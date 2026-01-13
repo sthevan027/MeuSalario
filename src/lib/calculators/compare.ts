@@ -3,7 +3,7 @@ import { simulateMonthly } from '@/lib/calculators/monthly'
 import { money } from '@/lib/calculators/utils'
 
 export function compareCltVsPj(input: CompareInput): CompareResult {
-  const base: Omit<MonthlySimulationInput, 'contractType' | 'descontosPercentual'> = {
+  const base: Omit<MonthlySimulationInput, 'contractType'> = {
     salarioBase: input.salarioBase,
     jornadaMensalHoras: input.jornadaMensalHoras,
     horas50: input.horas50,
@@ -16,13 +16,11 @@ export function compareCltVsPj(input: CompareInput): CompareResult {
   const clt = simulateMonthly({
     ...base,
     contractType: 'clt',
-    descontosPercentual: input.descontosCltPercentual,
   })
 
   const pj = simulateMonthly({
     ...base,
     contractType: 'pj',
-    descontosPercentual: input.descontosPjPercentual,
   })
 
   return { clt, pj, deltaLiquido: money(pj.liquido - clt.liquido) }

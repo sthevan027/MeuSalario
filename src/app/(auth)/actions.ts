@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseActionClient } from '@/lib/supabase/server'
 
 type ActionState =
   | { ok: true; message?: string }
@@ -17,7 +17,7 @@ export async function signIn(_prevState: ActionState | null, formData: FormData)
   const password = String(formData.get('password') ?? '')
   const nextPath = String(formData.get('nextPath') ?? '/app/dashboard') || '/app/dashboard'
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) return { ok: false, message: error.message }
@@ -30,7 +30,7 @@ export async function signUp(_prevState: ActionState | null, formData: FormData)
   const password = String(formData.get('password') ?? '')
   const name = String(formData.get('name') ?? '').trim()
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -72,7 +72,7 @@ export async function requestPasswordReset(
 ): Promise<ActionState> {
   const email = String(formData.get('email') ?? '').trim()
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${getOrigin()}/auth/callback?type=recovery`,
   })
@@ -88,7 +88,7 @@ export async function updatePassword(
 ): Promise<ActionState> {
   const password = String(formData.get('password') ?? '')
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const { error } = await supabase.auth.updateUser({ password })
 
   if (error) return { ok: false, message: error.message }
@@ -97,7 +97,7 @@ export async function updatePassword(
 }
 
 export async function signOut() {
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   await supabase.auth.signOut()
   redirect('/')
 }

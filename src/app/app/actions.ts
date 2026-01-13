@@ -1,6 +1,6 @@
 'use server'
 
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import { simulateTermination } from '@/lib/calculators/termination'
@@ -20,24 +20,26 @@ export async function createMonthlySimulation(
   formData: FormData
 ): Promise<ActionState<any>> {
   const contractType = String(formData.get('contractType') ?? 'clt') as MonthlySimulationInput['contractType']
-  const adiantamentoDia = num(formData.get('adiantamentoDia'), 15) === 20 ? 20 : 15
+  const adiantamentoDia = contractType === 'clt' ? (num(formData.get('adiantamentoDia'), 15) === 20 ? 20 : 15) : undefined
 
   const input: MonthlySimulationInput = {
     contractType,
     salarioBase: num(formData.get('salarioBase')),
     jornadaMensalHoras: num(formData.get('jornadaMensalHoras'), 220),
-    horas50: num(formData.get('horas50')),
-    horas100: num(formData.get('horas100')),
-    horas150: num(formData.get('horas150')),
+    horas50: contractType === 'clt' ? num(formData.get('horas50')) : 0,
+    horas100: contractType === 'clt' ? num(formData.get('horas100')) : 0,
+    horas150: contractType === 'clt' ? num(formData.get('horas150')) : 0,
+    bonus: contractType === 'pj' ? num(formData.get('bonus')) : undefined,
     atrasosHoras: num(formData.get('atrasosHoras')),
     adicionaisPercentual: num(formData.get('adicionaisPercentual')),
-    descontosPercentual: num(formData.get('descontosPercentual')),
+    // Para CLT ignoramos (INSS/IRRF são automáticos). Para PJ serve como estimativa.
+    descontosPercentual: contractType === 'pj' ? num(formData.get('descontosPercentual'), 10) : undefined,
     adiantamentoDia,
   }
 
   const result = simulateMonthly(input)
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -74,7 +76,7 @@ export async function createCompare(
 
   const result = compareCltVsPj(input)
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -115,7 +117,7 @@ export async function createTermination(
 
   const result = simulateTermination(input)
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

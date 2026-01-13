@@ -1,69 +1,47 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { signOut } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/Button'
-import { requireUser } from '@/lib/auth/profile'
 import { NavLink } from '@/components/layout/NavLink'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
-import { MobileMenu } from '@/components/layout/MobileMenu'
+import { MobileMenu } from './MobileMenu'
+import { MobileMenuButton } from './MobileMenuButton'
 import { User, Crown, LogOut, Shield } from 'lucide-react'
 
-const navigation = [
-  {
-    name: 'Dashboard',
-    href: '/app/dashboard',
-    iconName: 'dashboard' as const,
-    free: false, // Pro only
-  },
-  {
-    name: 'Simulação',
-    href: '/app/simulacao',
-    iconName: 'calculator' as const,
-    free: true,
-  },
-  {
-    name: 'Histórico',
-    href: '/app/historico',
-    iconName: 'history' as const,
-    free: false, // Pro only
-  },
-  {
-    name: 'CLT x PJ',
-    href: '/app/comparador',
-    iconName: 'scale' as const,
-    free: false, // Pro only
-  },
-  {
-    name: 'Rescisão',
-    href: '/app/rescisao',
-    iconName: 'fileText' as const,
-    free: false, // Pro only
-  },
-]
+interface AppLayoutClientProps {
+  children: React.ReactNode
+  profile: {
+    name?: string | null
+    email?: string | null
+    plan: string
+    role?: string | null
+  }
+  navigation: Array<{
+    name: string
+    href: string
+    iconName: 'dashboard' | 'calculator' | 'history' | 'scale' | 'fileText'
+    free: boolean
+  }>
+  isAdmin: boolean
+  isPro: boolean
+}
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const profile = await requireUser()
-  const isPro = profile.plan === 'pro'
-  const isAdmin = profile.role === 'admin'
+export function AppLayoutClient({ children, profile, navigation, isAdmin, isPro }: AppLayoutClientProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Mobile Menu */}
-      <MobileMenu
-        isPro={isPro}
-        isAdmin={isAdmin}
-        userName={profile.name || profile.email?.split('@')[0] || 'Usuário'}
-        userEmail={profile.email || ''}
-        navigation={navigation}
-        signOutAction={signOut}
-      />
+      {/* Mobile Menu Button */}
+      <MobileMenuButton onClick={() => setMobileMenuOpen(true)} />
 
-      {/* Sidebar Desktop */}
-      <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 border-r border-white/10 bg-slate-950/95 backdrop-blur-xl lg:block">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:border-r lg:border-white/10 lg:bg-slate-950/95 lg:backdrop-blur-xl">
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center border-b border-white/10 px-6">
-            <Link href={isPro ? "/app/dashboard" : "/app/simulacao"} className="text-xl font-bold tracking-tight">
+            <Link href={isPro ? '/app/dashboard' : '/app/simulacao'} className="text-xl font-bold tracking-tight">
               <span className="text-emerald-400">Meu</span>
               <span className="text-slate-100">Salario</span>
             </Link>
@@ -74,7 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             {navigation.map((item) => {
               const canAccess = item.free || isPro
 
-              if (!canAccess) return null // Não mostra o link se não tiver acesso
+              if (!canAccess) return null
 
               return (
                 <NavLink key={item.name} href={item.href} iconName={item.iconName}>
@@ -114,7 +92,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <UpgradeButton />
               </div>
             )}
-            
+
             <div className="mb-3 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
               <div className="flex-1 overflow-hidden">
                 <div className="truncate text-sm font-medium text-slate-100">
@@ -141,9 +119,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <main className="flex-1 overflow-x-hidden lg:ml-64">
-        <div className="mx-auto max-w-7xl p-4 pt-20 sm:p-6 lg:p-8 lg:pt-8">{children}</div>
+        <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
+
+      {/* Mobile Menu */}
+      <MobileMenu
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        profile={profile}
+        navigation={navigation}
+      />
     </div>
   )
 }
-

@@ -11,7 +11,8 @@ export const monthlyInputSchema = z.object({
   horas150: z.number().nonnegative(),
   atrasosHoras: z.number().nonnegative(),
   adicionaisPercentual: z.number().nonnegative(),
-  descontosPercentual: z.number().min(0).max(100),
+  // Para CLT é automático (INSS + IRRF). Para PJ pode ser estimado via percentual.
+  descontosPercentual: z.number().min(0).max(100).optional(),
 })
 
 export const terminationInputSchema = z.object({

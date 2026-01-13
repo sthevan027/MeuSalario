@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { requireAdmin } from '@/lib/auth/profile'
 import { isServiceRoleConfigured } from '@/lib/env'
 import { AdminNavLink } from '@/components/layout/AdminNavLink'
+import { AdminMobileMenu } from '@/components/layout/AdminMobileMenu'
 import { Shield, LogOut, Crown } from 'lucide-react'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -42,8 +43,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-64 border-r border-white/10 bg-slate-950/95 backdrop-blur-xl">
+      {/* Mobile Menu */}
+      <AdminMobileMenu
+        isPro={isPro}
+        userName={profile.name || profile.email?.split('@')[0] || 'Admin'}
+        userEmail={profile.email || ''}
+        signOutAction={signOut}
+      />
+
+      {/* Sidebar Desktop */}
+      <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 border-r border-white/10 bg-slate-950/95 backdrop-blur-xl lg:block">
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center border-b border-white/10 px-6">
@@ -112,8 +121,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Main content */}
-      <main className="ml-64 flex-1 overflow-x-hidden">
-        <div className="mx-auto max-w-7xl p-8">{children}</div>
+      <main className="flex-1 overflow-x-hidden lg:ml-64">
+        <div className="mx-auto max-w-7xl p-4 pt-20 sm:p-6 lg:p-8 lg:pt-8">{children}</div>
       </main>
     </div>
   )

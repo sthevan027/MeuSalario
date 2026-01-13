@@ -22,10 +22,11 @@ export function MonthlySimulationForm() {
   const [state, formAction] = useFormState(createMonthlySimulation, null)
   const [contractType, setContractType] = useState<'clt' | 'pj'>('clt')
   const [adiantamentoDia, setAdiantamentoDia] = useState<15 | 20>(15)
+  const [bonus, setBonus] = useState('0')
 
-  const defaults = useMemo(() => {
+  const defaults: { jornadaMensalHoras: number; descontosPercentual?: number } = useMemo(() => {
     return contractType === 'clt'
-      ? { descontosPercentual: 20, jornadaMensalHoras: 220 }
+      ? { jornadaMensalHoras: 220 }
       : { descontosPercentual: 10, jornadaMensalHoras: 220 }
   }, [contractType])
 
@@ -39,61 +40,102 @@ export function MonthlySimulationForm() {
       horas50: 0,
       horas100: 0,
       horas150: 0,
+      bonus: contractType === 'pj' ? parseFloat(bonus) || 0 : undefined,
       atrasosHoras: 0,
       adicionaisPercentual: 0,
-      descontosPercentual: defaults.descontosPercentual,
-      adiantamentoDia,
+      descontosPercentual: contractType === 'pj' ? defaults.descontosPercentual : undefined,
+      adiantamentoDia: contractType === 'clt' ? adiantamentoDia : undefined,
     })
-  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia])
+  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia, bonus])
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
       <form action={formAction} className="space-y-3">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Contrato">
-            <select
-              name="contractType"
-              value={contractType}
-              onChange={(e) => setContractType(e.target.value as any)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-400/60 focus:bg-white/10"
-            >
-              <option value="clt">CLT</option>
-              <option value="pj">PJ</option>
-            </select>
+            <div className="relative">
+              <select
+                name="contractType"
+                value={contractType}
+                onChange={(e) => {
+                  setContractType(e.target.value as any)
+                  setBonus('0')
+                }}
+                className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-sky-400/60 focus:bg-slate-800/50"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '12px'
+                }}
+              >
+                <option value="clt" className="bg-slate-900 text-slate-100">CLT</option>
+                <option value="pj" className="bg-slate-900 text-slate-100">PJ</option>
+              </select>
+            </div>
           </Field>
 
+          {contractType === 'clt' ? (
+            <Field label="Adiantamento (dia)">
+              <div className="relative">
+                <select
+                  name="adiantamentoDia"
+                  value={adiantamentoDia}
+                  onChange={(e) => setAdiantamentoDia((e.target.value === '20' ? 20 : 15) as 15 | 20)}
+                  className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60 focus:bg-slate-800/50"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundSize: '12px'
+                  }}
+                >
+                  <option value={15} className="bg-slate-900 text-slate-100">Dia 15</option>
+                  <option value={20} className="bg-slate-900 text-slate-100">Dia 20</option>
+                </select>
+              </div>
+            </Field>
+          ) : (
+            <Field label="Jornada mensal (horas)">
+              <Input name="jornadaMensalHoras" type="text" inputMode="decimal" step="1" defaultValue={defaults.jornadaMensalHoras} />
+            </Field>
+          )}
+        </div>
+
+        {contractType === 'clt' && (
           <Field label="Jornada mensal (horas)">
             <Input name="jornadaMensalHoras" type="text" inputMode="decimal" step="1" defaultValue={defaults.jornadaMensalHoras} />
           </Field>
-
-          <Field label="Adiantamento (dia)">
-            <select
-              name="adiantamentoDia"
-              value={adiantamentoDia}
-              onChange={(e) => setAdiantamentoDia((e.target.value === '20' ? 20 : 15) as 15 | 20)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none focus:border-emerald-500/60 focus:bg-white/10"
-            >
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-            </select>
-          </Field>
-        </div>
+        )}
 
         <Field label="Salário base">
           <Input name="salarioBase" type="text" inputMode="decimal" placeholder="Ex.: 3.500,00" required />
         </Field>
 
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="HE 50%">
-            <Input name="horas50" type="text" inputMode="decimal" placeholder="0" defaultValue="0" />
+        {contractType === 'clt' ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Field label="HE 50%">
+              <Input name="horas50" type="text" inputMode="decimal" placeholder="0" defaultValue="0" />
+            </Field>
+            <Field label="HE 100%">
+              <Input name="horas100" type="text" inputMode="decimal" placeholder="0" defaultValue="0" />
+            </Field>
+            <Field label="HE 150%">
+              <Input name="horas150" type="text" inputMode="decimal" placeholder="0" defaultValue="0" />
+            </Field>
+          </div>
+        ) : (
+          <Field label="Bônus" hint="Valor fixo de bônus">
+            <Input
+              name="bonus"
+              type="text"
+              inputMode="decimal"
+              placeholder="0"
+              value={bonus}
+              onChange={(e) => setBonus(e.target.value)}
+            />
           </Field>
-          <Field label="HE 100%">
-            <Input name="horas100" type="text" inputMode="decimal" placeholder="0" defaultValue="0" />
-          </Field>
-          <Field label="HE 150%">
-            <Input name="horas150" type="text" inputMode="decimal" placeholder="0" defaultValue="0" />
-          </Field>
-        </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Atrasos/Faltas (horas)">
@@ -104,9 +146,20 @@ export function MonthlySimulationForm() {
           </Field>
         </div>
 
-        <Field label="Descontos estimados (%)" hint={contractType === 'clt' ? 'padrão: 20%' : 'padrão: 10%'}>
-          <Input name="descontosPercentual" type="text" inputMode="decimal" defaultValue={String(defaults.descontosPercentual)} />
-        </Field>
+        {contractType === 'pj' ? (
+          <Field label="Descontos estimados (%)" hint="padrão: 10%">
+            <Input
+              name="descontosPercentual"
+              type="text"
+              inputMode="decimal"
+              defaultValue={String(defaults.descontosPercentual)}
+            />
+          </Field>
+        ) : (
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+            <span className="font-semibold">✓ Descontos automáticos (CLT)</span>: INSS progressivo e IRRF progressivo (base: bruto − INSS)
+          </div>
+        )}
 
         {state && !state.ok ? (
           <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">

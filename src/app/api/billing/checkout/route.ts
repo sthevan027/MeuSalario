@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { getStripe, getProPriceId } from '@/lib/stripe'
 
 export const runtime = 'nodejs'
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const { interval } = (await request.json().catch(() => ({}))) as { interval?: 'month' | 'year' }
     const safeInterval: 'month' | 'year' = interval === 'year' ? 'year' : 'month'
 
-    const supabase = createSupabaseServerClient()
+    const supabase = createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

@@ -126,14 +126,14 @@ export default async function DashboardPage() {
 
   // Usuário Pro - mostrar dashboard completo
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">
             {greeting}, <span className="text-emerald-400">{displayName}</span>
           </h1>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-1 text-xs text-slate-400 sm:text-sm">
             Aqui está um resumo das suas simulações
           </p>
         </div>
@@ -146,61 +146,61 @@ export default async function DashboardPage() {
       ) : null}
 
       {/* Cards de métricas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="group rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm transition-all hover:border-emerald-500/30">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="group rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-4 backdrop-blur-sm transition-all hover:border-emerald-500/30 sm:rounded-2xl sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              Bruto Previsto
+            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-xs">
+              Bruto
             </div>
-            <DollarSign size={20} className="text-slate-500 transition-colors group-hover:text-emerald-400" />
+            <DollarSign size={16} className="text-slate-500 transition-colors group-hover:text-emerald-400 sm:h-5 sm:w-5" />
           </div>
-          <div className="mt-3 text-2xl font-bold tabular-nums text-slate-50">
+          <div className="mt-2 text-lg font-bold tabular-nums text-slate-50 sm:mt-3 sm:text-2xl">
             {formatBRL(metrics.bruto)}
           </div>
         </div>
 
-        <div className="group rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm transition-all hover:border-emerald-500/30">
+        <div className="group rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-4 backdrop-blur-sm transition-all hover:border-emerald-500/30 sm:rounded-2xl sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-xs">
               Adicionais
             </div>
-            <Plus size={20} className="text-slate-500 transition-colors group-hover:text-emerald-400" />
+            <Plus size={16} className="text-slate-500 transition-colors group-hover:text-emerald-400 sm:h-5 sm:w-5" />
           </div>
-          <div className="mt-3 text-2xl font-bold tabular-nums text-emerald-400">
+          <div className="mt-2 text-lg font-bold tabular-nums text-emerald-400 sm:mt-3 sm:text-2xl">
             {formatBRL(metrics.adicionais)}
           </div>
         </div>
 
-        <div className="group rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm transition-all hover:border-rose-500/30">
+        <div className="group rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-4 backdrop-blur-sm transition-all hover:border-rose-500/30 sm:rounded-2xl sm:p-6">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-xs">
               Descontos
             </div>
-            <Minus size={20} className="text-slate-500 transition-colors group-hover:text-rose-400" />
+            <Minus size={16} className="text-slate-500 transition-colors group-hover:text-rose-400 sm:h-5 sm:w-5" />
           </div>
-          <div className="mt-3 text-2xl font-bold tabular-nums text-rose-400">
+          <div className="mt-2 text-lg font-bold tabular-nums text-rose-400 sm:mt-3 sm:text-2xl">
             {formatBRL(metrics.descontos)}
           </div>
         </div>
 
-        <div className="group rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-6 backdrop-blur-sm transition-all hover:border-emerald-500/40">
+        <div className="group col-span-2 rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-4 backdrop-blur-sm transition-all hover:border-emerald-500/40 sm:rounded-2xl sm:p-6 lg:col-span-1">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium uppercase tracking-wide text-emerald-300">
-              Líquido Previsto
+            <div className="text-[10px] font-medium uppercase tracking-wide text-emerald-300 sm:text-xs">
+              Líquido
             </div>
-            <TrendingUp size={20} className="text-emerald-400" />
+            <TrendingUp size={16} className="text-emerald-400 sm:h-5 sm:w-5" />
           </div>
-          <div className="mt-3 text-2xl font-bold tabular-nums text-emerald-300">
+          <div className="mt-2 text-lg font-bold tabular-nums text-emerald-300 sm:mt-3 sm:text-2xl">
             {formatBRL(metrics.liquido)}
           </div>
         </div>
       </div>
 
       {/* Gráfico de evolução */}
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-6 backdrop-blur-sm">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-slate-100">Evolução do Salário Líquido</h2>
-          <p className="mt-1 text-sm text-slate-400">
+      <div className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-4 backdrop-blur-sm sm:rounded-2xl sm:p-6">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="text-lg font-semibold text-slate-100 sm:text-xl">Evolução do Salário Líquido</h2>
+          <p className="mt-1 text-xs text-slate-400 sm:text-sm">
             Últimos 12 meses (apenas simulações mensais)
           </p>
         </div>

@@ -36,11 +36,28 @@ export async function middleware(request: NextRequest) {
         response.cookies.set({ name, value: '', ...options, maxAge: 0 })
       },
     },
+    auth: {
+      // Middleware só precisa verificar sessão, não fazer refresh automático
+      // O refresh é feito pelo cliente no browser ou por Server Actions quando necessário
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getUser() pode falhar se refresh_token estiver inválido/ausente
+  // Tratamos graciosamente: se falhar, considera usuário não autenticado
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (error: any) {
+    // Se for erro de refresh_token, trata como não autenticado (evita spam de erros)
+    if (error?.code !== 'refresh_token_not_found' && error?.status !== 400) {
+      // Re-throw apenas se não for erro de token (erro inesperado)
+      throw error
+    }
+    // Caso contrário, user permanece null (não autenticado)
+  }
 
   if (!user) {
     const url = request.nextUrl.clone()
@@ -60,10 +77,10 @@ export async function middleware(request: NextRequest) {
     }
 
     if (role !== 'admin') {
-      const url = request.nextUrl.clone()
+    const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
-      url.search = ''
-      return NextResponse.redirect(url)
+    url.search = ''
+    return NextResponse.redirect(url)
     }
   }
 
