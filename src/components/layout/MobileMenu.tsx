@@ -9,6 +9,8 @@ import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { Button } from '@/components/ui/Button'
 
 type MobileMenuProps = {
+  isOpen?: boolean
+  onClose?: () => void
   isPro: boolean
   isAdmin: boolean
   userName: string
@@ -22,14 +24,20 @@ type MobileMenuProps = {
   signOutAction: () => void
 }
 
-export function MobileMenu({ isPro, isAdmin, userName, userEmail, navigation, signOutAction }: MobileMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function MobileMenu({ isOpen: externalIsOpen, onClose, isPro, isAdmin, userName, userEmail, navigation, signOutAction }: MobileMenuProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  const setIsOpen = onClose || setInternalIsOpen
   const pathname = usePathname()
 
   // Fecha menu ao navegar
   useEffect(() => {
-    setIsOpen(false)
-  }, [pathname])
+    if (onClose) {
+      onClose()
+    } else {
+      setInternalIsOpen(false)
+    }
+  }, [pathname, onClose])
 
   // Bloqueia scroll quando menu está aberto
   useEffect(() => {
@@ -45,20 +53,28 @@ export function MobileMenu({ isPro, isAdmin, userName, userEmail, navigation, si
 
   return (
     <>
-      {/* Botão Hambúrguer */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-4 top-4 z-50 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-slate-950/95 text-slate-100 backdrop-blur-xl lg:hidden"
-        aria-label="Menu"
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      {/* Botão Hambúrguer - só mostra se não estiver sendo controlado externamente */}
+      {externalIsOpen === undefined && (
+        <button
+          onClick={() => setInternalIsOpen(!internalIsOpen)}
+          className="fixed left-4 top-4 z-50 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-slate-950/95 text-slate-100 backdrop-blur-xl lg:hidden"
+          aria-label="Menu"
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      )}
 
       {/* Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            if (onClose) {
+              onClose()
+            } else {
+              setInternalIsOpen(false)
+            }
+          }}
         />
       )}
 

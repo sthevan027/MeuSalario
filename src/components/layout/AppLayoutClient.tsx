@@ -126,8 +126,12 @@ export function AppLayoutClient({ children, profile, navigation, isAdmin, isPro 
       <MobileMenu
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        profile={profile}
+        isPro={isPro}
+        isAdmin={isAdmin}
+        userName={profile.name || profile.email?.split('@')[0] || 'Usuário'}
+        userEmail={profile.email || ''}
         navigation={navigation}
+        signOutAction={signOut}
       />
     </div>
   )
