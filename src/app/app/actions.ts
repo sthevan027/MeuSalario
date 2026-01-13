@@ -1,0 +1,136 @@
+'use server'
+
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { simulateMonthly } from '@/lib/calculators/monthly'
+import { compareCltVsPj } from '@/lib/calculators/compare'
+import { simulateTermination } from '@/lib/calculators/termination'
+import type { MonthlySimulationInput, CompareInput, TerminationInput } from '@/lib/calculators/types'
+import { toNumberOr } from '@/lib/number'
+
+type ActionState<T> =
+  | { ok: true; data: T }
+  | { ok: false; message: string }
+
+function num(v: FormDataEntryValue | null, fallback = 0) {
+  return toNumberOr(v, fallback)
+}
+
+export async function createMonthlySimulation(
+  _prev: ActionState<any> | null,
+  formData: FormData
+): Promise<ActionState<any>> {
+  const contractType = String(formData.get('contractType') ?? 'clt') as MonthlySimulationInput['contractType']
+  const adiantamentoDia = num(formData.get('adiantamentoDia'), 15) === 20 ? 20 : 15
+
+  const input: MonthlySimulationInput = {
+    contractType,
+    salarioBase: num(formData.get('salarioBase')),
+    jornadaMensalHoras: num(formData.get('jornadaMensalHoras'), 220),
+    horas50: num(formData.get('horas50')),
+    horas100: num(formData.get('horas100')),
+    horas150: num(formData.get('horas150')),
+    atrasosHoras: num(formData.get('atrasosHoras')),
+    adicionaisPercentual: num(formData.get('adicionaisPercentual')),
+    descontosPercentual: num(formData.get('descontosPercentual')),
+    adiantamentoDia,
+  }
+
+  const result = simulateMonthly(input)
+
+  const supabase = createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  const { error } = await supabase.from('simulations').insert({
+    user_id: user.id,
+    contract_type: input.contractType,
+    input_json: { kind: 'monthly', ...input },
+    result_json: result,
+  })
+
+  if (error) return { ok: false, message: error.message }
+
+  return { ok: true, data: { input, result } }
+}
+
+export async function createCompare(
+  _prev: ActionState<any> | null,
+  formData: FormData
+): Promise<ActionState<any>> {
+  const input: CompareInput = {
+    salarioBase: num(formData.get('salarioBase')),
+    jornadaMensalHoras: num(formData.get('jornadaMensalHoras'), 220),
+    horas50: num(formData.get('horas50')),
+    horas100: num(formData.get('horas100')),
+    horas150: num(formData.get('horas150')),
+    atrasosHoras: num(formData.get('atrasosHoras')),
+    adicionaisPercentual: num(formData.get('adicionaisPercentual')),
+    descontosCltPercentual: num(formData.get('descontosCltPercentual')),
+    descontosPjPercentual: num(formData.get('descontosPjPercentual')),
+  }
+
+  const result = compareCltVsPj(input)
+
+  const supabase = createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  const { error } = await supabase.from('simulations').insert([
+    {
+      user_id: user.id,
+      contract_type: 'clt',
+      input_json: { kind: 'compare', side: 'clt', ...input },
+      result_json: result.clt,
+    },
+    {
+      user_id: user.id,
+      contract_type: 'pj',
+      input_json: { kind: 'compare', side: 'pj', ...input },
+      result_json: result.pj,
+    },
+  ])
+
+  if (error) return { ok: false, message: error.message }
+
+  return { ok: true, data: { input, result } }
+}
+
+export async function createTermination(
+  _prev: ActionState<any> | null,
+  formData: FormData
+): Promise<ActionState<any>> {
+  const input: TerminationInput = {
+    salarioBase: num(formData.get('salarioBase')),
+    mesesTrabalhadosNoAno: num(formData.get('mesesTrabalhadosNoAno')),
+    avisoPrevioDias: num(formData.get('avisoPrevioDias'), 30),
+    feriasVencidas: formData.get('feriasVencidas') === 'on',
+    saldoFgtsMesesEstimado: num(formData.get('saldoFgtsMesesEstimado')),
+  }
+
+  const result = simulateTermination(input)
+
+  const supabase = createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  const { error } = await supabase.from('simulations').insert({
+    user_id: user.id,
+    contract_type: 'clt',
+    input_json: { kind: 'termination', ...input },
+    result_json: result,
+  })
+
+  if (error) return { ok: false, message: error.message }
+
+  return { ok: true, data: { input, result } }
+}
+

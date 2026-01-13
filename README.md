@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# MeuSalario
 
-## Getting Started
+Plataforma web para **previsão salarial**, simulações e dashboards (CLT/PJ), com **Supabase** (Auth/DB) e **Stripe** (assinatura Pro).
 
-First, run the development server:
+## Rodar local
+
+Instalar deps:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Configurar variáveis:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Copie `env.example` → `.env.local`
+- Preencha:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY` (necessária para webhook Stripe/admin)
+  - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY`, `NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY`
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Para acessar `/admin`, defina no Supabase o cargo do seu usuário:
 
-## Learn More
+```sql
+update public.profiles
+set role = 'admin'
+where email = 'SEU_EMAIL_AQUI';
+```
 
-To learn more about Next.js, take a look at the following resources:
+Subir o app:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Supabase (schema + RLS)
 
-## Deploy on Vercel
+Rode o SQL do arquivo:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `supabase/schema.sql`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Isso cria:
+- `profiles` (1-para-1 com `auth.users`)
+- `simulations`
+- `plans`
+- trigger de criação de profile
+- RLS básico
+
+## Stripe
+
+1. Crie os preços do plano Pro (mensal/anual) no Stripe.
+2. Coloque os Price IDs em `NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY` e `NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY`.
+3. Configure o webhook apontando para:
+   - `/api/billing/webhook`
+4. Use o segredo do webhook em `STRIPE_WEBHOOK_SECRET`.
+
