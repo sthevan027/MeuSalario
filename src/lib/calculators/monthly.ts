@@ -240,15 +240,16 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
 
   const atrasos = money(valorHora * atrasosHoras)
 
-  const bruto = money(salarioBase + horasExtrasOuBonus + dsr + adicionais - atrasos)
-  const inss = input.contractType === 'clt' ? calcINSS_CLT(bruto) : 0
-  const irrf = input.contractType === 'clt' ? calcIRRF_CLT(bruto) : 0
+  const bruto = money(salarioBase + horasExtrasOuBonus + dsr + adicionais)
+  const baseCalculo = money(bruto - atrasos)
+  const inss = input.contractType === 'clt' ? calcINSS_CLT(baseCalculo) : 0
+  const irrf = input.contractType === 'clt' ? calcIRRF_CLT(baseCalculo) : 0
 
   const descontos =
     input.contractType === 'clt'
       ? money(inss + irrf)
-      : money((bruto * descontosPercentual) / 100)
-  const liquido = money(bruto - descontos)
+      : money((baseCalculo * descontosPercentual) / 100)
+  const liquido = money(baseCalculo - descontos)
 
   // CLT: pagamento em 2 partes (adiantamento + pagamento final)
   // PJ: pagamento único (sem adiantamento)
