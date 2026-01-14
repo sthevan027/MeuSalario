@@ -35,6 +35,7 @@ const REFERENCE_TABLE_2026 = [
   { bruto: 6499, inss: 640, irrf: 100 },
   { bruto: 6500, inss: 700, irrf: 170 },
   { bruto: 6999, inss: 700, irrf: 170 },
+  { bruto: 7349, inss: 700, irrf: 170 },
   { bruto: 7350, inss: 800, irrf: 250 },
   { bruto: 7499, inss: 800, irrf: 250 },
   { bruto: 7500, inss: 820, irrf: 400 },
