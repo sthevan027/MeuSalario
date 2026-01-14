@@ -30,10 +30,15 @@ const IRRF_2026: { brackets: IrBracket[] } = {
 // Tabela de referência enviada (Nova regra do IR 2026)
 const REFERENCE_TABLE_2026 = [
   { bruto: 5000, inss: 560, irrf: 0 },
+  { bruto: 5999, inss: 560, irrf: 0 },
   { bruto: 6000, inss: 640, irrf: 100 },
+  { bruto: 6499, inss: 640, irrf: 100 },
   { bruto: 6500, inss: 700, irrf: 170 },
+  { bruto: 6999, inss: 700, irrf: 170 },
   { bruto: 7350, inss: 800, irrf: 250 },
+  { bruto: 7499, inss: 800, irrf: 250 },
   { bruto: 7500, inss: 820, irrf: 400 },
+  { bruto: 7999, inss: 820, irrf: 400 },
   { bruto: 8000, inss: 880, irrf: 700 },
 ] as const
 
