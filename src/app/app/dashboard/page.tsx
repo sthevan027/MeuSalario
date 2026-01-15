@@ -67,9 +67,12 @@ export default async function DashboardPage() {
 
   const endDate = rows.length ? new Date(rows[rows.length - 1].created_at) : new Date()
   const keys = lastNMonthKeys(endDate, 12)
+  const hoje = new Date()
+  const currentMonthKey = monthKey(hoje)
   const series = keys.map((k) => ({
     month: monthLabel(k),
     liquido: seriesMap.get(k) ?? null,
+    isCurrent: k === currentMonthKey,
   }))
   const hasSeries = series.some((p) => typeof p.liquido === 'number')
 
