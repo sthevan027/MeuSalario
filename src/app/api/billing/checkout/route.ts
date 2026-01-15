@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     customer: customerId,
     client_reference_id: user.id,
     line_items: [{ price: getProPriceId(safeInterval), quantity: 1 }],
+    payment_method_types: ['card'], // Especifica que aceita cartão de crédito/débito
     allow_promotion_codes: true,
     success_url: `${origin}/app/conta?checkout=success`,
     cancel_url: `${origin}/app/conta?checkout=cancel`,
