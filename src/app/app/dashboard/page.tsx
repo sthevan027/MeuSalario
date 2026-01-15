@@ -34,11 +34,53 @@ function monthLabel(key: string) {
 function lastNMonthKeys(endDate: Date, n = 12) {
   const keys: string[] = []
   const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(end.getFullYear(), end.getMonth() - i, 1)
-    keys.push(monthKey(d))
+  
+  // Sempre começar de 2026/01 (Janeiro 2026)
+  const startYear = 2026
+  const startMonth = 0 // Janeiro
+  const start = new Date(startYear, startMonth, 1)
+  
+  // Data atual para incluir meses futuros
+  const hoje = new Date()
+  const hojeMonth = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+  
+  // Usar a data mais recente entre endDate e hoje como referência
+  const referenceDate = end >= hojeMonth ? end : hojeMonth
+  
+  // Calcular quantos meses temos desde 2026/01 até a data de referência
+  const monthsFromStart = (referenceDate.getFullYear() - startYear) * 12 + (referenceDate.getMonth() - startMonth) + 1
+  
+  // Se temos menos de N meses, começar do início de 2026
+  if (monthsFromStart < n) {
+    let current = new Date(start)
+    let count = 0
+    while (count < n) {
+      keys.push(monthKey(current))
+      current = new Date(current.getFullYear(), current.getMonth() + 1, 1)
+      count++
+    }
+  } else {
+    // Gerar N meses, incluindo meses futuros a partir da data de referência
+    // Começar alguns meses antes e ir até alguns meses depois
+    const monthsBefore = Math.floor(n * 0.6) // 60% dos meses são passados
+    const monthsAfter = n - monthsBefore // 40% são futuros
+    
+    // Gerar meses passados
+    for (let i = monthsBefore - 1; i >= 0; i--) {
+      const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1)
+      if (d >= start) {
+        keys.push(monthKey(d))
+      }
+    }
+    
+    // Gerar meses futuros
+    for (let i = 1; i <= monthsAfter; i++) {
+      const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + i, 1)
+      keys.push(monthKey(d))
+    }
   }
-  return keys
+  
+  return keys.slice(0, n) // Garante que sempre retorna exatamente N meses
 }
 
 export default async function DashboardPage() {
@@ -58,20 +100,64 @@ export default async function DashboardPage() {
 
   const rows = ((data ?? []) as SimulationRow[]).filter((r) => String(r.input_json?.kind) === 'monthly')
 
-  const seriesMap = new Map<string, number>()
+  // Agrupa simulações por mês/ano da simulação, mantendo a mais recente quando houver duplicatas
+  const seriesMap = new Map<string, { liquido: number; created_at: Date }>()
+  let maxCreatedAt: Date | null = null
+  
   for (const r of rows) {
-    const key = monthKey(new Date(r.created_at))
     const liquido = Number(r.result_json?.liquido ?? 0)
-    seriesMap.set(key, liquido)
+    const created_at = new Date(r.created_at)
+    
+    // Usa o mês/ano da simulação se disponível, senão usa a data de criação
+    let simDate: Date
+    const inputMonth = r.input_json?.month
+    const inputYear = r.input_json?.year
+    
+    if (inputMonth && inputYear && inputMonth >= 1 && inputMonth <= 12) {
+      // Usa o mês/ano especificado na simulação (mês vem como 1-12)
+      simDate = new Date(inputYear, inputMonth - 1, 1)
+    } else {
+      // Fallback: usa a data de criação
+      simDate = new Date(created_at)
+    }
+    
+    const key = monthKey(simDate)
+    const existing = seriesMap.get(key)
+    
+    // Se não existe simulação para este mês, ou se esta é mais recente, atualiza
+    if (!existing || created_at > existing.created_at) {
+      seriesMap.set(key, { liquido, created_at })
+    }
+    
+    // Atualiza a data de criação mais recente
+    if (!maxCreatedAt || created_at > maxCreatedAt) {
+      maxCreatedAt = created_at
+    }
   }
 
-  const endDate = rows.length ? new Date(rows[rows.length - 1].created_at) : new Date()
+  // Cria um map simples com apenas os valores líquidos para o gráfico
+  const liquidoMap = new Map<string, number>()
+  for (const [key, value] of seriesMap) {
+    liquidoMap.set(key, value.liquido)
+  }
+
+  // Para calcular endDate, pega o mês/ano mais recente das simulações
+  let endDate = maxCreatedAt ?? new Date()
+  
+  // Se houver simulações com mês/ano futuro, ajusta o endDate
+  for (const [key] of seriesMap) {
+    const [year, month] = key.split('-').map(Number)
+    const simDate = new Date(year, month - 1, 1)
+    if (simDate > endDate) {
+      endDate = simDate
+    }
+  }
   const keys = lastNMonthKeys(endDate, 12)
   const hoje = new Date()
   const currentMonthKey = monthKey(hoje)
   const series = keys.map((k) => ({
     month: monthLabel(k),
-    liquido: seriesMap.get(k) ?? null,
+    liquido: liquidoMap.get(k) ?? null,
     isCurrent: k === currentMonthKey,
   }))
   const hasSeries = series.some((p) => typeof p.liquido === 'number')

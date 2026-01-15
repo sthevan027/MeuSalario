@@ -183,12 +183,12 @@ function calcularDomingosEFeriados(ano: number, mes: number): { domingos: number
  * Fórmula: DSR = (valor das horas extras / dias úteis) × (domingos + feriados)
  * Calcula automaticamente domingos e feriados do mês atual
  */
-function calcDSR(valorHorasExtras: number): number {
+function calcDSR(valorHorasExtras: number, month?: number, year?: number): number {
   if (valorHorasExtras <= 0) return 0
   
   const hoje = new Date()
-  const ano = hoje.getFullYear()
-  const mes = hoje.getMonth()
+  const ano = year ?? hoje.getFullYear()
+  const mes = month ? month - 1 : hoje.getMonth() // month vem como 1-12, getMonth retorna 0-11
   
   const { domingos, feriados, diasUteis } = calcularDomingosEFeriados(ano, mes)
   
@@ -221,7 +221,7 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
       : money(bonus)
 
   // DSR sobre horas extras (apenas para CLT)
-  const dsr = input.contractType === 'clt' ? calcDSR(horasExtrasOuBonus) : 0
+  const dsr = input.contractType === 'clt' ? calcDSR(horasExtrasOuBonus, input.month, input.year) : 0
 
   // Adicionais: calculados sobre salário base + horas extras
   const baseAdicionais = input.contractType === 'clt' 

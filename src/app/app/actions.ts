@@ -22,6 +22,12 @@ export async function createMonthlySimulation(
   const contractType = String(formData.get('contractType') ?? 'clt') as MonthlySimulationInput['contractType']
   const adiantamentoDia = contractType === 'clt' ? (num(formData.get('adiantamentoDia'), 15) === 20 ? 20 : 15) : undefined
 
+  // Lê mês e ano do formulário (opcionais, padrão: mês atual)
+  const monthStr = formData.get('month')
+  const yearStr = formData.get('year')
+  const month = monthStr ? num(monthStr) : undefined
+  const year = yearStr ? num(yearStr) : undefined
+
   const input: MonthlySimulationInput = {
     contractType,
     salarioBase: num(formData.get('salarioBase')),
@@ -35,6 +41,8 @@ export async function createMonthlySimulation(
     // Para CLT ignoramos (INSS/IRRF são automáticos). Para PJ serve como estimativa.
     descontosPercentual: contractType === 'pj' ? num(formData.get('descontosPercentual'), 10) : undefined,
     adiantamentoDia,
+    month: month && month >= 1 && month <= 12 ? month : undefined,
+    year: year && year >= 2020 && year <= 2100 ? year : undefined,
   }
 
   const result = simulateMonthly(input)

@@ -23,6 +23,8 @@ export type MonthlySimulationInput = {
    */
   descontosPercentual?: number
   adiantamentoDia?: 15 | 20 // CLT: dia do adiantamento, PJ: não usado
+  month?: number // Mês da simulação (1-12), padrão: mês atual
+  year?: number // Ano da simulação, padrão: ano atual
 }
 
 export type MonthlySimulationResult = {

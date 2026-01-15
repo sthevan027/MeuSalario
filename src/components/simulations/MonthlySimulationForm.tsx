@@ -23,6 +23,13 @@ export function MonthlySimulationForm() {
   const [contractType, setContractType] = useState<'clt' | 'pj'>('clt')
   const [adiantamentoDia, setAdiantamentoDia] = useState<15 | 20>(15)
   const [bonus, setBonus] = useState('0')
+  
+  // Estado para mês/ano da simulação (padrão: mês atual)
+  const hoje = new Date()
+  const defaultYear = hoje.getFullYear()
+  const defaultMonth = hoje.getMonth() + 1 // getMonth retorna 0-11
+  const [selectedYear, setSelectedYear] = useState<string>(String(defaultYear))
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(defaultMonth).padStart(2, '0'))
 
   const defaults: { jornadaMensalHoras: number; descontosPercentual?: number } = useMemo(() => {
     return contractType === 'clt'
@@ -45,8 +52,10 @@ export function MonthlySimulationForm() {
       adicionaisPercentual: 0,
       descontosPercentual: contractType === 'pj' ? defaults.descontosPercentual : undefined,
       adiantamentoDia: contractType === 'clt' ? adiantamentoDia : undefined,
+      month: parseInt(selectedMonth),
+      year: parseInt(selectedYear),
     })
-  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia, bonus])
+  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia, bonus, selectedMonth, selectedYear])
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
@@ -107,6 +116,58 @@ export function MonthlySimulationForm() {
             <Input name="jornadaMensalHoras" type="text" inputMode="decimal" step="1" defaultValue={defaults.jornadaMensalHoras} />
           </Field>
         )}
+
+        <Field label="Mês/Ano da simulação">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative">
+              <select
+                name="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60 focus:bg-slate-800/50"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '12px'
+                }}
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const monthNum = String(i + 1).padStart(2, '0')
+                  const monthName = new Date(2000, i, 1).toLocaleDateString('pt-BR', { month: 'long' })
+                  return (
+                    <option key={monthNum} value={monthNum} className="bg-slate-900 text-slate-100">
+                      {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+            <div className="relative">
+              <select
+                name="year"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60 focus:bg-slate-800/50"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundSize: '12px'
+                }}
+              >
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = defaultYear - 1 + i
+                  return (
+                    <option key={year} value={String(year)} className="bg-slate-900 text-slate-100">
+                      {year}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+          </div>
+        </Field>
 
         <Field label="Salário base">
           <Input name="salarioBase" type="text" inputMode="decimal" placeholder="Ex.: 3.500,00" required />
