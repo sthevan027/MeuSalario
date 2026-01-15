@@ -17,17 +17,7 @@ const INSS_2026: { ceiling: number; slices: ProgressiveSlice[] } = {
   ],
 }
 
-const IRRF_2026: { brackets: IrBracket[] } = {
-  brackets: [
-    { upTo: 2428.8, rate: 0, deduction: 0 },
-    { upTo: 2826.65, rate: 0.075, deduction: 182.16 },
-    { upTo: 3751.05, rate: 0.15, deduction: 394.16 },
-    { upTo: 4664.68, rate: 0.225, deduction: 675.49 },
-    { upTo: Number.POSITIVE_INFINITY, rate: 0.275, deduction: 908.73 },
-  ],
-}
-
-// Tabela de referência enviada (Nova regra do IR 2026)
+// Tabela de referência enviada (Nova regra do IR e IN 2026)
 const REFERENCE_TABLE_2026 = [
   { bruto: 5000, inss: 560, irrf: 0 },
   { bruto: 5999, inss: 560, irrf: 0 },
@@ -59,14 +49,6 @@ function calcProgressive(base: number, slices: ProgressiveSlice[]) {
   return money(total)
 }
 
-function calcINSS_CLT(bruto: number) {
-  return calcByReferenceTable(bruto, 'inss')
-}
-
-function calcIRRF_CLT(bruto: number) {
-  return calcByReferenceTable(bruto, 'irrf')
-}
-
 function calcByReferenceTable(bruto: number, field: 'inss' | 'irrf') {
   const value = Math.max(0, bruto)
   const rows = REFERENCE_TABLE_2026
@@ -87,12 +69,17 @@ function calcByReferenceTable(bruto: number, field: 'inss' | 'irrf') {
     }
   }
 
+  // Para valores acima da tabela, retorna o último valor (teto)
   const last = rows[rows.length - 1]
-  const beforeLast = rows[rows.length - 2]
-  const range = last.bruto - beforeLast.bruto
-  const progress = (value - last.bruto) / range
-  const extrapolated = last[field] + (last[field] - beforeLast[field]) * progress
-  return money(extrapolated)
+  return money(last[field])
+}
+
+function calcINSS_CLT(bruto: number) {
+  return calcByReferenceTable(bruto, 'inss')
+}
+
+function calcIRRF_CLT(baseCalculo: number) {
+  return calcByReferenceTable(baseCalculo, 'irrf')
 }
 
 /**
