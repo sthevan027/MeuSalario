@@ -135,7 +135,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               <div className="mt-0.5 text-xs text-slate-400">Cancele quando quiser</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-white">R$ 7,90</div>
+              <div className="text-lg font-bold text-white">R$ 5,50</div>
               <div className="text-xs text-slate-400">por mês</div>
             </div>
           </button>
@@ -152,10 +152,10 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                   Economize 17%
                 </span>
               </div>
-              <div className="mt-0.5 text-xs text-slate-400">R$ 6,58/mês</div>
+              <div className="mt-0.5 text-xs text-slate-400">R$ 4,58/mês</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-white">R$ 79,00</div>
+              <div className="text-lg font-bold text-white">R$ 55,00</div>
               <div className="text-xs text-slate-400">por ano</div>
             </div>
           </button>

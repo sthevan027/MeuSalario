@@ -202,10 +202,10 @@ export default async function HomePage() {
               
               <div className="mb-2 text-xs font-semibold text-emerald-400 sm:text-sm">PRO</div>
               <div className="mb-2 flex items-baseline gap-2">
-                <span className="text-4xl font-bold text-white sm:text-5xl">R$ 7,90</span>
+                <span className="text-4xl font-bold text-white sm:text-5xl">R$ 5,50</span>
                 <span className="text-sm text-slate-400 sm:text-base">/mês</span>
               </div>
-              <div className="mb-4 text-xs text-slate-400 sm:mb-6 sm:text-sm">ou R$ 79/ano (economize 17%)</div>
+              <div className="mb-4 text-xs text-slate-400 sm:mb-6 sm:text-sm">ou R$ 55/ano (economize 17%)</div>
               
               <ul className="mb-8 space-y-3">
                 <li className="flex items-start gap-3 text-white">

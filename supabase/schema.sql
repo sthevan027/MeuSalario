@@ -45,6 +45,7 @@ create table if not exists public.plans (
   name text not null,
   price_monthly numeric,
   price_yearly numeric,
+  trial_days integer default 0,
   features jsonb not null default '{}'::jsonb,
   active boolean not null default true
 );
@@ -174,12 +175,16 @@ create policy "plans_select_all"
   for select
   using (true);
 
+-- Migração: adicionar coluna trial_days se não existir
+alter table public.plans add column if not exists trial_days integer default 0;
+
 -- Dados iniciais: planos Free e Pro
-insert into public.plans (id, name, price_monthly, price_yearly, features, active)
+insert into public.plans (id, name, price_monthly, price_yearly, trial_days, features, active)
 values
   (
     'free',
     'Free',
+    0,
     0,
     0,
     '{
@@ -196,8 +201,9 @@ values
   (
     'pro',
     'Pro',
-    7.90,
-    79.00,
+    5.50,
+    55.00,
+    0,
     '{
       "simulation": true,
       "dashboard": true,
@@ -214,5 +220,6 @@ set
   name = excluded.name,
   price_monthly = excluded.price_monthly,
   price_yearly = excluded.price_yearly,
+  trial_days = excluded.trial_days,
   features = excluded.features,
   active = excluded.active;
