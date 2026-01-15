@@ -236,14 +236,19 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
   // DSR sobre horas extras (apenas para CLT)
   const dsr = input.contractType === 'clt' ? calcDSR(horasExtrasOuBonus) : 0
 
-  const adicionais = money((salarioBase * adicionaisPercentual) / 100)
+  // Adicionais: calculados sobre salário base + horas extras
+  const baseAdicionais = input.contractType === 'clt' 
+    ? salarioBase + horasExtrasOuBonus
+    : salarioBase
+  const adicionais = money((baseAdicionais * adicionaisPercentual) / 100)
 
   const atrasos = money(valorHora * atrasosHoras)
 
   const bruto = money(salarioBase + horasExtrasOuBonus + dsr + adicionais)
   const baseCalculo = money(bruto - atrasos)
   const inss = input.contractType === 'clt' ? calcINSS_CLT(baseCalculo) : 0
-  const irrf = input.contractType === 'clt' ? calcIRRF_CLT(baseCalculo) : 0
+  const baseCalculoIRRF = input.contractType === 'clt' ? money(baseCalculo - inss) : 0
+  const irrf = input.contractType === 'clt' ? calcIRRF_CLT(baseCalculoIRRF) : 0
 
   const descontos =
     input.contractType === 'clt'
