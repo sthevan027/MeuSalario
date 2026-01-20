@@ -6,18 +6,18 @@ const serverSchema = z.object({
 
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 
-  ASAAS_API_KEY: z.string().min(1).optional(),
-  ASAAS_WEBHOOK_TOKEN: z.string().min(1).optional(),
-  ASAAS_ENV: z.enum(['sandbox', 'production']).optional(),
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 })
 
 const rawEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-  ASAAS_API_KEY: process.env.ASAAS_API_KEY,
-  ASAAS_WEBHOOK_TOKEN: process.env.ASAAS_WEBHOOK_TOKEN,
-  ASAAS_ENV: process.env.ASAAS_ENV,
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 }
 
 const parsed = serverSchema.safeParse(rawEnv)
@@ -37,8 +37,8 @@ export function isServiceRoleConfigured() {
   return !!rawEnv.SUPABASE_SERVICE_ROLE_KEY
 }
 
-export function isAsaasConfigured() {
-  return !!rawEnv.ASAAS_API_KEY && !!rawEnv.ASAAS_WEBHOOK_TOKEN
+export function isStripeConfigured() {
+  return !!rawEnv.STRIPE_SECRET_KEY && !!rawEnv.STRIPE_WEBHOOK_SECRET
 }
 
 export function requireEnv<K extends keyof typeof rawEnv>(key: K): string {

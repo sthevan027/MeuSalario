@@ -163,7 +163,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
         {/* Nota */}
         <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-          <span>Pagamento seguro via Asaas (Pix + Cartão)</span>
+          <span>Pagamento seguro via Stripe</span>
           <span>{loading ? 'Abrindo checkout...' : ''}</span>
         </div>
       </div>

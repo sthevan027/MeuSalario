@@ -317,7 +317,7 @@ export function TerminationForm() {
               * Valores estimados. Podem variar conforme convenção coletiva e outros fatores.
             </p>
             <p className="text-[10px] text-slate-400">
-              ** O saldo do FGTS depositado (R$ {preview.items.find(i => i.key === 'fgts_info')?.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) não está incluído neste total, pois é liberado separadamente pela Caixa Econômica Federal.
+              ** O saldo do FGTS depositado (R$ {preview.items.find((i: { key: string; amount: number }) => i.key === 'fgts_info')?.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) não está incluído neste total, pois é liberado separadamente pela Caixa Econômica Federal.
             </p>
           </div>
         )}

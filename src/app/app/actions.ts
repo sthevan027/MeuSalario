@@ -297,4 +297,3 @@ export async function createVacationSimulation(
 
   return { ok: true, data: { input, result } }
 }
-

@@ -1,6 +1,6 @@
 /**
  * Interface abstrata para provedores de pagamento
- * Permite trocar facilmente entre diferentes gateways (Asaas, Stripe, etc)
+ * Permite trocar facilmente entre diferentes gateways (Stripe, etc)
  */
 
 export type SubscriptionStatus = 'ACTIVE' | 'PENDING' | 'OVERDUE' | 'CANCELED'
@@ -17,6 +17,8 @@ export interface CreateSubscriptionInput {
   planId: string
   value: number
   interval: 'month' | 'year'
+  /** ID do usuário no app (ex: Supabase user id), usado pelo Stripe em client_reference_id */
+  userId?: string
 }
 
 export interface CreateSubscriptionOutput {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { getAsaasProvider } from '@/lib/payments/asaas-provider'
+import { getStripeProvider } from '@/lib/payments/stripe-provider'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -21,31 +21,30 @@ export async function GET(request: Request) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('asaas_subscription_id, subscription_status')
+      .select('stripe_subscription_id, subscription_status')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.asaas_subscription_id) {
+    if (!profile?.stripe_subscription_id) {
       return NextResponse.json({ subscription: null })
     }
 
-    const asaas = getAsaasProvider()
-    const subscription = await asaas.getSubscription(profile.asaas_subscription_id)
+    const stripe = getStripeProvider()
+    const subscription = await stripe.getSubscription(profile.stripe_subscription_id)
 
     if (!subscription) {
       return NextResponse.json({ subscription: null })
     }
 
-    // Converte para formato compatível com o frontend
     return NextResponse.json({
       subscription: {
         id: subscription.id,
-        status: subscription.status.toLowerCase(), // ACTIVE -> active
-        current_period_end: subscription.currentPeriodEnd 
-          ? Math.floor(subscription.currentPeriodEnd.getTime() / 1000) 
+        status: subscription.status.toLowerCase(),
+        current_period_end: subscription.currentPeriodEnd
+          ? Math.floor(subscription.currentPeriodEnd.getTime() / 1000)
           : null,
         cancel_at_period_end: subscription.cancelAtPeriodEnd,
-        trial_end: null, // Asaas não tem trial nativo, pode ser implementado depois
+        trial_end: null,
         items: [
           {
             price_id: subscription.interval === 'month' ? 'pro_monthly' : 'pro_yearly',
@@ -54,9 +53,10 @@ export async function GET(request: Request) {
         ],
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get subscription error:', error)
-    return NextResponse.json({ error: error?.message || 'Erro ao buscar assinatura.' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Erro ao buscar assinatura.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
@@ -85,32 +85,25 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('asaas_subscription_id, subscription_status')
+      .select('stripe_subscription_id, subscription_status')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.asaas_subscription_id) {
+    if (!profile?.stripe_subscription_id) {
       return NextResponse.json({ error: 'Assinatura não encontrada.' }, { status: 404 })
     }
 
-    const asaas = getAsaasProvider()
+    const stripe = getStripeProvider()
 
     if (action === 'downgrade') {
-      // Cancela a assinatura no final do período
-      await asaas.cancelSubscription(profile.asaas_subscription_id, false)
-
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Assinatura será cancelada no final do período.' 
+      await stripe.cancelSubscription(profile.stripe_subscription_id, false)
+      return NextResponse.json({
+        success: true,
+        message: 'Assinatura será cancelada no final do período.',
       })
     }
 
     if (action === 'change_interval' && interval) {
-      // No Asaas, para mudar o intervalo, precisamos cancelar a atual e criar uma nova
-      // Ou podemos atualizar a assinatura diretamente (depende da API do Asaas)
-      // Por enquanto, vamos cancelar e criar nova (o usuário precisará fazer checkout novamente)
-      
-      // Busca plano para obter novo preço
       const { data: plan } = await supabase
         .from('plans')
         .select('price_monthly, price_yearly')
@@ -123,43 +116,42 @@ export async function POST(request: Request) {
 
       const newValue = interval === 'month' ? plan.price_monthly : plan.price_yearly
 
-      // Cancela assinatura atual
-      await asaas.cancelSubscription(profile.asaas_subscription_id, true)
+      await stripe.cancelSubscription(profile.stripe_subscription_id, true)
 
-      // Cria nova assinatura com novo intervalo
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('asaas_customer_id')
+        .select('stripe_customer_id')
         .eq('id', user.id)
         .single()
 
-      if (!profileData?.asaas_customer_id) {
+      if (!profileData?.stripe_customer_id) {
         return NextResponse.json({ error: 'Cliente não encontrado.' }, { status: 404 })
       }
 
-      const { subscriptionId, paymentLink } = await asaas.createSubscription({
-        customerId: profileData.asaas_customer_id,
+      const { paymentLink } = await stripe.createSubscription({
+        customerId: profileData.stripe_customer_id,
         planId: 'pro',
         value: Number(newValue),
         interval,
+        userId: user.id,
       })
 
-      // Atualiza subscription ID no banco
       await supabase
         .from('profiles')
-        .update({ asaas_subscription_id: subscriptionId })
+        .update({ stripe_subscription_id: null })
         .eq('id', user.id)
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         message: 'Intervalo alterado. Complete o pagamento para ativar.',
         paymentLink,
       })
     }
 
     return NextResponse.json({ error: 'Ação não implementada.' }, { status: 400 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Manage subscription error:', error)
-    return NextResponse.json({ error: error?.message || 'Erro ao gerenciar assinatura.' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Erro ao gerenciar assinatura.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

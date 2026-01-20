@@ -48,7 +48,7 @@ export default async function AdminPlanosPage() {
             Planos
           </h1>
           <p className="text-sm text-slate-400">
-            Gerenciamento dos planos da plataforma (sincronizado com Asaas)
+            Gerenciamento dos planos da plataforma (preços usados no checkout Stripe)
           </p>
         </div>
 

@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { getAsaasProvider } from '@/lib/payments/asaas-provider'
-import { env } from '@/lib/env'
+import { getStripeProvider } from '@/lib/payments/stripe-provider'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
- * POST - Cria assinatura no Asaas e retorna link de pagamento
+ * POST - Cria sessão de checkout Stripe e retorna URL de pagamento
  */
 export async function POST(request: Request) {
   try {
@@ -40,53 +39,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Preço do plano inválido.' }, { status: 500 })
     }
 
-    // Busca ou cria cliente no Asaas
     const { data: profile } = await supabase
       .from('profiles')
-      .select('asaas_customer_id')
+      .select('stripe_customer_id')
       .eq('id', user.id)
       .single()
 
-    const asaas = getAsaasProvider()
-    let customerId = profile?.asaas_customer_id ?? null
+    const stripe = getStripeProvider()
+    let customerId = profile?.stripe_customer_id ?? null
 
     if (!customerId) {
-      const { customerId: newCustomerId } = await asaas.createCustomer({
+      const { customerId: newCustomerId } = await stripe.createCustomer({
         id: user.id,
         name: user.user_metadata?.name || user.email || 'Usuário',
         email: user.email || '',
       })
       customerId = newCustomerId
-      
-      // Salva customer ID no banco
       await supabase
         .from('profiles')
-        .update({ asaas_customer_id: customerId })
+        .update({ stripe_customer_id: customerId })
         .eq('id', user.id)
     }
 
-    // Cria assinatura no Asaas
-    const { subscriptionId, paymentLink } = await asaas.createSubscription({
+    const { paymentLink } = await stripe.createSubscription({
       customerId,
       planId: 'pro',
       value: Number(planValue),
       interval: safeInterval,
+      userId: user.id,
     })
 
-    // Salva subscription ID no banco
     await supabase
       .from('profiles')
-      .update({ 
-        asaas_subscription_id: subscriptionId,
-        subscription_status: 'pending',
-      })
+      .update({ subscription_status: 'trialing' })
       .eq('id', user.id)
 
     return NextResponse.json({ url: paymentLink })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Checkout error:', error)
-    return NextResponse.json({ 
-      error: error?.message || 'Erro ao processar checkout. Verifique se o Asaas está configurado.' 
+    const message = error instanceof Error ? error.message : 'Erro ao processar checkout.'
+    return NextResponse.json({
+      error: message.includes('STRIPE') ? message : 'Erro ao processar checkout. Verifique se o Stripe está configurado.',
     }, { status: 500 })
   }
 }
