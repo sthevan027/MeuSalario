@@ -84,14 +84,13 @@ function lastNMonthKeys(endDate: Date, n = 12) {
   return keys.slice(0, n) // Garante que sempre retorna exatamente N meses
 }
 
-// Função auxiliar para buscar simulações (usada no cache)
+// Função auxiliar para buscar simulações mensais (usada no cache)
 async function getSimulationsData(userId: string) {
   const supabase = createSupabaseServerClient()
   const { data, error } = await supabase
     .from('simulations')
     .select('created_at, contract_type, input_json, result_json')
     .eq('user_id', userId)
-    .contains('input_json', { kind: 'monthly' })
     .order('created_at', { ascending: true })
     .limit(200)
   return { data, error }
@@ -113,7 +112,14 @@ export default async function DashboardPage() {
 
   const { data, error } = await getCachedSimulations()
 
-  const rows = ((data ?? []) as SimulationRow[]).filter((r) => String(r.input_json?.kind) === 'monthly')
+  // Filtra APENAS simulações mensais (não rescisão, não comparador)
+  const rows = ((data ?? []) as SimulationRow[]).filter((r) => {
+    const kind = String(r.input_json?.kind ?? '')
+    // Apenas simulações mensais têm kind === 'monthly'
+    // Rescisão tem kind === 'termination'
+    // Comparador tem kind === 'compare'
+    return kind === 'monthly'
+  })
 
   // Agrupa simulações por mês/ano da simulação, mantendo a mais recente quando houver duplicatas
   const seriesMap = new Map<string, { liquido: number; created_at: Date }>()

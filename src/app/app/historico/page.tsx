@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
 import { requirePro, getProfileOrNull } from '@/lib/auth/profile'
+import { DeleteSimulationButton } from '@/components/simulations/DeleteSimulationButton'
 
 type SimulationRow = {
   id: string
@@ -67,10 +68,11 @@ export default async function HistoricoPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-        <div className="grid grid-cols-3 gap-3 border-b border-white/10 px-4 py-3 text-xs font-medium text-slate-300">
+        <div className="grid grid-cols-4 gap-3 border-b border-white/10 px-4 py-3 text-xs font-medium text-slate-300">
           <div>Tipo</div>
           <div>Data</div>
           <div className="text-right">Valor</div>
+          <div className="text-right">Ações</div>
         </div>
 
         {rows.length === 0 ? (
@@ -78,10 +80,13 @@ export default async function HistoricoPage() {
         ) : (
           <div className="divide-y divide-white/10">
             {rows.map((r) => (
-              <div key={r.id} className="grid grid-cols-3 gap-3 px-4 py-3 text-sm">
+              <div key={r.id} className="grid grid-cols-4 gap-3 px-4 py-3 text-sm">
                 <div className="text-slate-100">{getLabel(r)}</div>
                 <div className="text-slate-300">{new Date(r.created_at).toLocaleString('pt-BR')}</div>
                 <div className="text-right font-medium tabular-nums text-slate-50">{formatBRL(getValue(r))}</div>
+                <div className="flex items-center justify-end">
+                  <DeleteSimulationButton simulationId={r.id} />
+                </div>
               </div>
             ))}
           </div>

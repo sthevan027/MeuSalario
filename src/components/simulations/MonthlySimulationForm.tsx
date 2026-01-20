@@ -35,11 +35,9 @@ export function MonthlySimulationForm() {
   const [selectedYear, setSelectedYear] = useState<string>(String(defaultYear))
   const [selectedMonth, setSelectedMonth] = useState<string>(String(defaultMonth).padStart(2, '0'))
 
-  const defaults: { jornadaMensalHoras: number; descontosPercentual?: number } = useMemo(() => {
-    return contractType === 'clt'
-      ? { jornadaMensalHoras: 220 }
-      : { descontosPercentual: 10, jornadaMensalHoras: 220 }
-  }, [contractType])
+  const defaults: { jornadaMensalHoras: number } = useMemo(() => {
+    return { jornadaMensalHoras: 220 }
+  }, [])
 
   // Preview: se já existe resultado salvo no state, mostramos ele; senão calculamos localmente com defaults
   const preview = useMemo(() => {
@@ -58,7 +56,7 @@ export function MonthlySimulationForm() {
       bonus: contractType === 'pj' ? parseFloat(bonus) || 0 : undefined,
       atrasosHoras: 0,
       adicionaisPercentual: 0,
-      descontosPercentual: contractType === 'pj' && !usaCalculoRealPJ ? defaults.descontosPercentual : undefined,
+      descontosPercentual: undefined, // Removido: sempre usar cálculo real quando disponível
       proLabore: usaCalculoRealPJ ? proLaboreValue : undefined,
       anexoSimplesNacional: usaCalculoRealPJ ? anexoSimples : undefined,
       dependentes: contractType === 'clt' ? (parseInt(dependentes) || 0) : undefined,
@@ -66,7 +64,7 @@ export function MonthlySimulationForm() {
       month: parseInt(selectedMonth),
       year: parseInt(selectedYear),
     })
-  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia, bonus, selectedMonth, selectedYear, proLabore, anexoSimples, usaCalculoReal, dependentes])
+  }, [state, contractType, defaults.jornadaMensalHoras, adiantamentoDia, bonus, selectedMonth, selectedYear, proLabore, anexoSimples, usaCalculoReal, dependentes])
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
@@ -254,9 +252,9 @@ export function MonthlySimulationForm() {
               </label>
             </div>
 
-            {usaCalculoReal ? (
+            {usaCalculoReal && (
               <div className="space-y-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3">
-                <Field label="Pró-labore" hint="Remuneração do sócio (para cálculo de INSS e IRRF)">
+                <Field label="Pró-labore" hint="Valor que você recebe como pró-labore da sua empresa (para cálculo de INSS e IRRF)">
                   <Input
                     name="proLabore"
                     type="text"
@@ -293,15 +291,12 @@ export function MonthlySimulationForm() {
                   ✓ Será calculado: DAS (Simples Nacional), INSS sobre pró-labore (11%) e IRRF sobre pró-labore
                 </p>
               </div>
-            ) : (
-              <Field label="Descontos estimados (%)" hint="padrão: 10%">
-                <Input
-                  name="descontosPercentual"
-                  type="text"
-                  inputMode="decimal"
-                  defaultValue={String(defaults.descontosPercentual)}
-                />
-              </Field>
+            )}
+            
+            {!usaCalculoReal && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                <span className="font-semibold">ℹ️ Para cálculo preciso de impostos PJ</span>, marque a opção acima e informe o pró-labore.
+              </div>
             )}
           </>
         ) : (

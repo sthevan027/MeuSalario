@@ -212,8 +212,8 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
       inss = 0
       irrf = 0
     } else {
-      // Modo legado: percentual genérico
-      descontos = money((baseCalculo * descontosPercentual) / 100)
+      // Sem cálculo real: não calcula descontos (usuário deve informar pró-labore)
+      descontos = 0
       inss = 0
       irrf = 0
     }
@@ -228,7 +228,7 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
   const saldoPagamento = input.contractType === 'clt' ? money(Math.max(0, liquido - adiantamento)) : liquido
 
   const items = [
-    { key: 'base', label: 'Salário base', amount: money(salarioBase), kind: 'earning' as const },
+    { key: 'base', label: input.contractType === 'pj' ? 'Faturamento bruto (valor recebido da empresa)' : 'Salário base', amount: money(salarioBase), kind: 'earning' as const },
     {
       key: input.contractType === 'clt' ? 'extras' : 'bonus',
       label: input.contractType === 'clt' ? 'Horas extras' : 'Bônus',
@@ -250,14 +250,20 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
             kind: 'deduction' as const,
           },
         ] as const)
-      : // PJ: mostra descontos reais ou genérico
+      : // PJ: mostra descontos reais com pró-labore destacado
         input.proLabore !== undefined && input.anexoSimplesNacional !== undefined
-        ? ([
-            { key: 'das', label: 'DAS (Simples Nacional)', amount: das ?? 0, kind: 'deduction' as const },
-            { key: 'inss-prolabore', label: 'INSS sobre pró-labore (11%)', amount: inssProLabore ?? 0, kind: 'deduction' as const },
-            { key: 'irrf-prolabore', label: 'IRRF sobre pró-labore', amount: irrfProLabore ?? 0, kind: 'deduction' as const },
-          ] as const)
-        : ([{ key: 'disc', label: `Descontos estimados (${descontosPercentual}%)`, amount: descontos, kind: 'deduction' as const }] as const)),
+        ? (() => {
+            const proLabore = input.proLabore ?? 0
+            const proLaboreLiquido = proLabore - (inssProLabore ?? 0) - (irrfProLabore ?? 0)
+            return [
+              { key: 'prolabore-info', label: `ℹ️ Pró-labore: R$ ${proLabore.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (valor que você recebe da sua empresa)`, amount: 0, kind: 'info' as const },
+              { key: 'das', label: 'DAS (Simples Nacional) - sobre faturamento total', amount: das ?? 0, kind: 'deduction' as const },
+              { key: 'inss-prolabore', label: 'INSS sobre pró-labore (11%)', amount: inssProLabore ?? 0, kind: 'deduction' as const },
+              { key: 'irrf-prolabore', label: 'IRRF sobre pró-labore', amount: irrfProLabore ?? 0, kind: 'deduction' as const },
+              { key: 'prolabore-liquido', label: `Pró-labore líquido (recebido): R$ ${proLaboreLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, amount: proLaboreLiquido, kind: 'info' as const },
+            ] as const
+          })()
+        : []), // Sem cálculo real: não mostra descontos genéricos
     // Adiantamento só para CLT
     ...(input.contractType === 'clt'
       ? ([

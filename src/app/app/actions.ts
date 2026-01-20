@@ -44,8 +44,8 @@ export async function createMonthlySimulation(
     bonus: contractType === 'pj' ? num(formData.get('bonus')) : undefined,
     atrasosHoras: num(formData.get('atrasosHoras')),
     adicionaisPercentual: num(formData.get('adicionaisPercentual')),
-    // Para CLT ignoramos (INSS/IRRF são automáticos). Para PJ: usa cálculo real ou percentual genérico
-    descontosPercentual: contractType === 'pj' && !usaCalculoRealPJ ? num(formData.get('descontosPercentual'), 10) : undefined,
+    // Para CLT ignoramos (INSS/IRRF são automáticos). Para PJ: sempre usar cálculo real quando disponível
+    descontosPercentual: undefined, // Campo removido: sempre usar cálculo real
     proLabore: usaCalculoRealPJ ? num(proLaboreStr) : undefined,
     anexoSimplesNacional: usaCalculoRealPJ ? (anexoStr === 'V' ? 'V' : 'III') : undefined,
     dependentes: contractType === 'clt' ? num(formData.get('dependentes'), 0) : undefined,
@@ -183,5 +183,44 @@ export async function createTermination(
   revalidateTag(`simulations-${user.id}`)
 
   return { ok: true, data: { input, result } }
+}
+
+export async function deleteSimulation(simulationId: string): Promise<ActionState<null>> {
+  const supabase = createSupabaseActionClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  // Verifica se a simulação pertence ao usuário
+  const { data: simulation, error: fetchError } = await supabase
+    .from('simulations')
+    .select('user_id')
+    .eq('id', simulationId)
+    .single()
+
+  if (fetchError || !simulation) {
+    return { ok: false, message: 'Simulação não encontrada.' }
+  }
+
+  if (simulation.user_id !== user.id) {
+    return { ok: false, message: 'Você não tem permissão para excluir esta simulação.' }
+  }
+
+  // Deleta a simulação
+  const { error } = await supabase
+    .from('simulations')
+    .delete()
+    .eq('id', simulationId)
+    .eq('user_id', user.id)
+
+  if (error) return { ok: false, message: error.message }
+
+  // Revalida cache do histórico e dashboard
+  revalidateTag(`simulations-${user.id}`)
+
+  return { ok: true, data: null }
 }
 

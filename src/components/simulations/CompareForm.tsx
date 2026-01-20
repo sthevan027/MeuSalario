@@ -107,7 +107,7 @@ export function CompareForm() {
 
           {usaCalculoRealPJ ? (
             <div className="grid gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 lg:grid-cols-2">
-              <Field label="Pró-labore" hint="Remuneração do sócio">
+              <Field label="Pró-labore" hint="Valor que você recebe como pró-labore da sua empresa">
                 <Input
                   name="proLabore"
                   type="text"
