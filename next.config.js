@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    // Server Actions são estáveis no Next.js 13.5+, mas mantemos para compatibilidade
     serverActions: true,
     optimizePackageImports: ['lucide-react', 'recharts'],
     instrumentationHook: true,

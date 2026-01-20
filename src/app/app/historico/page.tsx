@@ -1,6 +1,7 @@
+import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
-import { requirePro } from '@/lib/auth/profile'
+import { requirePro, getProfileOrNull } from '@/lib/auth/profile'
 
 type SimulationRow = {
   id: string
@@ -28,15 +29,25 @@ function getLabel(row: SimulationRow) {
 }
 
 export default async function HistoricoPage() {
-  await requirePro()
-
+  const profile = await requirePro()
   const supabase = createSupabaseServerClient()
 
-  const { data, error } = await supabase
-    .from('simulations')
-    .select('id, contract_type, input_json, result_json, created_at')
-    .order('created_at', { ascending: false })
-    .limit(50)
+  // Cache da query por 30 segundos (revalida quando tag é invalidada)
+  const getCachedSimulations = unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from('simulations')
+        .select('id, contract_type, input_json, result_json, created_at')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      return { data, error }
+    },
+    [`simulations-history-${profile.id}`],
+    { revalidate: 30, tags: [`simulations-${profile.id}`] }
+  )
+
+  const { data, error } = await getCachedSimulations()
 
   if (error) {
     return (

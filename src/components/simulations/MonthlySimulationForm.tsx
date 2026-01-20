@@ -23,6 +23,10 @@ export function MonthlySimulationForm() {
   const [contractType, setContractType] = useState<'clt' | 'pj'>('clt')
   const [adiantamentoDia, setAdiantamentoDia] = useState<15 | 20>(15)
   const [bonus, setBonus] = useState('0')
+  const [proLabore, setProLabore] = useState('')
+  const [anexoSimples, setAnexoSimples] = useState<'III' | 'V'>('III')
+  const [usaCalculoReal, setUsaCalculoReal] = useState(false)
+  const [dependentes, setDependentes] = useState('0')
   
   // Estado para mês/ano da simulação (padrão: mês atual)
   const hoje = new Date()
@@ -40,6 +44,10 @@ export function MonthlySimulationForm() {
   // Preview: se já existe resultado salvo no state, mostramos ele; senão calculamos localmente com defaults
   const preview = useMemo(() => {
     if (state && state.ok) return state.data.result
+    
+    const proLaboreValue = proLabore ? parseFloat(proLabore) : undefined
+    const usaCalculoRealPJ = contractType === 'pj' && usaCalculoReal && proLaboreValue !== undefined
+    
     return simulateMonthly({
       contractType,
       salarioBase: 3000,
@@ -50,12 +58,15 @@ export function MonthlySimulationForm() {
       bonus: contractType === 'pj' ? parseFloat(bonus) || 0 : undefined,
       atrasosHoras: 0,
       adicionaisPercentual: 0,
-      descontosPercentual: contractType === 'pj' ? defaults.descontosPercentual : undefined,
+      descontosPercentual: contractType === 'pj' && !usaCalculoRealPJ ? defaults.descontosPercentual : undefined,
+      proLabore: usaCalculoRealPJ ? proLaboreValue : undefined,
+      anexoSimplesNacional: usaCalculoRealPJ ? anexoSimples : undefined,
+      dependentes: contractType === 'clt' ? (parseInt(dependentes) || 0) : undefined,
       adiantamentoDia: contractType === 'clt' ? adiantamentoDia : undefined,
       month: parseInt(selectedMonth),
       year: parseInt(selectedYear),
     })
-  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia, bonus, selectedMonth, selectedYear])
+  }, [state, contractType, defaults.jornadaMensalHoras, defaults.descontosPercentual, adiantamentoDia, bonus, selectedMonth, selectedYear, proLabore, anexoSimples, usaCalculoReal, dependentes])
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
@@ -207,15 +218,92 @@ export function MonthlySimulationForm() {
           </Field>
         </div>
 
-        {contractType === 'pj' ? (
-          <Field label="Descontos estimados (%)" hint="padrão: 10%">
+        {contractType === 'clt' ? (
+          <Field label="Dependentes (IRRF)" hint="Reduz base do IRRF em R$ 189,59 por dependente">
             <Input
-              name="descontosPercentual"
-              type="text"
-              inputMode="decimal"
-              defaultValue={String(defaults.descontosPercentual)}
+              name="dependentes"
+              type="number"
+              inputMode="numeric"
+              step="1"
+              min="0"
+              max="20"
+              placeholder="0"
+              value={dependentes}
+              onChange={(e) => setDependentes(e.target.value)}
             />
           </Field>
+        ) : null}
+
+        {contractType === 'pj' ? (
+          <>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="usaCalculoReal"
+                checked={usaCalculoReal}
+                onChange={(e) => {
+                  setUsaCalculoReal(e.target.checked)
+                  if (!e.target.checked) {
+                    setProLabore('')
+                  }
+                }}
+                className="h-4 w-4 rounded border-white/20 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+              />
+              <label htmlFor="usaCalculoReal" className="text-sm text-slate-300">
+                Usar cálculo real de impostos PJ (Simples Nacional)
+              </label>
+            </div>
+
+            {usaCalculoReal ? (
+              <div className="space-y-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3">
+                <Field label="Pró-labore" hint="Remuneração do sócio (para cálculo de INSS e IRRF)">
+                  <Input
+                    name="proLabore"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ex.: 4.200,00"
+                    value={proLabore}
+                    onChange={(e) => setProLabore(e.target.value)}
+                  />
+                </Field>
+                <Field label="Anexo do Simples Nacional">
+                  <div className="relative">
+                    <select
+                      name="anexoSimplesNacional"
+                      value={anexoSimples}
+                      onChange={(e) => setAnexoSimples(e.target.value as 'III' | 'V')}
+                      className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60 focus:bg-slate-800/50"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundSize: '12px'
+                      }}
+                    >
+                      <option value="III" className="bg-slate-900 text-slate-100">
+                        Anexo III - Serviços (~6% inicial)
+                      </option>
+                      <option value="V" className="bg-slate-900 text-slate-100">
+                        Anexo V - Serviços profissionais (~15,5% inicial)
+                      </option>
+                    </select>
+                  </div>
+                </Field>
+                <p className="text-xs text-emerald-200">
+                  ✓ Será calculado: DAS (Simples Nacional), INSS sobre pró-labore (11%) e IRRF sobre pró-labore
+                </p>
+              </div>
+            ) : (
+              <Field label="Descontos estimados (%)" hint="padrão: 10%">
+                <Input
+                  name="descontosPercentual"
+                  type="text"
+                  inputMode="decimal"
+                  defaultValue={String(defaults.descontosPercentual)}
+                />
+              </Field>
+            )}
+          </>
         ) : (
           <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
             <span className="font-semibold">✓ Descontos automáticos (CLT)</span>: INSS progressivo e IRRF progressivo (base: bruto − INSS)
@@ -231,15 +319,22 @@ export function MonthlySimulationForm() {
         <SubmitButton />
       </form>
 
-      <ResultBreakdown
-        title="Resultado"
-        totalLabel="Salário líquido"
-        total={preview.liquido}
-        items={[
-          ...preview.items,
-          { key: 'bruto', label: 'Salário bruto (info)', amount: preview.bruto, kind: 'info' as const },
-        ]}
-      />
+      <div className="space-y-4">
+        <ResultBreakdown
+          title="Resultado"
+          totalLabel="Salário líquido"
+          total={preview.liquido}
+          items={[
+            ...preview.items,
+            { key: 'bruto', label: 'Salário bruto (info)', amount: preview.bruto, kind: 'info' as const },
+          ]}
+        />
+        {contractType === 'clt' && (
+          <p className="text-[10px] text-slate-500">
+            * Valores estimados. Podem variar conforme descontos específicos da empresa.
+          </p>
+        )}
+      </div>
     </div>
   )
 }

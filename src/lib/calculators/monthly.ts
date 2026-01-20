@@ -1,86 +1,25 @@
 import { clampNumber, money } from '@/lib/calculators/utils'
 import type { MonthlySimulationInput, MonthlySimulationResult } from '@/lib/calculators/types'
+import { calcularDescontosPJ, calcularINSS, calcularIRRF } from '@/lib/calculators/tax'
 
 type ProgressiveSlice = { upTo: number; rate: number }
 type IrBracket = { upTo: number; rate: number; deduction: number }
 
-// Tabelas (Brasil) — 2026
-// Referência: faixas progressivas (INSS) e tabela mensal IRRF.
-// Obs.: não consideramos dependentes, pensão, desconto simplificado etc.
-const INSS_2026: { ceiling: number; slices: ProgressiveSlice[] } = {
-  ceiling: 8475.55,
-  slices: [
-    { upTo: 1621.0, rate: 0.075 },
-    { upTo: 2902.84, rate: 0.09 },
-    { upTo: 4354.27, rate: 0.12 },
-    { upTo: 8475.55, rate: 0.14 },
-  ],
-}
-
-// Tabela de referência enviada (Nova regra do IR e IN 2026)
-const REFERENCE_TABLE_2026 = [
-  { bruto: 5000, inss: 560, irrf: 0 },
-  { bruto: 5999, inss: 560, irrf: 0 },
-  { bruto: 6000, inss: 640, irrf: 100 },
-  { bruto: 6499, inss: 640, irrf: 100 },
-  { bruto: 6500, inss: 700, irrf: 170 },
-  { bruto: 6999, inss: 700, irrf: 170 },
-  { bruto: 7349, inss: 700, irrf: 170 },
-  { bruto: 7350, inss: 800, irrf: 250 },
-  { bruto: 7499, inss: 800, irrf: 250 },
-  { bruto: 7500, inss: 820, irrf: 400 },
-  { bruto: 7999, inss: 820, irrf: 400 },
-  { bruto: 8000, inss: 880, irrf: 700 },
-] as const
-
-function calcProgressive(base: number, slices: ProgressiveSlice[]) {
-  let remainingBase = Math.max(0, base)
-  let prevLimit = 0
-  let total = 0
-
-  for (const s of slices) {
-    const limit = s.upTo
-    const taxable = Math.max(0, Math.min(remainingBase, limit) - prevLimit)
-    if (taxable > 0) total += taxable * s.rate
-    prevLimit = limit
-    if (remainingBase <= limit) break
-  }
-
-  return money(total)
-}
-
-function calcByReferenceTable(bruto: number, field: 'inss' | 'irrf') {
-  const value = Math.max(0, bruto)
-  const rows = REFERENCE_TABLE_2026
-
-  if (value <= rows[0].bruto) {
-    const ratio = rows[0][field] / rows[0].bruto
-    return money(value * ratio)
-  }
-
-  for (let i = 1; i < rows.length; i += 1) {
-    const prev = rows[i - 1]
-    const current = rows[i]
-    if (value <= current.bruto) {
-      const range = current.bruto - prev.bruto
-      const progress = (value - prev.bruto) / range
-      const interpolated = prev[field] + (current[field] - prev[field]) * progress
-      return money(interpolated)
-    }
-  }
-
-  // Para valores acima da tabela, retorna o último valor (teto)
-  const last = rows[rows.length - 1]
-  return money(last[field])
-}
-
-function calcINSS_CLT(bruto: number) {
-  return calcByReferenceTable(bruto, 'inss')
-}
-
-function calcIRRF_CLT(baseCalculo: number) {
-  return calcByReferenceTable(baseCalculo, 'irrf')
-}
+/**
+ * Simula o cálculo de salário mensal (CLT ou PJ)
+ * 
+ * Precisão estimada: 80-90%
+ * 
+ * Limitações conhecidas:
+ * - Não considera: pensão alimentícia judicial, desconto simplificado de IRRF
+ * - Não considera: descontos específicos da empresa (vale-transporte, convênio, etc.)
+ * - Não considera: convenções coletivas que possam alterar valores
+ * - Dependentes: reduz base do IRRF em R$ 189,59 por dependente (2026)
+ * - Adiantamento: simplificado como 40% do salário base (pode variar)
+ * 
+ * @param input - Dados da simulação mensal
+ * @returns Resultado da simulação com breakdown detalhado
+ */
 
 /**
  * Calcula a data da Páscoa para um determinado ano (algoritmo de Gauss)
@@ -233,14 +172,53 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
 
   const bruto = money(salarioBase + horasExtrasOuBonus + dsr + adicionais)
   const baseCalculo = money(bruto - atrasos)
-  const inss = input.contractType === 'clt' ? calcINSS_CLT(baseCalculo) : 0
-  const baseCalculoIRRF = input.contractType === 'clt' ? money(baseCalculo - inss) : 0
-  const irrf = input.contractType === 'clt' ? calcIRRF_CLT(baseCalculoIRRF) : 0
+  
+  // Cálculo de descontos: CLT vs PJ
+  let inss = 0
+  let irrf = 0
+  let descontos = 0
+  let das: number | undefined
+  let inssProLabore: number | undefined
+  let irrfProLabore: number | undefined
 
-  const descontos =
-    input.contractType === 'clt'
-      ? money(inss + irrf)
-      : money((baseCalculo * descontosPercentual) / 100)
+  if (input.contractType === 'clt') {
+    // CLT: INSS e IRRF automáticos usando tabelas reais de 2026
+    const dependentes = clampNumber(input.dependentes ?? 0, 0, 20)
+    inss = calcularINSS(baseCalculo)
+    irrf = calcularIRRF(baseCalculo, inss, dependentes)
+    descontos = money(inss + irrf)
+  } else {
+    // PJ: cálculo real ou percentual genérico
+    const usaCalculoReal = input.proLabore !== undefined && input.anexoSimplesNacional !== undefined
+
+    if (usaCalculoReal) {
+      // Cálculo real de impostos PJ
+      const proLabore = input.proLabore ?? money(baseCalculo * 0.3) // Se não informado, estima 30% do faturamento
+      const anexo = input.anexoSimplesNacional ?? 'III'
+      
+      const descontosPJ = calcularDescontosPJ(
+        baseCalculo,
+        proLabore,
+        anexo,
+        input.faturamentoAnualAcumulado
+      )
+
+      das = descontosPJ.das
+      inssProLabore = descontosPJ.inssProLabore
+      irrfProLabore = descontosPJ.irrfProLabore
+      descontos = descontosPJ.total
+      
+      // Para compatibilidade, mantém inss e irrf como 0 para PJ
+      inss = 0
+      irrf = 0
+    } else {
+      // Modo legado: percentual genérico
+      descontos = money((baseCalculo * descontosPercentual) / 100)
+      inss = 0
+      irrf = 0
+    }
+  }
+
   const liquido = money(baseCalculo - descontos)
 
   // CLT: pagamento em 2 partes (adiantamento + pagamento final)
@@ -265,9 +243,21 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
     ...(input.contractType === 'clt'
       ? ([
           { key: 'inss', label: 'INSS (tabela 2026)', amount: inss, kind: 'deduction' as const },
-          { key: 'irrf', label: 'IRRF (tabela 2026)', amount: irrf, kind: 'deduction' as const },
+          {
+            key: 'irrf',
+            label: input.dependentes && input.dependentes > 0 ? `IRRF (tabela 2026) - ${input.dependentes} dependente(s)` : 'IRRF (tabela 2026)',
+            amount: irrf,
+            kind: 'deduction' as const,
+          },
         ] as const)
-      : ([{ key: 'disc', label: `Descontos estimados (${descontosPercentual}%)`, amount: descontos, kind: 'deduction' as const }] as const)),
+      : // PJ: mostra descontos reais ou genérico
+        input.proLabore !== undefined && input.anexoSimplesNacional !== undefined
+        ? ([
+            { key: 'das', label: 'DAS (Simples Nacional)', amount: das ?? 0, kind: 'deduction' as const },
+            { key: 'inss-prolabore', label: 'INSS sobre pró-labore (11%)', amount: inssProLabore ?? 0, kind: 'deduction' as const },
+            { key: 'irrf-prolabore', label: 'IRRF sobre pró-labore', amount: irrfProLabore ?? 0, kind: 'deduction' as const },
+          ] as const)
+        : ([{ key: 'disc', label: `Descontos estimados (${descontosPercentual}%)`, amount: descontos, kind: 'deduction' as const }] as const)),
     // Adiantamento só para CLT
     ...(input.contractType === 'clt'
       ? ([
@@ -301,6 +291,10 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
     adiantamento,
     saldoPagamento,
     items,
+    // Campos adicionais para PJ
+    das: input.contractType === 'pj' ? das : undefined,
+    inssProLabore: input.contractType === 'pj' ? inssProLabore : undefined,
+    irrfProLabore: input.contractType === 'pj' ? irrfProLabore : undefined,
   }
 }
 

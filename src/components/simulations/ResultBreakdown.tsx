@@ -1,9 +1,10 @@
 'use client'
 
+import { memo } from 'react'
 import { formatBRL } from '@/lib/format'
 import type { BreakdownItem } from '@/lib/calculators/types'
 
-export function ResultBreakdown({
+export const ResultBreakdown = memo(function ResultBreakdown({
   title,
   totalLabel,
   total,
@@ -45,5 +46,5 @@ export function ResultBreakdown({
       </div>
     </div>
   )
-}
+})
 

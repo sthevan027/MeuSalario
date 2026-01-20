@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidateTag } from 'next/cache'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { compareCltVsPj } from '@/lib/calculators/compare'
@@ -28,6 +29,11 @@ export async function createMonthlySimulation(
   const month = monthStr ? num(monthStr) : undefined
   const year = yearStr ? num(yearStr) : undefined
 
+  // Para PJ: verifica se usa cálculo real ou percentual genérico
+  const proLaboreStr = formData.get('proLabore')
+  const anexoStr = formData.get('anexoSimplesNacional')
+  const usaCalculoRealPJ = contractType === 'pj' && proLaboreStr && anexoStr
+
   const input: MonthlySimulationInput = {
     contractType,
     salarioBase: num(formData.get('salarioBase')),
@@ -38,8 +44,11 @@ export async function createMonthlySimulation(
     bonus: contractType === 'pj' ? num(formData.get('bonus')) : undefined,
     atrasosHoras: num(formData.get('atrasosHoras')),
     adicionaisPercentual: num(formData.get('adicionaisPercentual')),
-    // Para CLT ignoramos (INSS/IRRF são automáticos). Para PJ serve como estimativa.
-    descontosPercentual: contractType === 'pj' ? num(formData.get('descontosPercentual'), 10) : undefined,
+    // Para CLT ignoramos (INSS/IRRF são automáticos). Para PJ: usa cálculo real ou percentual genérico
+    descontosPercentual: contractType === 'pj' && !usaCalculoRealPJ ? num(formData.get('descontosPercentual'), 10) : undefined,
+    proLabore: usaCalculoRealPJ ? num(proLaboreStr) : undefined,
+    anexoSimplesNacional: usaCalculoRealPJ ? (anexoStr === 'V' ? 'V' : 'III') : undefined,
+    dependentes: contractType === 'clt' ? num(formData.get('dependentes'), 0) : undefined,
     adiantamentoDia,
     month: month && month >= 1 && month <= 12 ? month : undefined,
     year: year && year >= 2020 && year <= 2100 ? year : undefined,
@@ -63,6 +72,9 @@ export async function createMonthlySimulation(
 
   if (error) return { ok: false, message: error.message }
 
+  // Revalida cache do dashboard e histórico
+  revalidateTag(`simulations-${user.id}`)
+
   return { ok: true, data: { input, result } }
 }
 
@@ -70,6 +82,11 @@ export async function createCompare(
   _prev: ActionState<any> | null,
   formData: FormData
 ): Promise<ActionState<any>> {
+  // Para PJ: verifica se usa cálculo real ou percentual genérico
+  const proLaboreStr = formData.get('proLabore')
+  const anexoStr = formData.get('anexoSimplesNacional')
+  const usaCalculoRealPJ = proLaboreStr && anexoStr
+
   const input: CompareInput = {
     salarioBase: num(formData.get('salarioBase')),
     jornadaMensalHoras: num(formData.get('jornadaMensalHoras'), 220),
@@ -78,8 +95,11 @@ export async function createCompare(
     horas150: num(formData.get('horas150')),
     atrasosHoras: num(formData.get('atrasosHoras')),
     adicionaisPercentual: num(formData.get('adicionaisPercentual')),
-    descontosCltPercentual: num(formData.get('descontosCltPercentual')),
-    descontosPjPercentual: num(formData.get('descontosPjPercentual')),
+    dependentes: num(formData.get('dependentes'), 0),
+    proLabore: usaCalculoRealPJ ? num(proLaboreStr) : undefined,
+    anexoSimplesNacional: usaCalculoRealPJ ? (anexoStr === 'V' ? 'V' : 'III') : undefined,
+    faturamentoAnualAcumulado: usaCalculoRealPJ ? num(formData.get('faturamentoAnualAcumulado')) : undefined,
+    descontosPjPercentual: !usaCalculoRealPJ ? num(formData.get('descontosPjPercentual'), 10) : undefined,
   }
 
   const result = compareCltVsPj(input)
@@ -108,6 +128,14 @@ export async function createCompare(
 
   if (error) return { ok: false, message: error.message }
 
+  // Revalida cache do dashboard e histórico
+  const {
+    data: { user: userCompare },
+  } = await supabase.auth.getUser()
+  if (userCompare) {
+    revalidateTag(`simulations-${userCompare.id}`)
+  }
+
   return { ok: true, data: { input, result } }
 }
 
@@ -115,12 +143,22 @@ export async function createTermination(
   _prev: ActionState<any> | null,
   formData: FormData
 ): Promise<ActionState<any>> {
+  const tipoRescisaoStr = formData.get('tipoRescisao')
   const input: TerminationInput = {
     salarioBase: num(formData.get('salarioBase')),
     mesesTrabalhadosNoAno: num(formData.get('mesesTrabalhadosNoAno')),
     avisoPrevioDias: num(formData.get('avisoPrevioDias'), 30),
     feriasVencidas: formData.get('feriasVencidas') === 'on',
     saldoFgtsMesesEstimado: num(formData.get('saldoFgtsMesesEstimado')),
+    diasTrabalhadosNoMes: num(formData.get('diasTrabalhadosNoMes'), 15),
+    tipoRescisao:
+      tipoRescisaoStr === 'acordo'
+        ? 'acordo'
+        : tipoRescisaoStr === 'pedido_demissao'
+          ? 'pedido_demissao'
+          : tipoRescisaoStr === 'justa_causa'
+            ? 'justa_causa'
+            : 'sem_justa_causa',
   }
 
   const result = simulateTermination(input)
@@ -140,6 +178,9 @@ export async function createTermination(
   })
 
   if (error) return { ok: false, message: error.message }
+
+  // Revalida cache do dashboard e histórico
+  revalidateTag(`simulations-${user.id}`)
 
   return { ok: true, data: { input, result } }
 }

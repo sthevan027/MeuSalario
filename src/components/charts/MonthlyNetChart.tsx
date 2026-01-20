@@ -5,6 +5,7 @@ if (typeof self === 'undefined') {
   (globalThis as any).self = globalThis
 }
 
+import { memo, useMemo } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -26,7 +27,7 @@ export type MonthlyNetPoint = {
   forecastValue?: number
 }
 
-export function MonthlyNetChart({ data }: { data: MonthlyNetPoint[] }) {
+export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: MonthlyNetPoint[] }) {
   const nonNull = data.filter((d) => typeof d.liquido === 'number') as Array<{
     month: string
     liquido: number
@@ -456,5 +457,5 @@ export function MonthlyNetChart({ data }: { data: MonthlyNetPoint[] }) {
       </ResponsiveContainer>
     </div>
   )
-}
+})
 

@@ -31,8 +31,11 @@ export const compareInputSchema = z.object({
   horas150: z.number().nonnegative(),
   atrasosHoras: z.number().nonnegative(),
   adicionaisPercentual: z.number().nonnegative(),
-  descontosCltPercentual: z.number().min(0).max(100),
-  descontosPjPercentual: z.number().min(0).max(100),
+  dependentes: z.number().min(0).max(20).optional(),
+  proLabore: z.number().nonnegative().optional(),
+  anexoSimplesNacional: z.enum(['III', 'V']).optional(),
+  faturamentoAnualAcumulado: z.number().nonnegative().optional(),
+  descontosPjPercentual: z.number().min(0).max(100).optional(),
 })
 
 export type MonthlyInput = z.infer<typeof monthlyInputSchema>

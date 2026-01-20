@@ -1,6 +1,7 @@
 import '@/lib/polyfills'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
@@ -83,20 +84,34 @@ function lastNMonthKeys(endDate: Date, n = 12) {
   return keys.slice(0, n) // Garante que sempre retorna exatamente N meses
 }
 
+// Função auxiliar para buscar simulações (usada no cache)
+async function getSimulationsData(userId: string) {
+  const supabase = createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('simulations')
+    .select('created_at, contract_type, input_json, result_json')
+    .eq('user_id', userId)
+    .contains('input_json', { kind: 'monthly' })
+    .order('created_at', { ascending: true })
+    .limit(200)
+  return { data, error }
+}
+
 export default async function DashboardPage() {
   const profile = await requireUser()
-  const supabase = createSupabaseServerClient()
-
+  
   // Computar valores antes do JSX
   const greeting = getGreeting()
   const displayName = getDisplayName(profile)
 
-  const { data, error } = await supabase
-    .from('simulations')
-    .select('created_at, contract_type, input_json, result_json')
-    .contains('input_json', { kind: 'monthly' })
-    .order('created_at', { ascending: true })
-    .limit(200)
+  // Cache da query por 30 segundos (revalida quando tag é invalidada)
+  const getCachedSimulations = unstable_cache(
+    async () => getSimulationsData(profile.id),
+    [`simulations-${profile.id}`],
+    { revalidate: 30, tags: [`simulations-${profile.id}`] }
+  )
+
+  const { data, error } = await getCachedSimulations()
 
   const rows = ((data ?? []) as SimulationRow[]).filter((r) => String(r.input_json?.kind) === 'monthly')
 
@@ -296,6 +311,9 @@ export default async function DashboardPage() {
         {hasSeries ? (
           <div className="mt-4">
             <MonthlyNetChart data={series} />
+            <p className="mt-2 text-center text-[10px] text-slate-500">
+              * Valores estimados
+            </p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-12 text-center">
