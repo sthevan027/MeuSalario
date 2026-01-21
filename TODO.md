@@ -102,11 +102,11 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ## 💰 Monetização e Planos
 
-- [ ] **Plano anual com desconto** - Implementar desconto para plano anual
-- [ ] **Trial estendido** - Oferecer trial de 14 dias para plano Pro
-- [ ] **Upgrade/downgrade** - Permitir mudança de plano a qualquer momento
-- [ ] **Cancelamento com retenção** - Fluxo de cancelamento com ofertas de retenção
-- [ ] **Cupons de desconto** - Sistema de códigos promocionais
+- [x] **Plano anual com desconto** - Implementar desconto para plano anual ✅
+- [x] **Trial estendido** - Oferecer trial de 14 dias para plano Pro ✅
+- [x] **Upgrade/downgrade** - Permitir mudança de plano a qualquer momento ✅
+- [x] **Cancelamento com retenção** - Fluxo de cancelamento com ofertas de retenção ✅
+- [x] **Cupons de desconto** - Sistema de códigos promocionais ✅
 - [ ] **Plano empresarial** - Adicionar plano para empresas (múltiplos usuários)
 - [ ] **Limites do plano Free** - Definir limites claros (ex: 5 simulações/mês)
 
@@ -128,15 +128,6 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Monitoramento de erros** - Integrar Sentry ou similar
 - [ ] **Analytics** - Adicionar analytics (Google Analytics, Plausible, etc.)
 
-## 📚 Documentação
-
-- [ ] **Documentação de API** - Documentar Server Actions e APIs
-- [ ] **Guia de contribuição** - Documentar como contribuir
-- [ ] **Changelog** - Manter changelog atualizado
-- [ ] **FAQ expandido** - Adicionar mais perguntas frequentes
-- [ ] **Vídeos tutoriais** - Criar vídeos explicando funcionalidades
-- [ ] **Glossário** - Explicar termos técnicos (INSS, IRRF, DAS, etc.)
-
 ## 🌐 Internacionalização
 
 - [ ] **Suporte a múltiplos idiomas** - i18n para inglês, espanhol
@@ -145,7 +136,6 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ## 🔗 Integrações
 
-- [ ] **Integração com bancos** - Importar extratos bancários (Open Banking)
 - [ ] **Integração com contadores** - Permitir exportar dados para contadores
 - [ ] **API pública** - API para desenvolvedores integrarem
 - [ ] **Webhooks** - Webhooks para eventos (nova simulação, etc.)
@@ -195,4 +185,12 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ---
 
-**Última atualização:** 2025-01-27
+**Última atualização:** 2026-01-20
+
+## ✅ Recém Implementado (2026-01-20)
+
+- ✅ Plano anual com desconto (17% de economia)
+- ✅ Trial de 14 dias para novos clientes
+- ✅ Sistema de upgrade/downgrade entre mensal e anual
+- ✅ Cancelamento com ofertas de retenção (20% ou 30% de desconto)
+- ✅ Suporte a cupons promocionais no checkout Stripe

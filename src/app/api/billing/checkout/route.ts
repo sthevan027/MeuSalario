@@ -45,13 +45,31 @@ export async function POST(request: Request) {
 
   const origin = new URL(request.url).origin
 
+  // Verifica se o usuário já tem assinatura ativa para aplicar trial apenas para novos clientes
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('subscription_status')
+    .eq('id', user.id)
+    .single()
+
+  const hasActiveSubscription = existingProfile?.subscription_status === 'active' || existingProfile?.subscription_status === 'trialing'
+  
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
     client_reference_id: user.id,
     line_items: [{ price: getProPriceId(safeInterval), quantity: 1 }],
-    payment_method_types: ['card'], // Especifica que aceita cartão de crédito/débito
+    payment_method_types: ['card'],
     allow_promotion_codes: true,
+    // Trial de 14 dias apenas para novos clientes (sem assinatura ativa)
+    subscription_data: hasActiveSubscription ? undefined : {
+      trial_period_days: 14,
+      trial_settings: {
+        end_behavior: {
+          missing_payment_method: 'cancel',
+        },
+      },
+    },
     success_url: `${origin}/app/conta?checkout=success`,
     cancel_url: `${origin}/app/conta?checkout=cancel`,
     metadata: { user_id: user.id },

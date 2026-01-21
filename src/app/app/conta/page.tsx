@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { SubscribeButtons } from '@/components/billing/SubscribeButtons'
+import { ManageSubscription } from '@/components/billing/ManageSubscription'
+import { CancelSubscription } from '@/components/billing/CancelSubscription'
 import { getDisplayName } from '@/lib/greetings'
 
 export default async function ContaPage() {
@@ -67,8 +69,19 @@ export default async function ContaPage() {
           <p className="mb-4 text-slate-300">
             Dashboard completo, histórico, gráficos, rescisão, comparador e exportação.
           </p>
+          <div className="mb-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+            ✨ 14 dias grátis para experimentar • Use código promocional no checkout
+          </div>
           <SubscribeButtons />
         </div>
+      )}
+
+      {/* Gerenciar Assinatura Pro */}
+      {profile?.plan === 'pro' && (
+        <>
+          <ManageSubscription />
+          <CancelSubscription />
+        </>
       )}
     </div>
   )
