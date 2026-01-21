@@ -79,7 +79,8 @@ export type MonthlySimulationResult = {
 
 export type TerminationInput = {
   salarioBase: number
-  mesesTrabalhadosNoAno: number
+  mesesTrabalhadosNoAno: number // Meses trabalhados no ano atual (0-12) - usado para 13º proporcional
+  mesesPeriodoAquisitivo?: number // Meses desde o último período de férias (para férias proporcionais). Se não informado, usa mesesTrabalhadosNoAno
   avisoPrevioDias: number
   feriasVencidas: boolean
   saldoFgtsMesesEstimado: number

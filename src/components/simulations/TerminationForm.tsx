@@ -21,9 +21,12 @@ function SubmitButton() {
 
 export function TerminationForm() {
   const [state, formAction] = useFormState(createTermination, null)
-  const [diasTrabalhadosNoMes, setDiasTrabalhadosNoMes] = useState('15')
   const [tipoRescisao, setTipoRescisao] = useState<'sem_justa_causa' | 'acordo' | 'pedido_demissao' | 'justa_causa'>('sem_justa_causa')
   const [salarioBase, setSalarioBase] = useState('')
+  const [dataEntrada, setDataEntrada] = useState('')
+  const [dataSaida, setDataSaida] = useState('')
+  const [avisoPrevioDias, setAvisoPrevioDias] = useState('30')
+  const [feriasVencidas, setFeriasVencidas] = useState(false)
 
   // Busca o último salário base do histórico
   useEffect(() => {
@@ -36,18 +39,140 @@ export function TerminationForm() {
     loadLastSalary()
   }, [])
 
+  // Função auxiliar para calcular meses entre duas datas
+  // Considera mês completo se tiver pelo menos 15 dias trabalhados
+  const calcularMesesEntreDatas = (dataInicio: Date, dataFim: Date): number => {
+    if (dataFim < dataInicio) return 0
+    
+    // Calcula diferença em anos e meses
+    let anos = dataFim.getFullYear() - dataInicio.getFullYear()
+    let meses = dataFim.getMonth() - dataInicio.getMonth()
+    let dias = dataFim.getDate() - dataInicio.getDate()
+    
+    // Ajusta se os dias são negativos
+    if (dias < 0) {
+      meses--
+      // Pega o último dia do mês anterior
+      const ultimoDiaMesAnterior = new Date(dataFim.getFullYear(), dataFim.getMonth(), 0).getDate()
+      dias += ultimoDiaMesAnterior
+    }
+    
+    // Calcula meses totais
+    let mesesTotais = anos * 12 + meses
+    
+    // Se trabalhou pelo menos 15 dias no mês parcial, conta como mês completo
+    if (dias >= 15) {
+      mesesTotais++
+    }
+    
+    return Math.max(0, mesesTotais)
+  }
+
+  // Calcula períodos baseado nas datas
+  const calculosPeriodos = useMemo(() => {
+    if (!dataEntrada || !dataSaida) {
+      return {
+        mesesTrabalhadosNoAno: 0,
+        mesesPeriodoAquisitivo: 0,
+        saldoFgtsMesesEstimado: 0,
+        diasTrabalhadosNoMes: 15,
+      }
+    }
+
+    const entrada = new Date(dataEntrada + 'T00:00:00')
+    const saida = new Date(dataSaida + 'T00:00:00')
+    
+    if (saida < entrada) {
+      return {
+        mesesTrabalhadosNoAno: 0,
+        mesesPeriodoAquisitivo: 0,
+        saldoFgtsMesesEstimado: 0,
+        diasTrabalhadosNoMes: 15,
+      }
+    }
+
+    // Tempo total na empresa (para FGTS) - em meses
+    const mesesTotal = calcularMesesEntreDatas(entrada, saida)
+    
+    // Ano da data de saída (ano de referência para 13º)
+    const anoSaida = saida.getFullYear()
+    const inicioAnoSaida = new Date(anoSaida, 0, 1)
+    const fimAnoSaida = new Date(anoSaida, 11, 31, 23, 59, 59)
+    
+    // Período trabalhado no ano da saída (para 13º proporcional)
+    const dataInicioAno = entrada > inicioAnoSaida ? entrada : inicioAnoSaida
+    const dataFimAno = saida < fimAnoSaida ? saida : fimAnoSaida
+    const mesesTrabalhadosNoAno = calcularMesesEntreDatas(dataInicioAno, dataFimAno)
+    
+    // Meses desde último período de férias (período aquisitivo)
+    // Este valor será usado para calcular férias proporcionais
+    let mesesPeriodoAquisitivo = mesesTotal
+    
+    if (feriasVencidas) {
+      // Se marcou férias vencidas, significa que já completou pelo menos 12 meses
+      if (mesesTotal > 12) {
+        // Tem férias vencidas + proporcionais dos meses além dos 12
+        // Ex: 19 meses = 12 meses (férias vencidas) + 7 meses (proporcionais)
+        const resto = mesesTotal % 12
+        mesesPeriodoAquisitivo = resto === 0 ? 0 : resto // Se resto = 0, não tem proporcionais
+      } else {
+        // Tem entre 0 e 12 meses, mas marcou férias vencidas
+        // Isso significa que completou 12 meses (férias vencidas), sem proporcionais
+        mesesPeriodoAquisitivo = 0
+      }
+    } else {
+      // Não marcou férias vencidas
+      if (mesesTotal >= 12) {
+        // Tem 12+ meses mas não marcou férias vencidas
+        // Considera apenas proporcionais até 12 meses
+        mesesPeriodoAquisitivo = 12
+      } else {
+        // Menos de 12 meses = férias proporcionais baseado no tempo total
+        mesesPeriodoAquisitivo = mesesTotal
+      }
+    }
+    
+    // Dias trabalhados no mês da rescisão
+    const diasTrabalhadosNoMes = saida.getDate()
+
+    return {
+      mesesTrabalhadosNoAno: Math.min(12, mesesTrabalhadosNoAno),
+      mesesPeriodoAquisitivo: Math.min(12, mesesPeriodoAquisitivo),
+      saldoFgtsMesesEstimado: mesesTotal,
+      diasTrabalhadosNoMes: Math.min(31, Math.max(1, diasTrabalhadosNoMes)),
+    }
+  }, [dataEntrada, dataSaida, feriasVencidas])
+
   const preview = useMemo(() => {
     if (state && state.ok) return state.data.result
+    
+    const salarioBaseValue = parseFloat(salarioBase.replace(/\./g, '').replace(',', '.')) || 0
+    const avisoPrevioValue = parseInt(avisoPrevioDias) || 0
+    
+    if (salarioBaseValue === 0 || !dataEntrada || !dataSaida) {
+      return {
+        total: 0,
+        totalBruto: 0,
+        totalDescontos: 0,
+        items: []
+      }
+    }
+    
     return simulateTermination({
-      salarioBase: parseFloat(salarioBase) || 3000,
-      mesesTrabalhadosNoAno: 6,
-      avisoPrevioDias: 30,
-      feriasVencidas: false,
-      saldoFgtsMesesEstimado: 12,
-      diasTrabalhadosNoMes: parseInt(diasTrabalhadosNoMes) || 15,
+      salarioBase: salarioBaseValue,
+      mesesTrabalhadosNoAno: calculosPeriodos.mesesTrabalhadosNoAno,
+      mesesPeriodoAquisitivo: calculosPeriodos.mesesPeriodoAquisitivo,
+      avisoPrevioDias: avisoPrevioValue,
+      feriasVencidas,
+      saldoFgtsMesesEstimado: calculosPeriodos.saldoFgtsMesesEstimado,
+      diasTrabalhadosNoMes: calculosPeriodos.diasTrabalhadosNoMes,
       tipoRescisao,
     })
-  }, [state, diasTrabalhadosNoMes, tipoRescisao, salarioBase])
+  }, [state, tipoRescisao, salarioBase, dataEntrada, dataSaida, avisoPrevioDias, feriasVencidas, calculosPeriodos])
+
+  // Formata data para input type="date" (YYYY-MM-DD)
+  const hoje = new Date().toISOString().split('T')[0]
+  const dataEntradaMax = dataSaida || hoje
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -65,23 +190,38 @@ export function TerminationForm() {
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Meses trabalhados no ano" hint="0 a 12">
-            <Input name="mesesTrabalhadosNoAno" type="number" inputMode="decimal" step="1" defaultValue={6} />
+          <Field label="Data de entrada" hint="Data em que começou a trabalhar na empresa">
+            <Input 
+              name="dataEntrada" 
+              type="date" 
+              value={dataEntrada}
+              max={dataEntradaMax}
+              onChange={(e) => setDataEntrada(e.target.value)}
+              required 
+            />
           </Field>
-          <Field label="Aviso prévio (dias)" hint="ex: 30">
-            <Input name="avisoPrevioDias" type="number" inputMode="decimal" step="1" defaultValue={30} />
+          <Field label="Data de saída" hint="Data prevista para sair da empresa">
+            <Input 
+              name="dataSaida" 
+              type="date" 
+              value={dataSaida}
+              min={dataEntrada || undefined}
+              onChange={(e) => setDataSaida(e.target.value)}
+              required 
+            />
           </Field>
         </div>
 
-        <Field label="Dias trabalhados no mês da rescisão" hint="Padrão: 15 dias">
-          <Input
-            name="diasTrabalhadosNoMes"
-            type="number"
-            inputMode="decimal"
-            step="1"
-            defaultValue={15}
-            value={diasTrabalhadosNoMes}
-            onChange={(e) => setDiasTrabalhadosNoMes(e.target.value)}
+        <Field label="Aviso prévio (dias)" hint="ex: 30">
+          <Input 
+            name="avisoPrevioDias" 
+            type="number" 
+            inputMode="decimal" 
+            step="1" 
+            min="0"
+            max="90"
+            value={avisoPrevioDias}
+            onChange={(e) => setAvisoPrevioDias(e.target.value)}
           />
         </Field>
 
@@ -124,13 +264,41 @@ export function TerminationForm() {
             name="feriasVencidas"
             type="checkbox"
             className="h-5 w-5 accent-sky-500"
-            defaultChecked={false}
+            checked={feriasVencidas}
+            onChange={(e) => setFeriasVencidas(e.target.checked)}
           />
         </div>
 
-        <Field label="Meses para FGTS (estimativa)" hint="ex: 12">
-          <Input name="saldoFgtsMesesEstimado" type="number" inputMode="decimal" step="1" defaultValue={12} />
-        </Field>
+        {/* Campos ocultos para enviar os valores calculados */}
+        <input type="hidden" name="mesesTrabalhadosNoAno" value={calculosPeriodos.mesesTrabalhadosNoAno} />
+        <input type="hidden" name="mesesPeriodoAquisitivo" value={calculosPeriodos.mesesPeriodoAquisitivo} />
+        <input type="hidden" name="saldoFgtsMesesEstimado" value={calculosPeriodos.saldoFgtsMesesEstimado} />
+        <input type="hidden" name="diasTrabalhadosNoMes" value={calculosPeriodos.diasTrabalhadosNoMes} />
+
+        {/* Resumo dos cálculos automáticos */}
+        {dataEntrada && dataSaida && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className="mb-2 text-xs font-semibold text-emerald-300">Valores calculados automaticamente:</div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+              <div>
+                <span className="text-slate-400">Tempo total:</span>{' '}
+                <span className="font-semibold">{calculosPeriodos.saldoFgtsMesesEstimado} meses</span>
+              </div>
+              <div>
+                <span className="text-slate-400">Meses no ano:</span>{' '}
+                <span className="font-semibold">{calculosPeriodos.mesesTrabalhadosNoAno} meses</span>
+              </div>
+              <div>
+                <span className="text-slate-400">Período aquisitivo:</span>{' '}
+                <span className="font-semibold">{calculosPeriodos.mesesPeriodoAquisitivo} meses</span>
+              </div>
+              <div>
+                <span className="text-slate-400">Dias no mês:</span>{' '}
+                <span className="font-semibold">{calculosPeriodos.diasTrabalhadosNoMes} dias</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {state && !state.ok ? (
           <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
@@ -144,9 +312,14 @@ export function TerminationForm() {
       <div className="space-y-4">
         <ResultBreakdown title="Resultado da rescisão" totalLabel="Total líquido (estimativa)" total={preview.total} items={preview.items} />
         {preview.totalBruto && preview.totalDescontos && (
-          <p className="text-[10px] text-slate-500">
-            * Valores estimados. Podem variar conforme convenção coletiva e outros fatores.
-          </p>
+          <div className="space-y-2">
+            <p className="text-[10px] text-slate-500">
+              * Valores estimados. Podem variar conforme convenção coletiva e outros fatores.
+            </p>
+            <p className="text-[10px] text-slate-400">
+              ** O saldo do FGTS depositado (R$ {preview.items.find(i => i.key === 'fgts_info')?.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) não está incluído neste total, pois é liberado separadamente pela Caixa Econômica Federal.
+            </p>
+          </div>
         )}
       </div>
     </div>

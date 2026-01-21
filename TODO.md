@@ -13,9 +13,9 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Descontos variáveis** - Permitir adicionar descontos customizados (vale transporte, plano de saúde, etc.)
 
 ### Dashboard e Análises
-- [ ] **Gráficos adicionais** - Adicionar gráficos de evolução de descontos, comparação CLT vs PJ ao longo do tempo
-- [ ] **Previsão anual** - Projeção de recebimentos ao longo do ano
-- [ ] **Métricas de economia** - Mostrar quanto foi "economizado" comparando com estimativas anteriores
+- [x] **Gráficos adicionais** - Adicionar gráficos de evolução de descontos, comparação CLT vs PJ ao longo do tempo ✅
+- [x] **Previsão anual** - Projeção de recebimentos ao longo do ano ✅
+- [x] **Métricas de economia** - Mostrar quanto foi "economizado" comparando com estimativas anteriores ✅
 - [ ] **Alertas e notificações** - Alertar sobre mudanças significativas nos valores
 - [x] **Filtros no histórico** - Filtrar histórico por tipo de contrato, período, valor mínimo/máximo ✅
 - [x] **Estatísticas resumidas** - Média, mediana, maior/menor salário líquido no período ✅
@@ -179,7 +179,11 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ## ✅ Recém Implementado (2026-01-21)
 
-### Dashboard e Histórico
+### Dashboard e Análises
+- ✅ Gráfico de evolução de descontos (INSS, IRRF, total)
+- ✅ Gráfico de comparação CLT vs PJ ao longo do tempo
+- ✅ Previsão anual com projeção de recebimentos para os próximos 12 meses
+- ✅ Métricas de economia comparando com primeira estimativa
 - ✅ Filtros no histórico (tipo de contrato, tipo de simulação, valor, período)
 - ✅ Estatísticas resumidas no dashboard (média, mediana, maior, menor)
 - ✅ Componente DashboardStats com análise de tendências
@@ -189,6 +193,7 @@ Lista de tarefas e melhorias para implementar no projeto.
 - ✅ Simulação de férias (CLT) com férias vencidas e proporcionais + 1/3
 - ✅ Páginas dedicadas para 13º salário e férias
 - ✅ Integração com histórico e salvamento de simulações
+- ✅ Campo "Salário base" preenchido automaticamente com último valor do histórico
 
 ### Monetização (2026-01-20)
 

@@ -20,6 +20,10 @@ import { calcularINSS, calcularIRRF } from '@/lib/calculators/tax'
 export function simulateTermination(input: TerminationInput): TerminationResult {
   const salarioBase = clampNumber(input.salarioBase, 0, 1_000_000)
   const mesesTrabalhadosNoAno = clampNumber(input.mesesTrabalhadosNoAno, 0, 12)
+  // Meses do período aquisitivo (desde último período de férias). Se não informado, usa meses do ano atual
+  const mesesPeriodoAquisitivo = input.mesesPeriodoAquisitivo !== undefined 
+    ? clampNumber(input.mesesPeriodoAquisitivo, 0, 600)
+    : mesesTrabalhadosNoAno
   const avisoPrevioDias = clampNumber(input.avisoPrevioDias, 0, 90)
   const feriasVencidas = !!input.feriasVencidas
   const saldoFgtsMesesEstimado = clampNumber(input.saldoFgtsMesesEstimado, 0, 600)
@@ -33,11 +37,22 @@ export function simulateTermination(input: TerminationInput): TerminationResult 
   const avisoPrevio = money((salarioBase / 30) * avisoPrevioDias)
 
   // 3. Férias vencidas + 1/3 constitucional
-  const feriasVencidasValor = feriasVencidas ? money(salarioBase * (1 + 1 / 3)) : 0
+  // Férias vencidas: quando completou 12 meses ou mais desde último período de férias
+  // Se tiver férias vencidas marcado, tem direito a férias vencidas
+  // Se não marcou mas período aquisitivo >= 12, também tem direito
+  const temFeriasVencidas = feriasVencidas || mesesPeriodoAquisitivo >= 12
+  const feriasVencidasValor = temFeriasVencidas ? money(salarioBase * (1 + 1 / 3)) : 0
 
   // 4. Férias proporcionais + 1/3 constitucional
-  // Considera meses trabalhados desde o último período de férias
-  const feriasProporcionais = money((salarioBase * (mesesTrabalhadosNoAno / 12)) * (1 + 1 / 3))
+  // Calcula proporcionais dos meses além dos 12 meses completos
+  // Ex: 19 meses trabalhados com férias vencidas = 12 meses (vencidas) + 7 meses (proporcionais)
+  let feriasProporcionais = 0
+  // Se tem férias vencidas marcado E período aquisitivo > 0 e < 12, calcula proporcionais
+  // OU se não tem férias vencidas mas período aquisitivo > 0 e < 12, calcula apenas proporcionais
+  if (mesesPeriodoAquisitivo > 0 && mesesPeriodoAquisitivo < 12) {
+    // Calcula proporcionais: (salário / 12) * meses * (1 + 1/3)
+    feriasProporcionais = money((salarioBase * (mesesPeriodoAquisitivo / 12)) * (1 + 1 / 3))
+  }
 
   // 5. 13º salário proporcional
   // Fração de mês: 15+ dias = mês inteiro (simplificado)

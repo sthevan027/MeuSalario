@@ -146,9 +146,13 @@ export async function createTermination(
   formData: FormData
 ): Promise<ActionState<any>> {
   const tipoRescisaoStr = formData.get('tipoRescisao')
+  const mesesPeriodoAquisitivoStr = formData.get('mesesPeriodoAquisitivo')
   const input: TerminationInput = {
     salarioBase: num(formData.get('salarioBase')),
     mesesTrabalhadosNoAno: num(formData.get('mesesTrabalhadosNoAno')),
+    mesesPeriodoAquisitivo: mesesPeriodoAquisitivoStr && mesesPeriodoAquisitivoStr.toString().trim() !== '' 
+      ? num(mesesPeriodoAquisitivoStr) 
+      : undefined,
     avisoPrevioDias: num(formData.get('avisoPrevioDias'), 30),
     feriasVencidas: formData.get('feriasVencidas') === 'on',
     saldoFgtsMesesEstimado: num(formData.get('saldoFgtsMesesEstimado')),
