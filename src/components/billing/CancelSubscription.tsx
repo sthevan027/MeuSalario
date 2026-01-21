@@ -26,11 +26,12 @@ export function CancelSubscription() {
         }),
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao cancelar assinatura')
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Erro ao cancelar assinatura')
       }
+
+      const data = await res.json()
 
       if (offerDiscount && data.applied_discount) {
         setSuccess(`Desconto de ${data.applied_discount}% aplicado! Sua assinatura continua ativa.`)
@@ -47,6 +48,7 @@ export function CancelSubscription() {
       }, 2000)
     } catch (e: any) {
       setError(e?.message || 'Erro ao cancelar assinatura')
+      console.error('Cancel subscription error:', e)
     } finally {
       setLoading(false)
     }

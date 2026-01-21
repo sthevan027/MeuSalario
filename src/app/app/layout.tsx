@@ -4,6 +4,7 @@ import { signOut } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/Button'
 import { requireUser } from '@/lib/auth/profile'
 import { NavLink } from '@/components/layout/NavLink'
+import { CollapsibleNavGroup } from '@/components/layout/CollapsibleNavGroup'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { MobileMenu } from '@/components/layout/MobileMenu'
 import { User, Crown, LogOut, Shield } from 'lucide-react'
@@ -14,12 +15,6 @@ const navigation = [
     href: '/app/dashboard',
     iconName: 'dashboard' as const,
     free: false, // Pro only
-  },
-  {
-    name: 'Simulação',
-    href: '/app/simulacao',
-    iconName: 'calculator' as const,
-    free: true,
   },
   {
     name: 'Histórico',
@@ -33,13 +28,39 @@ const navigation = [
     iconName: 'scale' as const,
     free: false, // Pro only
   },
-  {
-    name: 'Rescisão',
-    href: '/app/rescisao',
-    iconName: 'fileText' as const,
-    free: false, // Pro only
-  },
 ]
+
+// Grupo de simulações (expansível)
+const simulationGroup = {
+  title: 'Simulação',
+  iconName: 'calculator' as const,
+  items: [
+    {
+      name: 'Salário Mensal',
+      href: '/app/simulacao',
+      iconName: 'calculator' as const,
+      free: true,
+    },
+    {
+      name: '13º Salário',
+      href: '/app/decimo-terceiro',
+      iconName: 'calculator' as const,
+      free: false, // Pro only
+    },
+    {
+      name: 'Férias',
+      href: '/app/ferias',
+      iconName: 'calculator' as const,
+      free: false, // Pro only
+    },
+    {
+      name: 'Rescisão',
+      href: '/app/rescisao',
+      iconName: 'fileText' as const,
+      free: false, // Pro only
+    },
+  ],
+}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireUser()
@@ -55,6 +76,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         userName={profile.name || profile.email?.split('@')[0] || 'Usuário'}
         userEmail={profile.email || ''}
         navigation={navigation}
+        simulationGroup={simulationGroup}
         signOutAction={signOut}
       />
 
@@ -82,6 +104,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </NavLink>
               )
             })}
+
+            {/* Grupo de Simulações (expansível) */}
+            <CollapsibleNavGroup
+              title={simulationGroup.title}
+              iconName={simulationGroup.iconName}
+              items={simulationGroup.items}
+              isPro={isPro}
+            />
 
             {/* Admin (somente admins) */}
             {isAdmin && (

@@ -49,23 +49,35 @@ export async function POST(request: Request) {
 
     // Se há oferta de desconto, aplica cupom antes de cancelar
     if (offer_discount && offer_discount > 0 && offer_discount <= 100) {
-      // Cria um cupom de desconto temporário
-      const coupon = await stripe.coupons.create({
-        percent_off: offer_discount,
-        duration: 'once',
-        name: `Retention Offer - ${offer_discount}%`,
-      })
+      try {
+        // Cria um cupom de desconto temporário
+        const coupon = await stripe.coupons.create({
+          percent_off: offer_discount,
+          duration: 'once',
+          name: `Retention Offer - ${offer_discount}%`,
+        })
 
-      // Aplica o cupom na assinatura
-      await stripe.subscriptions.update(subscription.id, {
-        coupon: coupon.id,
-      })
+        // Aplica o cupom na assinatura usando discounts
+        await stripe.subscriptions.update(subscription.id, {
+          discounts: [
+            {
+              coupon: coupon.id,
+            },
+          ],
+        })
 
-      return NextResponse.json({
-        success: true,
-        message: `Desconto de ${offer_discount}% aplicado! Sua assinatura continua ativa.`,
-        applied_discount: offer_discount,
-      })
+        return NextResponse.json({
+          success: true,
+          message: `Desconto de ${offer_discount}% aplicado! Sua assinatura continua ativa.`,
+          applied_discount: offer_discount,
+        })
+      } catch (stripeError: any) {
+        console.error('Stripe error applying discount:', stripeError)
+        return NextResponse.json(
+          { error: stripeError?.message || 'Erro ao aplicar desconto.' },
+          { status: 500 }
+        )
+      }
     }
 
     // Cancela imediatamente ou no final do período

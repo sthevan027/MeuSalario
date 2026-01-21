@@ -145,3 +145,40 @@ export type CompareResult = {
   deltaLiquido: number
 }
 
+export type ThirteenthInput = {
+  salarioBase: number
+  mesesTrabalhados: number // Meses trabalhados no ano (1-12)
+  dependentes?: number
+  recebeuPrimeiraParcela?: boolean // Se já recebeu a 1ª parcela
+}
+
+export type ThirteenthResult = {
+  valorBase: number
+  primeiraParcela: number
+  segundaParcelaBase: number
+  segundaParcelaLiquida: number
+  inss: number
+  irrf: number
+  descontosSegundaParcela: number
+  totalLiquido: number
+  items: BreakdownItem[]
+}
+
+export type VacationInput = {
+  salarioBase: number
+  mesesTrabalhados: number // Meses trabalhados desde último período aquisitivo (0-12)
+  temFeriasVencidas?: boolean // Se tem férias vencidas (período completo)
+  dependentes?: number
+}
+
+export type VacationResult = {
+  feriasVencidas: number
+  feriasProporcionais: number
+  totalBruto: number
+  inss: number
+  irrf: number
+  descontos: number
+  totalLiquido: number
+  items: BreakdownItem[]
+}
+

@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, Crown, LogOut, Shield, User } from 'lucide-react'
 import { NavLink } from '@/components/layout/NavLink'
+import { CollapsibleNavGroup } from '@/components/layout/CollapsibleNavGroup'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { Button } from '@/components/ui/Button'
 
-type MobileMenuProps = {
+export type MobileMenuProps = {
   isOpen?: boolean
   onClose?: () => void
   isPro: boolean
@@ -21,10 +22,20 @@ type MobileMenuProps = {
     iconName: 'dashboard' | 'calculator' | 'history' | 'scale' | 'fileText'
     free: boolean
   }>
+  simulationGroup?: {
+    title: string
+    iconName: 'calculator' | 'history' | 'scale' | 'fileText' | 'dashboard'
+    items: Array<{
+      name: string
+      href: string
+      iconName?: 'calculator' | 'history' | 'scale' | 'fileText' | 'dashboard'
+      free: boolean
+    }>
+  }
   signOutAction: () => void
 }
 
-export function MobileMenu({ isOpen: externalIsOpen, onClose, isPro, isAdmin, userName, userEmail, navigation, signOutAction }: MobileMenuProps) {
+export function MobileMenu({ isOpen: externalIsOpen, onClose, isPro, isAdmin, userName, userEmail, navigation, simulationGroup, signOutAction }: MobileMenuProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = onClose || setInternalIsOpen
@@ -106,6 +117,16 @@ export function MobileMenu({ isOpen: externalIsOpen, onClose, isPro, isAdmin, us
                 </NavLink>
               )
             })}
+
+            {/* Grupo de Simulações (expansível) */}
+            {simulationGroup && (
+              <CollapsibleNavGroup
+                title={simulationGroup.title}
+                iconName={simulationGroup.iconName}
+                items={simulationGroup.items}
+                isPro={isPro}
+              />
+            )}
 
             {/* Admin */}
             {isAdmin && (

@@ -5,7 +5,9 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import { simulateTermination } from '@/lib/calculators/termination'
-import type { MonthlySimulationInput, CompareInput, TerminationInput } from '@/lib/calculators/types'
+import { simulateThirteenth } from '@/lib/calculators/thirteenth'
+import { simulateVacation } from '@/lib/calculators/vacation'
+import type { MonthlySimulationInput, CompareInput, TerminationInput, ThirteenthInput, VacationInput } from '@/lib/calculators/types'
 import { toNumberOr } from '@/lib/number'
 
 type ActionState<T> =
@@ -222,5 +224,73 @@ export async function deleteSimulation(simulationId: string): Promise<ActionStat
   revalidateTag(`simulations-${user.id}`)
 
   return { ok: true, data: null }
+}
+
+export async function createThirteenthSimulation(
+  _prev: ActionState<any> | null,
+  formData: FormData
+): Promise<ActionState<any>> {
+  const input: ThirteenthInput = {
+    salarioBase: num(formData.get('salarioBase')),
+    mesesTrabalhados: num(formData.get('mesesTrabalhados'), 12),
+    dependentes: num(formData.get('dependentes'), 0),
+    recebeuPrimeiraParcela: formData.get('recebeuPrimeiraParcela') === 'on',
+  }
+
+  const result = simulateThirteenth(input)
+
+  const supabase = createSupabaseActionClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  const { error } = await supabase.from('simulations').insert({
+    user_id: user.id,
+    contract_type: 'clt',
+    input_json: { kind: 'thirteenth', ...input },
+    result_json: result,
+  })
+
+  if (error) return { ok: false, message: error.message }
+
+  revalidateTag(`simulations-${user.id}`)
+
+  return { ok: true, data: { input, result } }
+}
+
+export async function createVacationSimulation(
+  _prev: ActionState<any> | null,
+  formData: FormData
+): Promise<ActionState<any>> {
+  const input: VacationInput = {
+    salarioBase: num(formData.get('salarioBase')),
+    mesesTrabalhados: num(formData.get('mesesTrabalhados'), 12),
+    dependentes: num(formData.get('dependentes'), 0),
+    temFeriasVencidas: formData.get('temFeriasVencidas') === 'on',
+  }
+
+  const result = simulateVacation(input)
+
+  const supabase = createSupabaseActionClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  const { error } = await supabase.from('simulations').insert({
+    user_id: user.id,
+    contract_type: 'clt',
+    input_json: { kind: 'vacation', ...input },
+    result_json: result,
+  })
+
+  if (error) return { ok: false, message: error.message }
+
+  revalidateTag(`simulations-${user.id}`)
+
+  return { ok: true, data: { input, result } }
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { experimental_useFormState as useFormState, experimental_useFormStatus as useFormStatus } from 'react-dom'
 import { createMonthlySimulation } from '@/app/app/actions'
 import { Field } from '@/components/ui/Field'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
 import { simulateMonthly } from '@/lib/calculators/monthly'
+import { getLastSalaryBase } from '@/lib/last-salary'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -27,6 +28,7 @@ export function MonthlySimulationForm() {
   const [anexoSimples, setAnexoSimples] = useState<'III' | 'V'>('III')
   const [usaCalculoReal, setUsaCalculoReal] = useState(false)
   const [dependentes, setDependentes] = useState('0')
+  const [salarioBase, setSalarioBase] = useState('')
   
   // Estado para mês/ano da simulação (padrão: mês atual)
   const hoje = new Date()
@@ -34,6 +36,17 @@ export function MonthlySimulationForm() {
   const defaultMonth = hoje.getMonth() + 1 // getMonth retorna 0-11
   const [selectedYear, setSelectedYear] = useState<string>(String(defaultYear))
   const [selectedMonth, setSelectedMonth] = useState<string>(String(defaultMonth).padStart(2, '0'))
+
+  // Busca o último salário base do histórico
+  useEffect(() => {
+    async function loadLastSalary() {
+      const lastSalary = await getLastSalaryBase()
+      if (lastSalary) {
+        setSalarioBase(String(lastSalary))
+      }
+    }
+    loadLastSalary()
+  }, [])
 
   const defaults: { jornadaMensalHoras: number } = useMemo(() => {
     return { jornadaMensalHoras: 220 }
@@ -48,7 +61,7 @@ export function MonthlySimulationForm() {
     
     return simulateMonthly({
       contractType,
-      salarioBase: 3000,
+      salarioBase: parseFloat(salarioBase) || 3000,
       jornadaMensalHoras: defaults.jornadaMensalHoras,
       horas50: 0,
       horas100: 0,
@@ -64,7 +77,7 @@ export function MonthlySimulationForm() {
       month: parseInt(selectedMonth),
       year: parseInt(selectedYear),
     })
-  }, [state, contractType, defaults.jornadaMensalHoras, adiantamentoDia, bonus, selectedMonth, selectedYear, proLabore, anexoSimples, usaCalculoReal, dependentes])
+  }, [state, contractType, defaults.jornadaMensalHoras, adiantamentoDia, bonus, selectedMonth, selectedYear, proLabore, anexoSimples, usaCalculoReal, dependentes, salarioBase])
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
@@ -179,7 +192,15 @@ export function MonthlySimulationForm() {
         </Field>
 
         <Field label="Salário base">
-          <Input name="salarioBase" type="text" inputMode="decimal" placeholder="Ex.: 3.500,00" required />
+          <Input 
+            name="salarioBase" 
+            type="text" 
+            inputMode="decimal" 
+            placeholder="Ex.: 3.500,00" 
+            value={salarioBase}
+            onChange={(e) => setSalarioBase(e.target.value)}
+            required 
+          />
         </Field>
 
         {contractType === 'clt' ? (

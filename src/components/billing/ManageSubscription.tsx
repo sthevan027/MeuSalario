@@ -27,11 +27,19 @@ export function ManageSubscription() {
   async function loadSubscription() {
     try {
       setLoading(true)
+      setError(null)
       const res = await fetch('/api/billing/manage')
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Erro ao carregar assinatura')
+      }
+      
       const data = await res.json()
       setSubscription(data.subscription)
     } catch (e: any) {
-      setError('Erro ao carregar assinatura')
+      setError(e?.message || 'Erro ao carregar assinatura')
+      console.error('Load subscription error:', e)
     } finally {
       setLoading(false)
     }
@@ -49,16 +57,17 @@ export function ManageSubscription() {
         body: JSON.stringify({ action: 'change_interval', interval: newInterval }),
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao alterar intervalo')
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Erro ao alterar intervalo')
       }
 
+      const data = await res.json()
       setSuccess(data.message || 'Intervalo alterado com sucesso!')
       await loadSubscription()
     } catch (e: any) {
       setError(e?.message || 'Erro ao alterar intervalo')
+      console.error('Change interval error:', e)
     } finally {
       setActionLoading(null)
     }
@@ -124,7 +133,7 @@ export function ManageSubscription() {
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant={currentInterval === 'month' ? 'default' : 'secondary'}
+                  variant={currentInterval === 'month' ? 'primary' : 'secondary'}
                   disabled={actionLoading !== null || currentInterval === 'month'}
                   onClick={() => changeInterval('month')}
                   className="flex-1"
@@ -133,7 +142,7 @@ export function ManageSubscription() {
                 </Button>
                 <Button
                   type="button"
-                  variant={currentInterval === 'year' ? 'default' : 'secondary'}
+                  variant={currentInterval === 'year' ? 'primary' : 'secondary'}
                   disabled={actionLoading !== null || currentInterval === 'year'}
                   onClick={() => changeInterval('year')}
                   className="flex-1"

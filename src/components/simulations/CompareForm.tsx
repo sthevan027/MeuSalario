@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
 import { compareCltVsPj } from '@/lib/calculators/compare'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { formatBRL } from '@/lib/format'
+import { getLastSalaryBase } from '@/lib/last-salary'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -25,6 +26,18 @@ export function CompareForm() {
   const [usaCalculoRealPJ, setUsaCalculoRealPJ] = useState(false)
   const [proLabore, setProLabore] = useState('')
   const [anexoSimples, setAnexoSimples] = useState<'III' | 'V'>('III')
+  const [salarioBase, setSalarioBase] = useState('')
+
+  // Busca o último salário base do histórico
+  useEffect(() => {
+    async function loadLastSalary() {
+      const lastSalary = await getLastSalaryBase()
+      if (lastSalary) {
+        setSalarioBase(String(lastSalary))
+      }
+    }
+    loadLastSalary()
+  }, [])
 
   const preview = useMemo(() => {
     if (state && state.ok) return state.data.result
@@ -33,7 +46,7 @@ export function CompareForm() {
     const usaCalculoReal = usaCalculoRealPJ && proLaboreValue !== undefined
     
     return compareCltVsPj({
-      salarioBase: 3000,
+      salarioBase: parseFloat(salarioBase) || 3000,
       jornadaMensalHoras: 220,
       horas50: 0,
       horas100: 0,
@@ -45,13 +58,21 @@ export function CompareForm() {
       anexoSimplesNacional: usaCalculoReal ? anexoSimples : undefined,
       descontosPjPercentual: !usaCalculoReal ? 10 : undefined,
     })
-  }, [state, dependentes, usaCalculoRealPJ, proLabore, anexoSimples])
+  }, [state, dependentes, usaCalculoRealPJ, proLabore, anexoSimples, salarioBase])
 
   return (
     <div className="space-y-6">
       <form action={formAction} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-3">
         <Field label="Salário base">
-          <Input name="salarioBase" type="text" inputMode="decimal" placeholder="Ex.: 3.500,00" required />
+          <Input 
+            name="salarioBase" 
+            type="text" 
+            inputMode="decimal" 
+            placeholder="Ex.: 3.500,00" 
+            value={salarioBase}
+            onChange={(e) => setSalarioBase(e.target.value)}
+            required 
+          />
         </Field>
         <Field label="Jornada mensal (horas)">
           <Input name="jornadaMensalHoras" type="number" inputMode="decimal" step="1" defaultValue={220} />

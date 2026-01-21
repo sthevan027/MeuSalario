@@ -1,8 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { formatBRL } from '@/lib/format'
-import { requirePro, getProfileOrNull } from '@/lib/auth/profile'
-import { DeleteSimulationButton } from '@/components/simulations/DeleteSimulationButton'
+import { requirePro } from '@/lib/auth/profile'
+import { HistoryTable } from '@/components/historico/HistoryTable'
 
 type SimulationRow = {
   id: string
@@ -10,23 +9,6 @@ type SimulationRow = {
   input_json: any
   result_json: any
   created_at: string
-}
-
-function getKind(row: SimulationRow) {
-  return String(row.input_json?.kind ?? 'monthly')
-}
-
-function getValue(row: SimulationRow) {
-  const kind = getKind(row)
-  if (kind === 'termination') return Number(row.result_json?.total ?? 0)
-  return Number(row.result_json?.liquido ?? 0)
-}
-
-function getLabel(row: SimulationRow) {
-  const kind = getKind(row)
-  if (kind === 'termination') return 'Rescisão'
-  if (kind === 'compare') return `Comparador (${row.contract_type.toUpperCase()})`
-  return `Mensal (${row.contract_type.toUpperCase()})`
 }
 
 export default async function HistoricoPage() {
@@ -67,32 +49,7 @@ export default async function HistoricoPage() {
         <p className="text-sm text-slate-300">Últimas simulações salvas.</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-        <div className="grid grid-cols-4 gap-3 border-b border-white/10 px-4 py-3 text-xs font-medium text-slate-300">
-          <div>Tipo</div>
-          <div>Data</div>
-          <div className="text-right">Valor</div>
-          <div className="text-right">Ações</div>
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-slate-300">Você ainda não salvou nenhuma simulação.</div>
-        ) : (
-          <div className="divide-y divide-white/10">
-            {rows.map((r) => (
-              <div key={r.id} className="grid grid-cols-4 gap-3 px-4 py-3 text-sm">
-                <div className="text-slate-100">{getLabel(r)}</div>
-                <div className="text-slate-300">{new Date(r.created_at).toLocaleString('pt-BR')}</div>
-                <div className="text-right font-medium tabular-nums text-slate-50">{formatBRL(getValue(r))}</div>
-                <div className="flex items-center justify-end">
-                  <DeleteSimulationButton simulationId={r.id} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <HistoryTable rows={rows} />
     </div>
   )
 }
-

@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
 import { simulateTermination } from '@/lib/calculators/termination'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { getLastSalaryBase } from '@/lib/last-salary'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -22,11 +23,23 @@ export function TerminationForm() {
   const [state, formAction] = useFormState(createTermination, null)
   const [diasTrabalhadosNoMes, setDiasTrabalhadosNoMes] = useState('15')
   const [tipoRescisao, setTipoRescisao] = useState<'sem_justa_causa' | 'acordo' | 'pedido_demissao' | 'justa_causa'>('sem_justa_causa')
+  const [salarioBase, setSalarioBase] = useState('')
+
+  // Busca o último salário base do histórico
+  useEffect(() => {
+    async function loadLastSalary() {
+      const lastSalary = await getLastSalaryBase()
+      if (lastSalary) {
+        setSalarioBase(String(lastSalary))
+      }
+    }
+    loadLastSalary()
+  }, [])
 
   const preview = useMemo(() => {
     if (state && state.ok) return state.data.result
     return simulateTermination({
-      salarioBase: 3000,
+      salarioBase: parseFloat(salarioBase) || 3000,
       mesesTrabalhadosNoAno: 6,
       avisoPrevioDias: 30,
       feriasVencidas: false,
@@ -34,13 +47,21 @@ export function TerminationForm() {
       diasTrabalhadosNoMes: parseInt(diasTrabalhadosNoMes) || 15,
       tipoRescisao,
     })
-  }, [state, diasTrabalhadosNoMes, tipoRescisao])
+  }, [state, diasTrabalhadosNoMes, tipoRescisao, salarioBase])
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <form action={formAction} className="space-y-3">
         <Field label="Salário base">
-          <Input name="salarioBase" type="text" inputMode="decimal" placeholder="Ex.: 3.500,00" required />
+          <Input 
+            name="salarioBase" 
+            type="text" 
+            inputMode="decimal" 
+            placeholder="Ex.: 3.500,00" 
+            value={salarioBase}
+            onChange={(e) => setSalarioBase(e.target.value)}
+            required 
+          />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">

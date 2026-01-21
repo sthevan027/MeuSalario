@@ -8,6 +8,7 @@ import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
 import { TrendingUp, DollarSign, Plus, Minus, Sparkles } from 'lucide-react'
 import { UpgradeCta } from '@/components/billing/UpgradeCta'
+import { DashboardStats } from '@/components/dashboard/DashboardStats'
 
 const MonthlyNetChart = dynamic(
   () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
@@ -194,6 +195,13 @@ export default async function DashboardPage() {
     liquido: Number(lastResult?.liquido ?? 0),
   }
 
+  // Preparar dados para estatísticas (serializar Date para passar para componente cliente)
+  const statsData = rows.map((r) => ({
+    liquido: Number(r.result_json?.liquido ?? 0),
+    created_at: r.created_at, // String já serializada
+    contract_type: r.contract_type,
+  }))
+
   if (profile.plan !== 'pro') {
     // Usuário Free - mostrar paywall do Dashboard
     return (
@@ -305,6 +313,19 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Estatísticas Resumidas */}
+      {hasSeries && statsData.length > 0 && (
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-4 backdrop-blur-sm sm:rounded-2xl sm:p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-100 sm:text-xl">Estatísticas</h2>
+            <p className="mt-1 text-xs text-slate-400 sm:text-sm">
+              Análise dos últimos {statsData.length} meses
+            </p>
+          </div>
+          <DashboardStats simulations={statsData} />
+        </div>
+      )}
 
       {/* Gráfico de evolução */}
       <div className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-4 backdrop-blur-sm sm:rounded-2xl sm:p-6">

@@ -6,12 +6,10 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ### Simulações e Cálculos
 - [ ] **Exportação PDF/CSV** - Permitir exportar simulações em PDF e CSV (mencionado na landing page)
-- [ ] **Simulação de 13º salário** - Adicionar cálculo específico para 13º salário proporcional
-- [ ] **Simulação de férias** - Cálculo de férias proporcionais e vencidas
+- [x] **Simulação de 13º salário** - Adicionar cálculo específico para 13º salário proporcional ✅
+- [x] **Simulação de férias** - Cálculo de férias proporcionais e vencidas ✅
 - [ ] **Múltiplos contratos** - Permitir gerenciar múltiplos contratos (ex: CLT + PJ simultâneos)
-- [ ] **Templates de simulação** - Salvar templates com valores padrão (ex: "Meu salário padrão")
 - [ ] **Comparação de cenários** - Comparar múltiplos cenários lado a lado (ex: com/sem horas extras)
-- [ ] **Cálculo de horas extras acumuladas** - Considerar banco de horas e compensação
 - [ ] **Descontos variáveis** - Permitir adicionar descontos customizados (vale transporte, plano de saúde, etc.)
 
 ### Dashboard e Análises
@@ -19,8 +17,8 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Previsão anual** - Projeção de recebimentos ao longo do ano
 - [ ] **Métricas de economia** - Mostrar quanto foi "economizado" comparando com estimativas anteriores
 - [ ] **Alertas e notificações** - Alertar sobre mudanças significativas nos valores
-- [ ] **Filtros no histórico** - Filtrar histórico por tipo de contrato, período, valor mínimo/máximo
-- [ ] **Estatísticas resumidas** - Média, mediana, maior/menor salário líquido no período
+- [x] **Filtros no histórico** - Filtrar histórico por tipo de contrato, período, valor mínimo/máximo ✅
+- [x] **Estatísticas resumidas** - Média, mediana, maior/menor salário líquido no período ✅
 
 ### PJ - Melhorias Específicas
 - [ ] **Cálculo de faturamento anual acumulado** - Rastrear faturamento para cálculo correto do Simples Nacional
@@ -72,14 +70,6 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Navegação por teclado** - Garantir navegação completa via teclado
 - [ ] **Contraste de cores** - Verificar e ajustar contraste para WCAG AA
 - [ ] **Foco visível** - Melhorar indicadores de foco em elementos interativos
-
-## 📊 Performance e Otimizações
-
-### Já Implementado ✅
-- ✅ Cache de queries do Supabase
-- ✅ Memoização de componentes pesados
-- ✅ Lazy loading de gráficos
-- ✅ SEO otimizado
 
 ### Pendente
 - [ ] **Debounce nos inputs** - Reduzir cálculos durante digitação
@@ -187,7 +177,20 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 **Última atualização:** 2026-01-20
 
-## ✅ Recém Implementado (2026-01-20)
+## ✅ Recém Implementado (2026-01-21)
+
+### Dashboard e Histórico
+- ✅ Filtros no histórico (tipo de contrato, tipo de simulação, valor, período)
+- ✅ Estatísticas resumidas no dashboard (média, mediana, maior, menor)
+- ✅ Componente DashboardStats com análise de tendências
+
+### Simulações
+- ✅ Simulação de 13º salário (CLT) com cálculo de 1ª e 2ª parcela
+- ✅ Simulação de férias (CLT) com férias vencidas e proporcionais + 1/3
+- ✅ Páginas dedicadas para 13º salário e férias
+- ✅ Integração com histórico e salvamento de simulações
+
+### Monetização (2026-01-20)
 
 - ✅ Plano anual com desconto (17% de economia)
 - ✅ Trial de 14 dias para novos clientes

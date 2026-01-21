@@ -38,20 +38,25 @@ export async function GET(request: Request) {
 
     const subscription = subscriptions.data[0] || null
 
+    if (!subscription) {
+      return NextResponse.json({ subscription: null })
+    }
+
+    // Type assertion para acessar propriedades que podem não estar no tipo base
+    const sub = subscription as any
+
     return NextResponse.json({
-      subscription: subscription
-        ? {
-            id: subscription.id,
-            status: subscription.status,
-            current_period_end: subscription.current_period_end,
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            trial_end: subscription.trial_end,
-            items: subscription.items.data.map((item) => ({
-              price_id: item.price.id,
-              interval: item.price.recurring?.interval,
-            })),
-          }
-        : null,
+      subscription: {
+        id: subscription.id,
+        status: subscription.status,
+        current_period_end: sub.current_period_end ?? null,
+        cancel_at_period_end: sub.cancel_at_period_end ?? false,
+        trial_end: sub.trial_end ?? null,
+        items: subscription.items.data.map((item) => ({
+          price_id: item.price.id,
+          interval: item.price.recurring?.interval ?? null,
+        })),
+      },
     })
   } catch (error: any) {
     console.error('Get subscription error:', error)
@@ -115,27 +120,40 @@ export async function POST(request: Request) {
     }
 
     if (action === 'change_interval' && interval) {
-      // Muda o intervalo da assinatura (mensal <-> anual)
-      const currentItem = subscription.items.data[0]
-      const newPriceId = interval === 'month' 
-        ? process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY
-        : process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY
+      try {
+        // Muda o intervalo da assinatura (mensal <-> anual)
+        const currentItem = subscription.items.data[0]
+        
+        if (!currentItem) {
+          return NextResponse.json({ error: 'Item da assinatura não encontrado.' }, { status: 404 })
+        }
 
-      if (!newPriceId) {
-        return NextResponse.json({ error: 'Price ID não configurado.' }, { status: 500 })
+        const newPriceId = interval === 'month' 
+          ? process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY
+          : process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY
+
+        if (!newPriceId) {
+          return NextResponse.json({ error: 'Price ID não configurado.' }, { status: 500 })
+        }
+
+        await stripe.subscriptions.update(subscription.id, {
+          items: [
+            {
+              id: currentItem.id,
+              price: newPriceId,
+            },
+          ],
+          proration_behavior: 'always_invoice', // Pró-rata automático
+        })
+
+        return NextResponse.json({ success: true, message: 'Intervalo da assinatura atualizado.' })
+      } catch (stripeError: any) {
+        console.error('Stripe error changing interval:', stripeError)
+        return NextResponse.json(
+          { error: stripeError?.message || 'Erro ao alterar intervalo da assinatura.' },
+          { status: 500 }
+        )
       }
-
-      await stripe.subscriptions.update(subscription.id, {
-        items: [
-          {
-            id: currentItem.id,
-            price: newPriceId,
-          },
-        ],
-        proration_behavior: 'always_invoice', // Pró-rata automático
-      })
-
-      return NextResponse.json({ success: true, message: 'Intervalo da assinatura atualizado.' })
     }
 
     return NextResponse.json({ error: 'Ação não implementada.' }, { status: 400 })
