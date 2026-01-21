@@ -49,7 +49,7 @@ export async function seedPlans(_formData: FormData): Promise<void> {
         price_yearly: 0,
         features: {
           monthly_simulation: true,
-          dashboard: false,
+          dashboard: true,
           history: false,
           charts: false,
           termination: false,

@@ -1,0 +1,64 @@
+/**
+ * Interface abstrata para provedores de pagamento
+ * Permite trocar facilmente entre diferentes gateways (Asaas, Stripe, etc)
+ */
+
+export type SubscriptionStatus = 'ACTIVE' | 'PENDING' | 'OVERDUE' | 'CANCELED'
+
+export interface CreateCustomerInput {
+  id: string
+  name: string
+  email: string
+  cpfCnpj?: string
+}
+
+export interface CreateSubscriptionInput {
+  customerId: string
+  planId: string
+  value: number
+  interval: 'month' | 'year'
+}
+
+export interface CreateSubscriptionOutput {
+  subscriptionId: string
+  paymentLink: string
+}
+
+export interface WebhookResult {
+  userId: string
+  status: SubscriptionStatus
+  subscriptionId?: string
+}
+
+export interface PaymentProvider {
+  /**
+   * Cria ou retorna um cliente no gateway de pagamento
+   */
+  createCustomer(user: CreateCustomerInput): Promise<{ customerId: string }>
+
+  /**
+   * Cria uma assinatura recorrente e retorna link de pagamento
+   */
+  createSubscription(data: CreateSubscriptionInput): Promise<CreateSubscriptionOutput>
+
+  /**
+   * Cancela uma assinatura
+   */
+  cancelSubscription(subscriptionId: string, immediately?: boolean): Promise<void>
+
+  /**
+   * Busca informações de uma assinatura
+   */
+  getSubscription(subscriptionId: string): Promise<{
+    id: string
+    status: SubscriptionStatus
+    currentPeriodEnd: Date | null
+    cancelAtPeriodEnd: boolean
+    interval: 'month' | 'year'
+  } | null>
+
+  /**
+   * Processa webhook do gateway e retorna dados normalizados
+   */
+  handleWebhook(payload: any, headers: Headers): Promise<WebhookResult | null>
+}

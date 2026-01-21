@@ -31,6 +31,10 @@ export default function PlanosPage() {
                 </li>
                 <li className="flex items-start gap-3 text-slate-300">
                   <span className="text-emerald-400">✓</span>
+                  <span>Dashboard</span>
+                </li>
+                <li className="flex items-start gap-3 text-slate-300">
+                  <span className="text-emerald-400">✓</span>
                   <span>Visualização do salário atual</span>
                 </li>
                 <li className="flex items-start gap-3 text-slate-600">
@@ -39,7 +43,7 @@ export default function PlanosPage() {
                 </li>
                 <li className="flex items-start gap-3 text-slate-600">
                   <span>✗</span>
-                  <span>Sem gráficos</span>
+                  <span>Sem gráficos avançados</span>
                 </li>
                 <li className="flex items-start gap-3 text-slate-600">
                   <span>✗</span>
@@ -86,10 +90,6 @@ export default function PlanosPage() {
                 <li className="flex items-start gap-3 text-white">
                   <span className="text-emerald-400">✓</span>
                   <span>Tudo do plano Free</span>
-                </li>
-                <li className="flex items-start gap-3 text-white">
-                  <span className="text-emerald-400">✓</span>
-                  <span>Dashboard completo</span>
                 </li>
                 <li className="flex items-start gap-3 text-white">
                   <span className="text-emerald-400">✓</span>

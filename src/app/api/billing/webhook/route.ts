@@ -1,102 +1,148 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { getStripe } from '@/lib/stripe'
-import { env } from '@/lib/env'
+import { getAsaasProvider } from '@/lib/payments/asaas-provider'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function mapStripeStatus(status: string | null | undefined) {
+/**
+ * Mapeia status do Asaas para formato do banco
+ */
+function mapAsaasStatus(status: string): 'active' | 'trialing' | 'past_due' | 'canceled' | 'none' {
   switch (status) {
-    case 'active':
+    case 'ACTIVE':
       return 'active'
-    case 'trialing':
-      return 'trialing'
-    case 'past_due':
+    case 'PENDING':
+      return 'trialing' // Tratamos pending como trialing
+    case 'OVERDUE':
       return 'past_due'
-    case 'canceled':
-    case 'unpaid':
-    case 'incomplete':
-    case 'incomplete_expired':
+    case 'CANCELED':
       return 'canceled'
     default:
       return 'none'
   }
 }
 
-function planFromStatus(mapped: string) {
+/**
+ * Determina plano baseado no status
+ */
+function planFromStatus(mapped: string): 'free' | 'pro' {
   return mapped === 'active' || mapped === 'trialing' ? 'pro' : 'free'
 }
 
+/**
+ * POST - Processa webhooks do Asaas
+ * 
+ * Eventos suportados:
+ * - PAYMENT_CONFIRMED: Pagamento confirmado
+ * - PAYMENT_RECEIVED: Pagamento recebido
+ * - PAYMENT_OVERDUE: Pagamento em atraso
+ * - SUBSCRIPTION_CANCELED: Assinatura cancelada
+ */
 export async function POST(request: Request) {
-  if (!env.STRIPE_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: 'STRIPE_WEBHOOK_SECRET não configurada.' }, { status: 500 })
-  }
-
-  const stripe = getStripe()
-  const signature = headers().get('stripe-signature')
-  const body = await request.text()
-
-  if (!signature) return NextResponse.json({ error: 'Assinatura ausente.' }, { status: 400 })
-
-  let event: any
   try {
-    event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET)
-  } catch (err: any) {
-    return NextResponse.json({ error: `Webhook inválido: ${err?.message ?? 'erro'}` }, { status: 400 })
-  }
+    const asaas = getAsaasProvider()
+    const headersList = headers()
+    const body = await request.json()
 
-  const admin = createSupabaseAdminClient()
-  
-  if (!admin) {
-    return NextResponse.json({ error: 'Supabase Admin não configurado.' }, { status: 500 })
-  }
+    const admin = createSupabaseAdminClient()
+    
+    if (!admin) {
+      return NextResponse.json({ error: 'Supabase Admin não configurado.' }, { status: 500 })
+    }
 
-  // Atualiza status baseado em customer/subscription
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as any
-    const customerId = session.customer as string | null
-    const userId = (session.client_reference_id as string | null) ?? (session.metadata?.user_id as string | null)
+    // Processa webhook através do provider
+    const result = await asaas.handleWebhook(body, headersList)
 
-    if (customerId) {
-      const status = 'active'
-      const payload = { subscription_status: status, plan: planFromStatus(status), stripe_customer_id: customerId }
+    if (!result) {
+      // Se não temos userId direto, tenta buscar via customerId do payload
+      const payment = body.payment as any
+      const subscription = body.subscription as any
+      const customerId = payment?.customer || subscription?.customer
 
-      if (userId) {
-        await admin.from('profiles').update(payload).eq('id', userId)
-      } else {
-        await admin.from('profiles').update(payload).eq('stripe_customer_id', customerId)
+      if (customerId) {
+        // Busca userId no banco via asaas_customer_id
+        const { data: profile } = await admin
+          .from('profiles')
+          .select('id')
+          .eq('asaas_customer_id', customerId)
+          .single()
+
+        if (profile) {
+          // Processa evento manualmente
+          const event = body.event
+          let status: 'ACTIVE' | 'PENDING' | 'OVERDUE' | 'CANCELED' = 'PENDING'
+
+          if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
+            status = 'ACTIVE'
+          } else if (event === 'PAYMENT_OVERDUE') {
+            status = 'OVERDUE'
+          } else if (event === 'SUBSCRIPTION_CANCELED') {
+            status = 'CANCELED'
+          }
+
+          const mappedStatus = mapAsaasStatus(status)
+          const plan = planFromStatus(mappedStatus)
+
+          const updateData: any = {
+            subscription_status: mappedStatus,
+            plan,
+          }
+
+          if (subscription?.id) {
+            updateData.asaas_subscription_id = subscription.id
+          }
+
+          await admin
+            .from('profiles')
+            .update(updateData)
+            .eq('id', profile.id)
+
+          return NextResponse.json({ received: true, processed: true, method: 'fallback' })
+        }
       }
+
+      // Evento não processado, mas retorna sucesso para evitar retries
+      return NextResponse.json({ received: true, message: 'Evento não processado' })
     }
-  }
 
-  if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-    const sub = event.data.object as any
-    const customerId = sub.customer as string | null
-    const mapped = mapStripeStatus(sub.status)
+    // Mapeia status para formato do banco
+    const mappedStatus = mapAsaasStatus(result.status)
+    const plan = planFromStatus(mappedStatus)
 
-    if (customerId) {
-      await admin
-        .from('profiles')
-        .update({ subscription_status: mapped, plan: planFromStatus(mapped) })
-        .eq('stripe_customer_id', customerId)
+    // Atualiza perfil do usuário
+    const updateData: any = {
+      subscription_status: mappedStatus,
+      plan,
     }
-  }
 
-  if (event.type === 'invoice.paid') {
-    const invoice = event.data.object as any
-    const customerId = invoice.customer as string | null
-
-    if (customerId) {
-      const status = 'active'
-      await admin
-        .from('profiles')
-        .update({ subscription_status: status, plan: planFromStatus(status) })
-        .eq('stripe_customer_id', customerId)
+    // Se temos subscription ID, atualiza também
+    if (result.subscriptionId) {
+      updateData.asaas_subscription_id = result.subscriptionId
     }
-  }
 
-  return NextResponse.json({ received: true })
+    await admin
+      .from('profiles')
+      .update(updateData)
+      .eq('id', result.userId)
+
+    return NextResponse.json({ received: true, processed: true })
+  } catch (error: any) {
+    console.error('Webhook error:', error)
+    
+    // Retorna erro apenas se for de validação (token inválido)
+    // Para outros erros, retorna sucesso para evitar retries infinitos
+    if (error.message?.includes('Token') || error.message?.includes('token')) {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
+
+    // Loga erro mas retorna sucesso para evitar retries
+    return NextResponse.json({ 
+      received: true, 
+      error: error.message,
+      note: 'Erro processado, mas webhook aceito para evitar retries' 
+    })
+  }
 }
 

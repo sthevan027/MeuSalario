@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { getStripe } from '@/lib/stripe'
+import { getAsaasProvider } from '@/lib/payments/asaas-provider'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
  * POST - Cancela assinatura (com opção de retenção)
+ * Nota: Ofertas de desconto não são suportadas nativamente pelo Asaas via API
+ * mas podem ser implementadas manualmente ou via webhook
  */
 export async function POST(request: Request) {
   try {
@@ -26,68 +28,48 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_customer_id')
+      .select('asaas_subscription_id')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.stripe_customer_id) {
-      return NextResponse.json({ error: 'Cliente não encontrado no Stripe.' }, { status: 404 })
-    }
-
-    const stripe = getStripe()
-    const subscriptions = await stripe.subscriptions.list({
-      customer: profile.stripe_customer_id,
-      status: 'active',
-      limit: 1,
-    })
-
-    const subscription = subscriptions.data[0]
-
-    if (!subscription) {
+    if (!profile?.asaas_subscription_id) {
       return NextResponse.json({ error: 'Assinatura não encontrada.' }, { status: 404 })
     }
 
-    // Se há oferta de desconto, aplica cupom antes de cancelar
+    // Se há oferta de desconto, retorna sucesso sem cancelar
+    // (No Asaas, descontos precisam ser aplicados manualmente ou via webhook)
     if (offer_discount && offer_discount > 0 && offer_discount <= 100) {
-      try {
-        // Cria um cupom de desconto temporário
-        const coupon = await stripe.coupons.create({
-          percent_off: offer_discount,
-          duration: 'once',
-          name: `Retention Offer - ${offer_discount}%`,
-        })
-
-        // Aplica o cupom na assinatura usando discounts
-        await stripe.subscriptions.update(subscription.id, {
-          discounts: [
-            {
-              coupon: coupon.id,
-            },
-          ],
-        })
-
-        return NextResponse.json({
-          success: true,
-          message: `Desconto de ${offer_discount}% aplicado! Sua assinatura continua ativa.`,
-          applied_discount: offer_discount,
-        })
-      } catch (stripeError: any) {
-        console.error('Stripe error applying discount:', stripeError)
-        return NextResponse.json(
-          { error: stripeError?.message || 'Erro ao aplicar desconto.' },
-          { status: 500 }
-        )
-      }
+      // Por enquanto, apenas retorna sucesso
+      // Em produção, você pode criar uma nota/observação no Asaas ou aplicar desconto manualmente
+      return NextResponse.json({
+        success: true,
+        message: `Oferta de ${offer_discount}% de desconto registrada. Entre em contato com o suporte para aplicar.`,
+        applied_discount: offer_discount,
+      })
     }
 
-    // Cancela imediatamente ou no final do período
+    // Cancela assinatura
+    const asaas = getAsaasProvider()
+    
     if (cancel_immediately) {
-      await stripe.subscriptions.cancel(subscription.id)
-      return NextResponse.json({ success: true, message: 'Assinatura cancelada imediatamente.' })
-    } else {
-      await stripe.subscriptions.update(subscription.id, {
-        cancel_at_period_end: true,
+      await asaas.cancelSubscription(profile.asaas_subscription_id, true)
+      
+      // Atualiza status no banco
+      await supabase
+        .from('profiles')
+        .update({ 
+          subscription_status: 'canceled',
+          plan: 'free',
+        })
+        .eq('id', user.id)
+
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Assinatura cancelada imediatamente.' 
       })
+    } else {
+      await asaas.cancelSubscription(profile.asaas_subscription_id, false)
+      
       return NextResponse.json({
         success: true,
         message: 'Assinatura será cancelada no final do período atual.',

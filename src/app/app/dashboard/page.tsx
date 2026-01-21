@@ -6,8 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
-import { TrendingUp, DollarSign, Plus, Minus, Sparkles } from 'lucide-react'
-import { UpgradeCta } from '@/components/billing/UpgradeCta'
+import { TrendingUp, DollarSign, Plus, Minus } from 'lucide-react'
 import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { AnnualForecast } from '@/components/dashboard/AnnualForecast'
 import { SavingsMetrics } from '@/components/dashboard/SavingsMetrics'
@@ -261,47 +260,7 @@ export default async function DashboardPage() {
 
   const hasCltVsPjData = cltVsPjSeries.some((p) => p.clt !== null || p.pj !== null)
 
-  if (profile.plan !== 'pro') {
-    // Usuário Free - mostrar paywall do Dashboard
-    return (
-      <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
-        <div className="w-full max-w-2xl">
-          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-8 text-center backdrop-blur-sm">
-            <div className="mb-4 flex justify-center">
-              <div className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 p-4">
-                <Sparkles size={32} className="text-white" />
-              </div>
-            </div>
-            <h1 className="mb-3 text-3xl font-bold text-slate-100">Dashboard é exclusivo Pro</h1>
-            <p className="mb-6 text-lg text-slate-300">
-              Tenha acesso a gráficos avançados, histórico completo, comparações CLT x PJ e muito mais.
-            </p>
-            <div className="mb-6 grid gap-3 text-left text-sm text-slate-300">
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Evolução mensal do seu salário líquido
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Histórico completo de todas as simulações
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Comparador CLT x PJ com análise detalhada
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Simulação de rescisão trabalhista
-              </div>
-            </div>
-            <UpgradeCta />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Usuário Pro - mostrar dashboard completo
+  // Dashboard disponível para Free e Pro
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}

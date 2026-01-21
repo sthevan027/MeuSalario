@@ -14,7 +14,7 @@ const navigation = [
     name: 'Dashboard',
     href: '/app/dashboard',
     iconName: 'dashboard' as const,
-    free: false, // Pro only
+    free: true, // Disponível para Free
   },
   {
     name: 'Histórico',

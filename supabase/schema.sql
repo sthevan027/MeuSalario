@@ -13,7 +13,8 @@ create table if not exists public.profiles (
   role text not null default 'user' check (role in ('user','admin')),
   subscription_status text not null default 'none'
     check (subscription_status in ('active','trialing','past_due','canceled','none')),
-  stripe_customer_id text,
+  asaas_customer_id text,
+  asaas_subscription_id text,
   created_at timestamptz not null default now()
 );
 
@@ -23,8 +24,12 @@ alter table public.profiles add column if not exists email text;
 alter table public.profiles add column if not exists plan text;
 alter table public.profiles add column if not exists role text;
 alter table public.profiles add column if not exists subscription_status text;
-alter table public.profiles add column if not exists stripe_customer_id text;
+alter table public.profiles add column if not exists asaas_customer_id text;
+alter table public.profiles add column if not exists asaas_subscription_id text;
 alter table public.profiles add column if not exists created_at timestamptz;
+
+-- Migração: remover coluna stripe_customer_id se existir (migração do Stripe para Asaas)
+alter table public.profiles drop column if exists stripe_customer_id;
 
 -- SIMULAÇÕES
 create table if not exists public.simulations (
@@ -39,7 +44,7 @@ create table if not exists public.simulations (
 create index if not exists simulations_user_id_created_at_idx
   on public.simulations(user_id, created_at desc);
 
--- PLANOS (simples para o MVP; Stripe é a fonte de verdade do preço)
+-- PLANOS (simples para o MVP; Asaas usa os preços definidos aqui)
 create table if not exists public.plans (
   id text primary key,
   name text not null,
@@ -110,8 +115,11 @@ begin
     if new.subscription_status is distinct from old.subscription_status then
       raise exception 'Não é permitido alterar subscription_status.';
     end if;
-    if new.stripe_customer_id is distinct from old.stripe_customer_id then
-      raise exception 'Não é permitido alterar stripe_customer_id.';
+    if new.asaas_customer_id is distinct from old.asaas_customer_id then
+      raise exception 'Não é permitido alterar asaas_customer_id.';
+    end if;
+    if new.asaas_subscription_id is distinct from old.asaas_subscription_id then
+      raise exception 'Não é permitido alterar asaas_subscription_id.';
     end if;
     if new.email is distinct from old.email then
       raise exception 'Não é permitido alterar email.';
@@ -189,7 +197,7 @@ values
     0,
     '{
       "simulation": true,
-      "dashboard": false,
+      "dashboard": true,
       "charts": false,
       "history": false,
       "comparison": false,
