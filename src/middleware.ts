@@ -12,6 +12,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // /app: auth é feita no layout (requireUser) para evitar loop de redirect no Edge
+  if (isAppRoute) {
+    if (pathname === '/app' || pathname === '/app/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/app/simulacao'
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
+  // /admin: verificação de sessão no middleware
   let response = NextResponse.next({
     request: { headers: request.headers },
   })
@@ -37,33 +48,30 @@ export async function middleware(request: NextRequest) {
       },
     },
     auth: {
-      // Middleware só precisa verificar sessão, não fazer refresh automático
-      // O refresh é feito pelo cliente no browser ou por Server Actions quando necessário
       autoRefreshToken: false,
       persistSession: false,
     },
   })
 
-  // getUser() pode falhar se refresh_token estiver inválido/ausente
-  // Tratamos graciosamente: se falhar, considera usuário não autenticado
   let user = null
   try {
     const { data } = await supabase.auth.getUser()
     user = data.user
   } catch (error: any) {
-    // Se for erro de refresh_token, trata como não autenticado (evita spam de erros)
     if (error?.code !== 'refresh_token_not_found' && error?.status !== 400) {
-      // Re-throw apenas se não for erro de token (erro inesperado)
       throw error
     }
-    // Caso contrário, user permanece null (não autenticado)
   }
 
   if (!user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('next', pathname)
-    return NextResponse.redirect(url)
+    const redirectResponse = NextResponse.redirect(url)
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
   if (isAdminRoute) {
@@ -77,18 +85,11 @@ export async function middleware(request: NextRequest) {
     }
 
     if (role !== 'admin') {
-    const url = request.nextUrl.clone()
+      const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
-    url.search = ''
-    return NextResponse.redirect(url)
+      url.search = ''
+      return NextResponse.redirect(url)
     }
-  }
-
-  // Se acessar /app sem rota específica, redireciona para simulação
-  if (pathname === '/app' || pathname === '/app/') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/app/simulacao'
-    return NextResponse.redirect(url)
   }
 
   return response
