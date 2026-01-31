@@ -9,6 +9,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://meusalario.app'),
   title: {
     default: 'MeuSalario - Previsibilidade Financeira para CLT e PJ',
     template: '%s | MeuSalario',
