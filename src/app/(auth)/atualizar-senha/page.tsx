@@ -3,17 +3,25 @@ import { UpdatePasswordForm } from '@/components/auth/UpdatePasswordForm'
 
 export default function AtualizarSenhaPage() {
   return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Definir nova senha</h1>
-        <p className="text-sm text-slate-300">Digite sua nova senha para concluir a recuperação.</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white">Nova senha</h1>
+        <p className="mt-2 text-slate-400">
+          Crie uma senha forte para acessar sua conta com segurança.
+        </p>
       </div>
 
+      {/* Form */}
       <UpdatePasswordForm />
 
-      <div className="text-sm">
-        <Link href="/login" className="text-sky-300 hover:text-sky-200">
-          Voltar para o login
+      {/* Footer */}
+      <div className="text-center">
+        <Link
+          href="/login"
+          className="text-sm text-slate-400 transition-colors hover:text-emerald-400"
+        >
+          ← Voltar para o login
         </Link>
       </div>
     </div>

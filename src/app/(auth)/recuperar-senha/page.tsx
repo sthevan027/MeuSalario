@@ -3,19 +3,25 @@ import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm'
 
 export default function RecuperarSenhaPage() {
   return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Recuperar senha</h1>
-        <p className="text-sm text-slate-300">
-          Vamos te enviar um link de redefinição para o seu email.
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white">Redefinir senha</h1>
+        <p className="mt-2 text-slate-400">
+          Digite seu email e enviaremos um link seguro para você criar uma nova senha.
         </p>
       </div>
 
+      {/* Form */}
       <ResetPasswordForm />
 
-      <div className="text-sm">
-        <Link href="/login" className="text-sky-300 hover:text-sky-200">
-          Voltar para o login
+      {/* Footer */}
+      <div className="text-center">
+        <Link
+          href="/login"
+          className="text-sm text-slate-400 transition-colors hover:text-emerald-400"
+        >
+          ← Voltar para o login
         </Link>
       </div>
     </div>
