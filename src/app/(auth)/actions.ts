@@ -82,6 +82,29 @@ export async function requestPasswordReset(
   return { ok: true, message: 'Link enviado! Verifique seu email para redefinir sua senha.' }
 }
 
+export async function verifyRecoveryCode(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const email = String(formData.get('email') ?? '').trim()
+  const token = String(formData.get('token') ?? '').trim()
+
+  if (!email || !token) {
+    return { ok: false, message: 'Preencha o email e o código.' }
+  }
+
+  const supabase = createSupabaseActionClient()
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'recovery',
+  })
+
+  if (error) return { ok: false, message: error.message }
+
+  redirect('/atualizar-senha')
+}
+
 export async function updatePassword(
   _prevState: ActionState | null,
   formData: FormData
