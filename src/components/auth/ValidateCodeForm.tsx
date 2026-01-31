@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { experimental_useFormState as useFormState, experimental_useFormStatus as useFormStatus } from 'react-dom'
 import { verifyRecoveryCode } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/Button'
@@ -55,7 +56,15 @@ export function ValidateCodeForm() {
               : 'border-rose-400/20 bg-rose-500/10 text-rose-100',
           ].join(' ')}
         >
-          {state.message}
+          <p className="m-0">{state.message}</p>
+          {!state.ok && (
+            <Link
+              href="/recuperar-senha"
+              className="mt-2 inline-block text-sm font-medium text-emerald-400 hover:text-emerald-300"
+            >
+              Solicitar novo código →
+            </Link>
+          )}
         </div>
       ) : null}
 

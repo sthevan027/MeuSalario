@@ -100,7 +100,17 @@ export async function verifyRecoveryCode(
     type: 'recovery',
   })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) {
+    const msg = error.message.toLowerCase()
+    if (msg.includes('expired') || msg.includes('invalid') || msg.includes('token')) {
+      return {
+        ok: false,
+        message:
+          'Código expirado ou inválido. Solicite um novo email em "Recuperar senha" e use o código mais recente (ele vale 1 hora).',
+      }
+    }
+    return { ok: false, message: error.message }
+  }
 
   redirect('/atualizar-senha')
 }
