@@ -1,6 +1,6 @@
 'use client'
 
-import { experimental_useFormState as useFormState, experimental_useFormStatus as useFormStatus } from 'react-dom'
+import { useFormState, useFormStatus } from 'react-dom'
 import { createTermination } from '@/app/app/actions'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'

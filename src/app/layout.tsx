@@ -1,12 +1,18 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   preload: true,
 })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#10b981',
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://meusalario.app'),
@@ -17,8 +23,6 @@ export const metadata: Metadata = {
   description: 'Saiba quanto você vai receber antes do pagamento. Simule CLT x PJ, rescisão e acompanhe sua evolução salarial. Sem surpresas no fim do mês.',
   keywords: ['salário', 'CLT', 'PJ', 'rescisão', 'horas extras', 'calculadora salarial', 'simulador salário', 'salário líquido'],
   authors: [{ name: 'MeuSalario' }],
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#10b981',
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
@@ -47,8 +51,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>{children}</body>
     </html>
   )
 }

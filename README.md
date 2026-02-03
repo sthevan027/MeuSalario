@@ -57,3 +57,7 @@ Isso cria:
 6. Configure `NEXT_PUBLIC_APP_URL` (ex: `http://localhost:3000` ou sua URL de produção) para os redirects do Checkout.
 
 Os preços dos planos são definidos na tabela `plans` do Supabase e usados no Checkout Stripe.
+
+## Notas de dependências
+
+- **ESLint 8 e subdependências deprecated:** O `pnpm install` pode mostrar avisos de que `eslint@8.57.1` e pacotes como `glob`, `inflight`, `rimraf` estão deprecated. Isso é esperado: o Next.js 14 usa `eslint-config-next`, que ainda declara suporte apenas a ESLint 7/8. Migrar para ESLint 9 exigiria atualizar o Next.js para uma versão que suporte o plugin em flat config (ex.: Next 15). Por enquanto o lint continua funcionando normalmente.

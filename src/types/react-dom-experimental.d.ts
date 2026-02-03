@@ -9,15 +9,14 @@ declare module 'react-dom' {
     key?: Key | null
   ): ReactPortal
 
-  // Tipagens mínimas para Server Actions no React 18 (API experimental).
-  // No React 19 essas APIs viram useFormState/useFormStatus.
-  export function experimental_useFormState<State, Payload>(
+  // Tipagens mínimas para useFormState/useFormStatus (form actions).
+  export function useFormState<State, Payload>(
     action: (prevState: State, payload: Payload) => State | Promise<State>,
     initialState: State,
     permalink?: string
   ): [State, (payload: Payload) => void]
 
-  export function experimental_useFormStatus(): {
+  export function useFormStatus(): {
     pending: boolean
   }
 }

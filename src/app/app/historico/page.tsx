@@ -1,5 +1,6 @@
+import { cookies } from 'next/headers'
 import { unstable_cache } from 'next/cache'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClient, type CookieStore } from '@/lib/supabase/server'
 import { requirePro } from '@/lib/auth/profile'
 import { HistoryTable } from '@/components/historico/HistoryTable'
 
@@ -13,11 +14,12 @@ type SimulationRow = {
 
 export default async function HistoricoPage() {
   const profile = await requirePro()
-  const supabase = createSupabaseServerClient()
+  const cookieStore = cookies()
 
-  // Cache 60s para reduzir carga no Supabase
+  // Cache 60s; cookies() fora do cache e passado como argumento (fonte dinâmica)
   const getCachedSimulations = unstable_cache(
-    async () => {
+    async (store: CookieStore) => {
+      const supabase = createSupabaseServerClient(store)
       const { data, error } = await supabase
         .from('simulations')
         .select('id, contract_type, input_json, result_json, created_at')
@@ -30,7 +32,7 @@ export default async function HistoricoPage() {
     { revalidate: 60, tags: [`simulations-${profile.id}`] }
   )
 
-  const { data, error } = await getCachedSimulations()
+  const { data, error } = await getCachedSimulations(cookieStore)
 
   if (error) {
     return (

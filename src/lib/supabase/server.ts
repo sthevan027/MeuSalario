@@ -2,20 +2,23 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { requireEnv } from '@/lib/env'
 
+export type CookieStore = ReturnType<typeof cookies>
+
 /**
  * Client para Server Components (RSC):
  * - Pode LER cookies
  * - NÃO pode escrever/apagar cookies (Next 13.5 restringe isso a Route Handlers e Server Actions)
  * - Desliga auto-refresh/persist no servidor para evitar loops e spam de requests
  * - Trata erros de refresh_token graciosamente (evita spam de "refresh_token_not_found")
+ * - Se cookieStore for passado, usa-o (obrigatório dentro de unstable_cache; cookies() deve ser chamado fora).
  */
-export function createSupabaseServerClient() {
-  const cookieStore = cookies()
+export function createSupabaseServerClient(cookieStore?: CookieStore) {
+  const store = cookieStore ?? cookies()
 
   const client = createServerClient(requireEnv('NEXT_PUBLIC_SUPABASE_URL'), requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'), {
     cookies: {
       get(name: string) {
-        return cookieStore.get(name)?.value
+        return store.get(name)?.value
       },
       // IMPORTANTE: no-op em Server Components (evita: "Cookies can only be modified...")
       set() {},

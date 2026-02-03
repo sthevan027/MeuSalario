@@ -1,6 +1,6 @@
 'use client'
 
-import { experimental_useFormState as useFormState, experimental_useFormStatus as useFormStatus } from 'react-dom'
+import { useFormState, useFormStatus } from 'react-dom'
 import { requestPasswordReset } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'

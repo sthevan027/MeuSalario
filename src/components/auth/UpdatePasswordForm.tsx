@@ -1,6 +1,6 @@
 'use client'
 
-import { experimental_useFormState as useFormState, experimental_useFormStatus as useFormStatus } from 'react-dom'
+import { useFormState, useFormStatus } from 'react-dom'
 import { useState } from 'react'
 import { updatePassword } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/Button'

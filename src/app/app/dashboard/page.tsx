@@ -1,8 +1,9 @@
 import '@/lib/polyfills'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { unstable_cache } from 'next/cache'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServerClient, type CookieStore } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
@@ -88,9 +89,10 @@ function lastNMonthKeys(endDate: Date, n = 12) {
   return keys.slice(0, n) // Garante que sempre retorna exatamente N meses
 }
 
-// Função auxiliar para buscar simulações mensais (usada no cache)
-async function getSimulationsData(userId: string) {
-  const supabase = createSupabaseServerClient()
+// Função auxiliar para buscar simulações mensais (usada no cache).
+// cookieStore deve ser obtido fora do unstable_cache e passado como argumento.
+async function getSimulationsData(userId: string, cookieStore: CookieStore) {
+  const supabase = createSupabaseServerClient(cookieStore)
   const { data, error } = await supabase
     .from('simulations')
     .select('created_at, contract_type, input_json, result_json')
@@ -107,14 +109,17 @@ export default async function DashboardPage() {
   const greeting = getGreeting()
   const displayName = getDisplayName(profile)
 
+  // cookies() fora do cache (fonte dinâmica não pode ser usada dentro de unstable_cache)
+  const cookieStore = cookies()
+
   // Cache da query por 60s (menos hits no Supabase; revalida com tag)
   const getCachedSimulations = unstable_cache(
-    async () => getSimulationsData(profile.id),
+    async (store: CookieStore) => getSimulationsData(profile.id, store),
     [`simulations-${profile.id}`],
     { revalidate: 60, tags: [`simulations-${profile.id}`] }
   )
 
-  const { data, error } = await getCachedSimulations()
+  const { data, error } = await getCachedSimulations(cookieStore)
 
   // Filtra APENAS simulações mensais (não rescisão, não comparador)
   const rows = ((data ?? []) as SimulationRow[]).filter((r) => {
