@@ -162,7 +162,6 @@ export function MobileMenu({ isOpen: externalIsOpen, onClose, isPro, isAdmin, us
             <div className="mb-3 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
               <div className="flex-1 overflow-hidden">
                 <div className="truncate text-sm font-medium text-slate-100">{userName}</div>
-                <div className="truncate text-xs text-slate-400">{userEmail}</div>
               </div>
               {isPro && (
                 <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2 py-1 text-xs font-bold text-white">

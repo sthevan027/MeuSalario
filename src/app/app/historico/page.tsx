@@ -15,7 +15,7 @@ export default async function HistoricoPage() {
   const profile = await requirePro()
   const supabase = createSupabaseServerClient()
 
-  // Cache da query por 30 segundos (revalida quando tag é invalidada)
+  // Cache 60s para reduzir carga no Supabase
   const getCachedSimulations = unstable_cache(
     async () => {
       const { data, error } = await supabase
@@ -27,7 +27,7 @@ export default async function HistoricoPage() {
       return { data, error }
     },
     [`simulations-history-${profile.id}`],
-    { revalidate: 30, tags: [`simulations-${profile.id}`] }
+    { revalidate: 60, tags: [`simulations-${profile.id}`] }
   )
 
   const { data, error } = await getCachedSimulations()

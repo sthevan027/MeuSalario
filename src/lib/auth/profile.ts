@@ -10,6 +10,7 @@ export type Profile = {
   name: string | null
 }
 
+/** Busca perfil do usuário. Em React 19+, envolver com cache() para deduplicar na mesma request. */
 export async function getProfileOrNull(): Promise<Profile | null> {
   const supabase = createSupabaseServerClient()
   const {

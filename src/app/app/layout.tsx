@@ -150,7 +150,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <div className="truncate text-sm font-medium text-slate-100">
                   {profile.name || profile.email?.split('@')[0] || 'Usuário'}
                 </div>
-                <div className="truncate text-xs text-slate-400">{profile.email}</div>
               </div>
               {isPro && (
                 <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2 py-1 text-xs font-bold text-white">

@@ -6,19 +6,16 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
-import { TrendingUp, DollarSign, Plus, Minus } from 'lucide-react'
-import { DashboardStats } from '@/components/dashboard/DashboardStats'
-import { AnnualForecast } from '@/components/dashboard/AnnualForecast'
-import { SavingsMetrics } from '@/components/dashboard/SavingsMetrics'
+import { LazyChart } from '@/components/charts/LazyChart'
 
 const MonthlyNetChart = dynamic(
   () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
-  { ssr: false, loading: () => <div className="flex h-64 items-center justify-center text-slate-500">Carregando gráfico...</div> }
+  { ssr: false }
 )
 
 const CltVsPjChart = dynamic(
   () => import('@/components/charts/CltVsPjChart').then(mod => ({ default: mod.CltVsPjChart })),
-  { ssr: false, loading: () => <div className="flex h-64 items-center justify-center text-slate-500">Carregando gráfico...</div> }
+  { ssr: false }
 )
 
 type SimulationRow = {
@@ -99,7 +96,7 @@ async function getSimulationsData(userId: string) {
     .select('created_at, contract_type, input_json, result_json')
     .eq('user_id', userId)
     .order('created_at', { ascending: true })
-    .limit(200)
+    .limit(120)
   return { data, error }
 }
 
@@ -110,11 +107,11 @@ export default async function DashboardPage() {
   const greeting = getGreeting()
   const displayName = getDisplayName(profile)
 
-  // Cache da query por 30 segundos (revalida quando tag é invalidada)
+  // Cache da query por 60s (menos hits no Supabase; revalida com tag)
   const getCachedSimulations = unstable_cache(
     async () => getSimulationsData(profile.id),
     [`simulations-${profile.id}`],
-    { revalidate: 30, tags: [`simulations-${profile.id}`] }
+    { revalidate: 60, tags: [`simulations-${profile.id}`] }
   )
 
   const { data, error } = await getCachedSimulations()
@@ -201,13 +198,6 @@ export default async function DashboardPage() {
     liquido: Number(lastResult?.liquido ?? 0),
   }
 
-  // Preparar dados para estatísticas (serializar Date para passar para componente cliente)
-  const statsData = rows.map((r) => ({
-    liquido: Number(r.result_json?.liquido ?? 0),
-    created_at: r.created_at, // String já serializada
-    contract_type: r.contract_type,
-  }))
-
   // Preparar dados para gráfico CLT vs PJ
   // As simulações de comparação são salvas como dois registros (CLT e PJ) com o mesmo created_at
   const compareRows = ((data ?? []) as SimulationRow[]).filter((r) => {
@@ -260,243 +250,127 @@ export default async function DashboardPage() {
 
   const hasCltVsPjData = cltVsPjSeries.some((p) => p.clt !== null || p.pj !== null)
 
+  // Valor anual: soma dos líquidos dos últimos 12 meses (ou projeção média × 12)
+  const valorAnual = series.reduce((acc, p) => acc + (p.liquido ?? 0), 0)
+  const mesesComDado = series.filter((p) => p.liquido != null).length
+  const valorAnualProjecao = mesesComDado > 0 ? (valorAnual / mesesComDado) * 12 : metrics.liquido * 12
+
   // Dashboard disponível para Free e Pro
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm sm:p-8">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="relative">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-100 sm:text-4xl">
-                {greeting}, <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">{displayName}</span>
-                <span className="ml-2 inline-block animate-pulse">👋</span>
-              </h1>
-              <p className="mt-2 text-sm text-slate-400 sm:text-base">
-                Acompanhe sua evolução financeira em tempo real
-              </p>
-            </div>
-            {hasSeries && (
-              <div className="hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 sm:block">
-                <div className="text-xs font-medium text-emerald-300">Status</div>
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                  <span className="text-sm font-bold text-emerald-200">Ativo</span>
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="space-y-6">
+      {/* Header simples */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">
+            {greeting}, <span className="text-emerald-400">{displayName}</span> 👋
+          </h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Acompanhe sua evolução financeira em tempo real
+          </p>
         </div>
+        {hasSeries && (
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-sm font-medium text-emerald-400">Ativo</span>
+          </div>
+        )}
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4 text-rose-100">
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           Erro ao carregar simulações: {error.message}
         </div>
       ) : null}
 
-      {/* Cards de métricas */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {/* Bruto */}
-        <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-700/40 via-slate-800/50 to-slate-900/50 p-5 backdrop-blur-sm transition-all hover:border-slate-400/40 hover:shadow-xl sm:rounded-2xl sm:p-6">
-          <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-slate-400/10 blur-2xl transition-all group-hover:bg-slate-400/20" />
-          <div className="relative">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-slate-500/20 p-2">
-                  <DollarSign size={20} className="text-slate-300" />
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Bruto
-                </div>
-              </div>
-            </div>
-            <div className="text-2xl font-bold tabular-nums text-slate-50 sm:text-3xl">
-              {formatBRL(metrics.bruto)}
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-              Salário base total
-            </div>
+      {/* 4 cards: mesmo estilo, só o texto com cor */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Bruto</div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-slate-50 sm:text-2xl">
+            {formatBRL(metrics.bruto)}
           </div>
+          <div className="mt-1 text-xs text-slate-500">Salário base total</div>
         </div>
 
-        {/* Adicionais */}
-        <div className="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-slate-800/50 to-slate-900/50 p-5 backdrop-blur-sm transition-all hover:border-emerald-400/40 hover:shadow-xl hover:shadow-emerald-500/20 sm:rounded-2xl sm:p-6">
-          <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl transition-all group-hover:bg-emerald-500/20" />
-          <div className="relative">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-emerald-500/20 p-2">
-                  <Plus size={20} className="text-emerald-400" />
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-emerald-300/90">
-                  Adicionais
-                </div>
-              </div>
-              {metrics.adicionais > 0 && (
-                <div className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                  BÔNUS
-                </div>
-              )}
-            </div>
-            <div className="text-2xl font-bold tabular-nums text-emerald-300 sm:text-3xl">
-              {formatBRL(metrics.adicionais)}
-            </div>
-            <div className="mt-2 text-xs text-emerald-400/70">
-              Horas extras e outros
-            </div>
+        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Adicionais</span>
+            {metrics.adicionais > 0 && (
+              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">BÔNUS</span>
+            )}
           </div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-emerald-400 sm:text-2xl">
+            {formatBRL(metrics.adicionais)}
+          </div>
+          <div className="mt-1 text-xs text-slate-500">Horas extras e outros</div>
         </div>
 
-        {/* Descontos */}
-        <div className="group relative overflow-hidden rounded-xl border border-rose-500/20 bg-gradient-to-br from-rose-500/10 via-slate-800/50 to-slate-900/50 p-5 backdrop-blur-sm transition-all hover:border-rose-400/40 hover:shadow-xl hover:shadow-rose-500/20 sm:rounded-2xl sm:p-6">
-          <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-rose-500/10 blur-2xl transition-all group-hover:bg-rose-500/20" />
-          <div className="relative">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-rose-500/20 p-2">
-                  <Minus size={20} className="text-rose-400" />
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-rose-300/90">
-                  Descontos
-                </div>
-              </div>
-            </div>
-            <div className="text-2xl font-bold tabular-nums text-rose-300 sm:text-3xl">
-              {formatBRL(metrics.descontos)}
-            </div>
-            <div className="mt-2 text-xs text-rose-400/70">
-              INSS, IRRF e outros
-            </div>
+        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
+          <div className="text-xs font-semibold uppercase tracking-wider text-rose-400">Descontos</div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-rose-400 sm:text-2xl">
+            {formatBRL(metrics.descontos)}
           </div>
+          <div className="mt-1 text-xs text-slate-500">INSS, IRRF e outros</div>
         </div>
 
-        {/* Líquido - Destaque */}
-        <div className="group relative col-span-2 overflow-hidden rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-teal-500/10 p-6 backdrop-blur-sm transition-all hover:border-emerald-400/50 hover:shadow-2xl hover:shadow-emerald-500/30 sm:rounded-2xl sm:p-7 lg:col-span-1">
-          <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-emerald-500/20 blur-3xl transition-all group-hover:bg-emerald-500/30" />
-          <div className="relative">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="rounded-xl bg-emerald-500/30 p-2.5">
-                  <TrendingUp size={24} className="text-emerald-300" />
-                </div>
-                <div className="text-sm font-bold uppercase tracking-wider text-emerald-200">
-                  Líquido
-                </div>
-              </div>
-              <div className="rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-emerald-500/30">
-                ATUAL
-              </div>
-            </div>
-            <div className="text-3xl font-bold tabular-nums text-emerald-200 sm:text-4xl">
-              {formatBRL(metrics.liquido)}
-            </div>
-            <div className="mt-3 text-xs font-medium text-emerald-300/80">
-              💰 Valor que você recebe
-            </div>
+        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Líquido</span>
+            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">ATUAL</span>
           </div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-emerald-400 sm:text-2xl">
+            {formatBRL(metrics.liquido)}
+          </div>
+          <div className="mt-1 text-xs text-slate-500">Valor que você recebe</div>
         </div>
       </div>
 
-      {/* Estatísticas Resumidas */}
-      {hasSeries && statsData.length > 0 && (
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-slate-900/30 p-6 backdrop-blur-sm sm:p-8">
-          <div className="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
-          <div className="relative">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-xl bg-blue-500/20 p-3">
-                <TrendingUp size={24} className="text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-100">Estatísticas</h2>
-                <p className="text-sm text-slate-400">
-                  Análise dos últimos <span className="font-semibold text-blue-400">{statsData.length}</span> meses
-                </p>
-              </div>
-            </div>
-            <DashboardStats simulations={statsData} />
-          </div>
+      {/* Retângulo Valor Anual */}
+      <div className="rounded-xl border border-white/10 bg-slate-800/40 px-5 py-4">
+        <div className="text-sm font-medium text-slate-400">Valor anual (previsão)</div>
+        <div className="mt-1 text-2xl font-bold tabular-nums text-slate-50 sm:text-3xl">
+          {formatBRL(mesesComDado >= 12 ? valorAnual : valorAnualProjecao)}
         </div>
-      )}
+        <div className="mt-1 text-xs text-slate-500">
+          {mesesComDado >= 12
+            ? 'Soma dos últimos 12 meses'
+            : `Projeção (média × 12 • ${mesesComDado} ${mesesComDado === 1 ? 'mês' : 'meses'} de dado)`}
+        </div>
+      </div>
 
-      {/* Métricas de Economia */}
-      {hasSeries && statsData.length > 1 && (
-        <SavingsMetrics simulations={statsData} />
-      )}
-
-      {/* Previsão Anual */}
-      {hasSeries && statsData.length > 0 && (
-        <AnnualForecast simulations={statsData} />
-      )}
-
-      {/* Gráfico de evolução */}
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-slate-900/30 p-6 backdrop-blur-sm sm:p-8">
-        <div className="absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl" />
-        <div className="relative">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-xl bg-emerald-500/20 p-3">
-              <TrendingUp size={24} className="text-emerald-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-100">Evolução do Salário Líquido</h2>
-              <p className="text-sm text-slate-400">
-                Últimos 12 meses • Simulações mensais
-              </p>
-            </div>
-          </div>
-          {hasSeries ? (
-            <>
+      {/* Gráfico de evolução do salário líquido */}
+      <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
+        <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
+        {hasSeries ? (
+          <div className="mt-4">
+            <LazyChart fallback="Carregando gráfico...">
               <MonthlyNetChart data={series} />
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-                <div className="h-1 w-1 rounded-full bg-slate-500" />
-                <span>Valores estimados baseados em suas simulações</span>
-                <div className="h-1 w-1 rounded-full bg-slate-500" />
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 py-16 text-center">
-              <div className="mb-4 rounded-full bg-emerald-500/10 p-4">
-                <TrendingUp size={48} className="text-emerald-500/50" />
-              </div>
-              <p className="mb-2 text-lg font-semibold text-slate-300">Nenhuma simulação encontrada</p>
-              <p className="mb-6 max-w-sm text-sm text-slate-400">
-                Comece fazendo sua primeira simulação para acompanhar a evolução do seu salário líquido
-              </p>
-              <Link
-                href="/app/simulacao"
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/40"
-              >
-                Fazer Simulação
-                <TrendingUp size={16} className="transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          )}
-        </div>
+            </LazyChart>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
+            <p className="text-slate-400">Nenhuma simulação ainda</p>
+            <p className="mt-1 text-sm text-slate-500">Faça uma simulação para ver o gráfico</p>
+            <Link
+              href="/app/simulacao"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+            >
+              Fazer simulação
+            </Link>
+          </div>
+        )}
       </div>
 
-      {/* Gráfico CLT vs PJ */}
+      {/* CLT vs PJ */}
       {hasCltVsPjData && (
-        <div className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-slate-900/30 p-6 backdrop-blur-sm sm:p-8">
-          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
-          <div className="relative">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-3">
-                <TrendingUp size={24} className="text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-100">Comparação CLT vs PJ</h2>
-                <p className="text-sm text-slate-400">
-                  Evolução comparativa ao longo do tempo
-                </p>
-              </div>
-            </div>
-            <CltVsPjChart data={cltVsPjSeries} />
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-              <div className="h-1 w-1 rounded-full bg-slate-500" />
-              <span>Baseado nas suas simulações de comparação CLT x PJ</span>
-              <div className="h-1 w-1 rounded-full bg-slate-500" />
-            </div>
+        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
+          <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
+          <div className="mt-4">
+            <LazyChart fallback="Carregando gráfico...">
+              <CltVsPjChart data={cltVsPjSeries} />
+            </LazyChart>
           </div>
         </div>
       )}
