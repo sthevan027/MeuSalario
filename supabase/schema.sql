@@ -28,7 +28,7 @@ alter table public.profiles add column if not exists stripe_customer_id text;
 alter table public.profiles add column if not exists stripe_subscription_id text;
 alter table public.profiles add column if not exists created_at timestamptz;
 
--- Colunas Asaas (gateway de pagamento alternativo)
+-- Colunas Asaas (gateway de pagamento)
 alter table public.profiles add column if not exists asaas_customer_id text;
 alter table public.profiles add column if not exists asaas_subscription_id text;
 
@@ -58,7 +58,7 @@ select
 from public.simulations s
 left join public.profiles p on p.id = s.user_id;
 
--- PLANOS (simples para o MVP; Stripe usa os preços definidos aqui)
+-- PLANOS (simples para o MVP; Asaas usa os preços definidos aqui)
 create table if not exists public.plans (
   id text primary key,
   name text not null,

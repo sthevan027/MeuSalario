@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import {
-  getPaymentProvider,
-  getCustomerIdColumn,
-  isAsaasActive,
-} from '@/lib/payments'
+import { getPaymentProvider, getCustomerIdColumn } from '@/lib/payments'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
- * POST - Cria sessão de checkout e retorna URL de pagamento (Asaas ou Stripe)
+ * POST - Cria sessão de checkout e retorna URL de pagamento (Asaas)
  */
 export async function POST(request: Request) {
   try {
@@ -47,17 +43,16 @@ export async function POST(request: Request) {
 
     let customerId: string | null = null
 
-    // Asaas Payment Links não exigem cliente pré-criado; Stripe exige
-    if (!isAsaasActive()) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select(customerIdCol)
-        .eq('id', user.id)
-        .single()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select(customerIdCol)
+      .eq('id', user.id)
+      .single()
 
-      customerId = (profile as Record<string, string>)?.[customerIdCol] ?? null
+    customerId = (profile as Record<string, string>)?.[customerIdCol] ?? null
 
-      if (!customerId) {
+    if (!customerId) {
+      try {
         const { customerId: newCustomerId } = await provider.createCustomer({
           id: user.id,
           name: user.user_metadata?.name || user.email || 'Usuário',
@@ -68,32 +63,8 @@ export async function POST(request: Request) {
           .from('profiles')
           .update({ [customerIdCol]: customerId })
           .eq('id', user.id)
-      }
-    } else {
-      // Asaas: opcional criar cliente para consistência (pode ajudar em webhooks)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select(customerIdCol)
-        .eq('id', user.id)
-        .single()
-
-      customerId = (profile as Record<string, string>)?.[customerIdCol] ?? null
-
-      if (!customerId) {
-        try {
-          const { customerId: newCustomerId } = await provider.createCustomer({
-            id: user.id,
-            name: user.user_metadata?.name || user.email || 'Usuário',
-            email: user.email || '',
-          })
-          customerId = newCustomerId
-          await supabase
-            .from('profiles')
-            .update({ [customerIdCol]: customerId })
-            .eq('id', user.id)
-        } catch {
-          // Ignora - Payment Link cria cliente no fluxo hospedado
-        }
+      } catch {
+        // Payment Link cria cliente no fluxo hospedado
       }
     }
 
@@ -123,16 +94,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: paymentLink })
   } catch (error: unknown) {
     console.error('Checkout error:', error)
-    const err = error as { message?: string; param?: string; code?: string; type?: string }
-    const message = err?.message || 'Erro ao processar checkout.'
-    const isStripeError = message.includes('STRIPE') || err?.type?.includes('Stripe') || err?.code
-    const userMessage = isStripeError
-      ? err?.param === 'success_url'
-        ? 'URL de retorno inválida. Configure NEXT_PUBLIC_APP_URL no Vercel.'
-        : message
-      : process.env.NODE_ENV === 'development'
-        ? message
-        : 'Erro ao processar checkout. Verifique as variáveis de ambiente (ASAAS_API_KEY ou STRIPE_* e NEXT_PUBLIC_APP_URL).'
+    const message = error instanceof Error ? error.message : 'Erro ao processar checkout.'
+    const userMessage = process.env.NODE_ENV === 'development'
+      ? message
+      : 'Erro ao processar checkout. Verifique as variáveis de ambiente (ASAAS_API_KEY e NEXT_PUBLIC_APP_URL).'
     return NextResponse.json({ error: userMessage }, { status: 500 })
   }
 }

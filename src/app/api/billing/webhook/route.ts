@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { getPaymentProvider, getSubscriptionIdColumn, isAsaasActive } from '@/lib/payments'
+import { getPaymentProvider, getSubscriptionIdColumn } from '@/lib/payments'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
@@ -26,7 +26,7 @@ function planFromStatus(mapped: string): 'free' | 'pro' {
 }
 
 /**
- * POST - Processa webhooks do gateway (Asaas ou Stripe)
+ * POST - Processa webhooks do Asaas
  */
 export async function POST(request: Request) {
   try {
@@ -48,8 +48,7 @@ export async function POST(request: Request) {
 
     let userId = result.userId
 
-    // Asaas: fallback para match por email quando userId vem como "email:xxx"
-    if (isAsaasActive() && userId.startsWith('email:')) {
+    if (userId.startsWith('email:')) {
       const email = userId.replace(/^email:/, '')
       const { data: profile } = await admin
         .from('profiles')
