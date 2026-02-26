@@ -14,8 +14,10 @@ export const viewport: Viewport = {
   themeColor: '#10b981',
 }
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://meu-salario-lime.vercel.app'
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://meusalario.app'),
+  metadataBase: new URL(appUrl),
   title: {
     default: 'MeuSalario - Previsibilidade Financeira para CLT e PJ',
     template: '%s | MeuSalario',
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://meusalario.app',
+    url: appUrl,
     title: 'MeuSalario - Previsibilidade Financeira para CLT e PJ',
     description: 'Saiba quanto você vai receber antes do pagamento. Simule CLT x PJ, rescisão e acompanhe sua evolução salarial.',
     siteName: 'MeuSalario',

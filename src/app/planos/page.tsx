@@ -71,15 +71,15 @@ export default function PlanosPage() {
 
               <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-400">PRO</div>
               <div className="mb-2 flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-white">R$ 5,50</span>
+                <span className="text-5xl font-bold text-white">R$ 10</span>
                 <span className="text-slate-400">/mês</span>
               </div>
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-sm text-slate-400">ou</span>
-                <span className="text-2xl font-bold text-white">R$ 55</span>
+                <span className="text-2xl font-bold text-white">R$ 95</span>
                 <span className="text-sm text-slate-400">/ano</span>
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300">
-                  Economize 17%
+                  Economize 21%
                 </span>
               </div>
               <div className="mb-6 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">

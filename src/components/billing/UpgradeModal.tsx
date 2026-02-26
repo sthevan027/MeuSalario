@@ -2,7 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Check, Crown } from 'lucide-react'
+import { X, Check, Crown, Minus } from 'lucide-react'
+
+const PRICE_MONTHLY = 10
+const PRICE_YEARLY = 95
+const DISCOUNT_REAIS = PRICE_MONTHLY * 12 - PRICE_YEARLY // R$ 25
+const DISCOUNT_PERCENT = Math.round((DISCOUNT_REAIS / (PRICE_MONTHLY * 12)) * 100) // ~21%
+
+const FREE_FEATURES = [
+  { name: 'Simulação mensal', included: true },
+  { name: 'Dashboard básico', included: true },
+  { name: 'Histórico mensal', included: false },
+  { name: 'Gráficos de evolução', included: false },
+  { name: 'Simulador de rescisão', included: false },
+  { name: 'Comparador CLT x PJ', included: false },
+  { name: 'Exportação de dados', included: false },
+]
 
 interface UpgradeModalProps {
   isOpen: boolean
@@ -101,19 +116,34 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           </p>
         </div>
 
-        {/* Features */}
-        <div className="mb-5 grid gap-2 text-sm text-slate-300">
-          {[
-            'Dashboard com gráficos de evolução',
-            'Histórico mensal ilimitado',
-            'Comparador CLT x PJ',
-            'Simulador de rescisão',
-          ].map((feature) => (
-            <div key={feature} className="flex items-center gap-2">
-              <Check size={16} className="text-emerald-400" />
-              <span>{feature}</span>
-            </div>
-          ))}
+        {/* Tabela Free vs Pro */}
+        <div className="mb-5 overflow-hidden rounded-xl border border-white/10">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                <th className="px-3 py-2.5 text-left font-medium text-slate-400">Recurso</th>
+                <th className="w-16 px-2 py-2.5 text-center font-medium text-slate-400">Free</th>
+                <th className="w-16 px-2 py-2.5 text-center font-medium text-emerald-400">Pro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {FREE_FEATURES.map((f) => (
+                <tr key={f.name} className="border-b border-white/5 last:border-0">
+                  <td className="px-3 py-2 text-slate-300">{f.name}</td>
+                  <td className="px-2 py-2 text-center">
+                    {f.included ? (
+                      <Check size={18} className="mx-auto text-emerald-400" />
+                    ) : (
+                      <Minus size={18} className="mx-auto text-slate-500" />
+                    )}
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    <Check size={18} className="mx-auto text-emerald-400" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Error */}
@@ -135,7 +165,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               <div className="mt-0.5 text-xs text-slate-400">Cancele quando quiser</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-white">R$ 5,50</div>
+              <div className="text-lg font-bold text-white">R$ {PRICE_MONTHLY.toFixed(2)}</div>
               <div className="text-xs text-slate-400">por mês</div>
             </div>
           </button>
@@ -146,16 +176,20 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             className="flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-left hover:border-emerald-500/70 hover:bg-emerald-500/15 disabled:opacity-50"
           >
             <div>
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-semibold text-white">Anual</div>
-                <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white">
-                  Economize 17%
-                </span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-semibold text-white">Anual</div>
+                  <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                    Desconto de R$ {DISCOUNT_REAIS}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-400">
+                  Economize {DISCOUNT_PERCENT}% · R$ {(PRICE_YEARLY / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                </div>
               </div>
-              <div className="mt-0.5 text-xs text-slate-400">R$ 4,58/mês</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-white">R$ 55,00</div>
+              <div className="text-lg font-bold text-white">R$ {PRICE_YEARLY.toFixed(2)}</div>
               <div className="text-xs text-slate-400">por ano</div>
             </div>
           </button>

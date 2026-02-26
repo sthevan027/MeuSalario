@@ -54,6 +54,13 @@ export class StripeProvider implements PaymentProvider {
     const amountCents = Math.round(data.value * 100)
     const interval = data.interval === 'year' ? 'year' : 'month'
 
+    const baseUrl =
+      data.baseUrl ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.NODE_ENV === 'production' ? 'https://meu-salario-lime.vercel.app' : 'http://localhost:3000')
+    const successUrl = new URL('/app/conta?success=1', baseUrl).href
+    const cancelUrl = new URL('/app/conta?canceled=1', baseUrl).href
+
     const session = await this.stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: data.customerId,
@@ -72,8 +79,8 @@ export class StripeProvider implements PaymentProvider {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/app/conta?success=1`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/app/conta?canceled=1`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       subscription_data: {
         metadata: { plan_id: data.planId, user_id: data.userId ?? '' },
       },

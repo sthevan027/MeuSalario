@@ -9,7 +9,11 @@ type ActionState =
   | { ok: false; message: string }
 
 function getOrigin() {
-  return headers().get('origin') ?? 'http://localhost:3000'
+  return (
+    headers().get('origin') ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.NODE_ENV === 'production' ? 'https://meu-salario-lime.vercel.app' : 'http://localhost:3000')
+  )
 }
 
 export async function signIn(_prevState: ActionState | null, formData: FormData): Promise<ActionState> {

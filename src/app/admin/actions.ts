@@ -61,8 +61,8 @@ export async function seedPlans(_formData: FormData): Promise<void> {
       {
         id: 'pro',
         name: 'Pro',
-        price_monthly: 5.5,
-        price_yearly: 55,
+        price_monthly: 10,
+        price_yearly: 95,
         features: {
           monthly_simulation: true,
           dashboard: true,

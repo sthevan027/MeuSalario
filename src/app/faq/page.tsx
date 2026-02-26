@@ -41,7 +41,7 @@ export default function FAQPage() {
                 Qual a diferença entre Free e Pro?
               </h2>
               <p className="text-slate-300">
-                O plano Free permite simulações básicas. O plano Pro (R$ 5,50/mês) inclui dashboard completo,
+                O plano Free permite simulações básicas. O plano Pro (R$ 10/mês) inclui dashboard completo,
                 gráficos, histórico mensal, comparador CLT x PJ, simulador de rescisão e exportação de dados.
               </p>
             </div>

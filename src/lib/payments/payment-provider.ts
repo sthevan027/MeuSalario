@@ -19,6 +19,8 @@ export interface CreateSubscriptionInput {
   interval: 'month' | 'year'
   /** ID do usuário no app (ex: Supabase user id), usado pelo Stripe em client_reference_id */
   userId?: string
+  /** URL base do app (ex: http://localhost:3000) para success/cancel_url do Checkout */
+  baseUrl?: string
 }
 
 export interface CreateSubscriptionOutput {

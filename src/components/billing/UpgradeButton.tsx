@@ -20,7 +20,7 @@ export function UpgradeButton() {
               <Crown size={14} />
               Plano Pro
             </div>
-            <div className="text-lg font-bold text-white">R$ 5,50/mês</div>
+            <div className="text-lg font-bold text-white">R$ 10/mês</div>
           </div>
           <div className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm">
             Assinar

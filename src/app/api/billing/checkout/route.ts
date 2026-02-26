@@ -61,12 +61,14 @@ export async function POST(request: Request) {
         .eq('id', user.id)
     }
 
+    const baseUrl = new URL(request.url).origin
     const { paymentLink } = await stripe.createSubscription({
       customerId,
       planId: 'pro',
       value: Number(planValue),
       interval: safeInterval,
       userId: user.id,
+      baseUrl,
     })
 
     await supabase

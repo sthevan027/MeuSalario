@@ -30,7 +30,9 @@ export async function getProfileOrNull(): Promise<Profile | null> {
 
 export async function requireUser() {
   const profile = await getProfileOrNull()
-  if (!profile) redirect('/login')
+  // Redireciona via clear-session para limpar cookies inválidos (ex: refresh_token_not_found)
+  // e evitar loop de redirect /login <-> /app/dashboard que causa piscar tela preta
+  if (!profile) redirect('/auth/clear-session?redirect=/login')
   return profile
 }
 

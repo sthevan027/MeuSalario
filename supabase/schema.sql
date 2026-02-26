@@ -45,6 +45,19 @@ create table if not exists public.simulations (
 create index if not exists simulations_user_id_created_at_idx
   on public.simulations(user_id, created_at desc);
 
+-- View: simulações com nome do usuário (para visualizar no Table Editor do Supabase)
+create or replace view public.simulations_with_user as
+select
+  s.id,
+  s.user_id,
+  coalesce(p.name, p.email, s.user_id::text) as user_name,
+  s.contract_type,
+  s.input_json,
+  s.result_json,
+  s.created_at
+from public.simulations s
+left join public.profiles p on p.id = s.user_id;
+
 -- PLANOS (simples para o MVP; Stripe usa os preços definidos aqui)
 create table if not exists public.plans (
   id text primary key,
@@ -210,8 +223,8 @@ values
   (
     'pro',
     'Pro',
-    5.50,
-    55.00,
+    10.00,
+    95.00,
     0,
     '{
       "simulation": true,
