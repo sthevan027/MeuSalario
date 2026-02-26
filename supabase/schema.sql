@@ -28,9 +28,9 @@ alter table public.profiles add column if not exists stripe_customer_id text;
 alter table public.profiles add column if not exists stripe_subscription_id text;
 alter table public.profiles add column if not exists created_at timestamptz;
 
--- Migração: remover colunas Asaas se existirem (migração Asaas -> Stripe)
-alter table public.profiles drop column if exists asaas_customer_id;
-alter table public.profiles drop column if exists asaas_subscription_id;
+-- Colunas Asaas (gateway de pagamento alternativo)
+alter table public.profiles add column if not exists asaas_customer_id text;
+alter table public.profiles add column if not exists asaas_subscription_id text;
 
 -- SIMULAÇÕES
 create table if not exists public.simulations (
@@ -134,6 +134,12 @@ begin
     end if;
     if new.stripe_subscription_id is distinct from old.stripe_subscription_id then
       raise exception 'Não é permitido alterar stripe_subscription_id.';
+    end if;
+    if new.asaas_customer_id is distinct from old.asaas_customer_id then
+      raise exception 'Não é permitido alterar asaas_customer_id.';
+    end if;
+    if new.asaas_subscription_id is distinct from old.asaas_subscription_id then
+      raise exception 'Não é permitido alterar asaas_subscription_id.';
     end if;
     if new.email is distinct from old.email then
       raise exception 'Não é permitido alterar email.';

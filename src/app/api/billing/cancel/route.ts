@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { getStripeProvider } from '@/lib/payments/stripe-provider'
+import { getPaymentProvider, getSubscriptionIdColumn } from '@/lib/payments'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -24,13 +24,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
     }
 
+    const subIdCol = getSubscriptionIdColumn()
+
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_subscription_id')
+      .select(subIdCol)
       .eq('id', user.id)
       .single()
 
-    if (!profile?.stripe_subscription_id) {
+    const subscriptionId = (profile as Record<string, string>)?.[subIdCol]
+
+    if (!subscriptionId) {
       return NextResponse.json({ error: 'Assinatura não encontrada.' }, { status: 404 })
     }
 
@@ -42,17 +46,17 @@ export async function POST(request: Request) {
       })
     }
 
-    const stripe = getStripeProvider()
+    const provider = getPaymentProvider()
 
     if (cancel_immediately) {
-      await stripe.cancelSubscription(profile.stripe_subscription_id, true)
+      await provider.cancelSubscription(subscriptionId, true)
 
       await supabase
         .from('profiles')
         .update({
           subscription_status: 'canceled',
           plan: 'free',
-          stripe_subscription_id: null,
+          [subIdCol]: null,
         })
         .eq('id', user.id)
 
@@ -62,7 +66,7 @@ export async function POST(request: Request) {
       })
     }
 
-    await stripe.cancelSubscription(profile.stripe_subscription_id, false)
+    await provider.cancelSubscription(subscriptionId, false)
 
     return NextResponse.json({
       success: true,

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { getStripeProvider } from '@/lib/payments/stripe-provider'
+import {
+  getPaymentProvider,
+  getCustomerIdColumn,
+  isAsaasActive,
+} from '@/lib/payments'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
- * POST - Cria sessão de checkout Stripe e retorna URL de pagamento
+ * POST - Cria sessão de checkout e retorna URL de pagamento (Asaas ou Stripe)
  */
 export async function POST(request: Request) {
   try {
@@ -22,7 +26,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
     }
 
-    // Busca plano Pro para obter preço
     const { data: plan } = await supabase
       .from('plans')
       .select('price_monthly, price_yearly')
@@ -39,26 +42,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Preço do plano inválido.' }, { status: 500 })
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single()
+    const provider = getPaymentProvider()
+    const customerIdCol = getCustomerIdColumn()
 
-    const stripe = getStripeProvider()
-    let customerId = profile?.stripe_customer_id ?? null
+    let customerId: string | null = null
 
-    if (!customerId) {
-      const { customerId: newCustomerId } = await stripe.createCustomer({
-        id: user.id,
-        name: user.user_metadata?.name || user.email || 'Usuário',
-        email: user.email || '',
-      })
-      customerId = newCustomerId
-      await supabase
+    // Asaas Payment Links não exigem cliente pré-criado; Stripe exige
+    if (!isAsaasActive()) {
+      const { data: profile } = await supabase
         .from('profiles')
-        .update({ stripe_customer_id: customerId })
+        .select(customerIdCol)
         .eq('id', user.id)
+        .single()
+
+      customerId = (profile as Record<string, string>)?.[customerIdCol] ?? null
+
+      if (!customerId) {
+        const { customerId: newCustomerId } = await provider.createCustomer({
+          id: user.id,
+          name: user.user_metadata?.name || user.email || 'Usuário',
+          email: user.email || '',
+        })
+        customerId = newCustomerId
+        await supabase
+          .from('profiles')
+          .update({ [customerIdCol]: customerId })
+          .eq('id', user.id)
+      }
+    } else {
+      // Asaas: opcional criar cliente para consistência (pode ajudar em webhooks)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select(customerIdCol)
+        .eq('id', user.id)
+        .single()
+
+      customerId = (profile as Record<string, string>)?.[customerIdCol] ?? null
+
+      if (!customerId) {
+        try {
+          const { customerId: newCustomerId } = await provider.createCustomer({
+            id: user.id,
+            name: user.user_metadata?.name || user.email || 'Usuário',
+            email: user.email || '',
+          })
+          customerId = newCustomerId
+          await supabase
+            .from('profiles')
+            .update({ [customerIdCol]: customerId })
+            .eq('id', user.id)
+        } catch {
+          // Ignora - Payment Link cria cliente no fluxo hospedado
+        }
+      }
     }
 
     const baseUrl =
@@ -69,8 +105,9 @@ export async function POST(request: Request) {
           return process.env.NEXT_PUBLIC_APP_URL || 'https://meu-salario-lime.vercel.app'
         }
       })()
-    const { paymentLink } = await stripe.createSubscription({
-      customerId,
+
+    const { paymentLink } = await provider.createSubscription({
+      customerId: customerId || user.id,
       planId: 'pro',
       value: Number(planValue),
       interval: safeInterval,
@@ -91,12 +128,11 @@ export async function POST(request: Request) {
     const isStripeError = message.includes('STRIPE') || err?.type?.includes('Stripe') || err?.code
     const userMessage = isStripeError
       ? err?.param === 'success_url'
-        ? 'URL de retorno inválida. Configure NEXT_PUBLIC_APP_URL=https://meu-salario-lime.vercel.app no Vercel.'
+        ? 'URL de retorno inválida. Configure NEXT_PUBLIC_APP_URL no Vercel.'
         : message
       : process.env.NODE_ENV === 'development'
         ? message
-        : 'Erro ao processar checkout. Verifique as variáveis de ambiente (STRIPE_SECRET_KEY, NEXT_PUBLIC_APP_URL) no Vercel.'
+        : 'Erro ao processar checkout. Verifique as variáveis de ambiente (ASAAS_API_KEY ou STRIPE_* e NEXT_PUBLIC_APP_URL).'
     return NextResponse.json({ error: userMessage }, { status: 500 })
   }
 }
-

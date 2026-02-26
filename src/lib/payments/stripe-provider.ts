@@ -65,7 +65,7 @@ export class StripeProvider implements PaymentProvider {
       mode: 'subscription',
       customer: data.customerId,
       client_reference_id: data.userId ?? data.customerId,
-      payment_method_collection: 'always',
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {

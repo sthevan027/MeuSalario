@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { getStripeProvider } from '@/lib/payments/stripe-provider'
+import { getPaymentProvider, getSubscriptionIdColumn, isAsaasActive } from '@/lib/payments'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function mapStripeStatus(status: string): 'active' | 'trialing' | 'past_due' | 'canceled' | 'none' {
+function mapStatus(status: string): 'active' | 'trialing' | 'past_due' | 'canceled' | 'none' {
   switch (status) {
     case 'ACTIVE':
       return 'active'
@@ -26,11 +26,11 @@ function planFromStatus(mapped: string): 'free' | 'pro' {
 }
 
 /**
- * POST - Processa webhooks do Stripe
+ * POST - Processa webhooks do gateway (Asaas ou Stripe)
  */
 export async function POST(request: Request) {
   try {
-    const stripe = getStripeProvider()
+    const provider = getPaymentProvider()
     const headersList = headers()
     const body = await request.text()
 
@@ -40,14 +40,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Supabase Admin não configurado.' }, { status: 500 })
     }
 
-    const result = await stripe.handleWebhook(body, headersList)
+    const result = await provider.handleWebhook(body, headersList)
 
     if (!result) {
       return NextResponse.json({ received: true, message: 'Evento não processado' })
     }
 
-    const mappedStatus = mapStripeStatus(result.status)
+    let userId = result.userId
+
+    // Asaas: fallback para match por email quando userId vem como "email:xxx"
+    if (isAsaasActive() && userId.startsWith('email:')) {
+      const email = userId.replace(/^email:/, '')
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (!profile?.id) {
+        return NextResponse.json({ received: true, message: 'Usuário não encontrado para email' })
+      }
+      userId = profile.id
+    }
+
+    const mappedStatus = mapStatus(result.status)
     const plan = planFromStatus(mappedStatus)
+
+    const subIdCol = getSubscriptionIdColumn()
 
     const updateData: Record<string, unknown> = {
       subscription_status: mappedStatus,
@@ -55,13 +74,13 @@ export async function POST(request: Request) {
     }
 
     if (result.subscriptionId) {
-      updateData.stripe_subscription_id = result.subscriptionId
+      updateData[subIdCol] = result.subscriptionId
     }
 
     await admin
       .from('profiles')
       .update(updateData)
-      .eq('id', result.userId)
+      .eq('id', userId)
 
     return NextResponse.json({ received: true, processed: true })
   } catch (error: unknown) {

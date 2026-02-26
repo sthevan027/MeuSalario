@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { getStripeProvider } from '@/lib/payments/stripe-provider'
+import {
+  getPaymentProvider,
+  getSubscriptionIdColumn,
+  getCustomerIdColumn,
+} from '@/lib/payments'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,7 +12,7 @@ export const dynamic = 'force-dynamic'
 /**
  * GET - Retorna informações da assinatura atual
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = createSupabaseActionClient()
     const {
@@ -19,18 +23,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
     }
 
+    const subIdCol = getSubscriptionIdColumn()
+
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_subscription_id, subscription_status')
+      .select(`${subIdCol}, subscription_status`)
       .eq('id', user.id)
       .single()
 
-    if (!profile?.stripe_subscription_id) {
+    const subscriptionId = (profile as Record<string, string>)?.[subIdCol]
+
+    if (!subscriptionId) {
       return NextResponse.json({ subscription: null })
     }
 
-    const stripe = getStripeProvider()
-    const subscription = await stripe.getSubscription(profile.stripe_subscription_id)
+    const provider = getPaymentProvider()
+    const subscription = await provider.getSubscription(subscriptionId)
 
     if (!subscription) {
       return NextResponse.json({ subscription: null })
@@ -83,20 +91,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
     }
 
+    const subIdCol = getSubscriptionIdColumn()
+    const customerIdCol = getCustomerIdColumn()
+
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_subscription_id, subscription_status')
+      .select(`${subIdCol}, subscription_status`)
       .eq('id', user.id)
       .single()
 
-    if (!profile?.stripe_subscription_id) {
+    const subscriptionId = (profile as Record<string, string>)?.[subIdCol]
+
+    if (!subscriptionId) {
       return NextResponse.json({ error: 'Assinatura não encontrada.' }, { status: 404 })
     }
 
-    const stripe = getStripeProvider()
+    const provider = getPaymentProvider()
 
     if (action === 'downgrade') {
-      await stripe.cancelSubscription(profile.stripe_subscription_id, false)
+      await provider.cancelSubscription(subscriptionId, false)
       return NextResponse.json({
         success: true,
         message: 'Assinatura será cancelada no final do período.',
@@ -116,20 +129,22 @@ export async function POST(request: Request) {
 
       const newValue = interval === 'month' ? plan.price_monthly : plan.price_yearly
 
-      await stripe.cancelSubscription(profile.stripe_subscription_id, true)
+      await provider.cancelSubscription(subscriptionId, true)
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('stripe_customer_id')
+        .select(customerIdCol)
         .eq('id', user.id)
         .single()
 
-      if (!profileData?.stripe_customer_id) {
+      const customerId = (profileData as Record<string, string>)?.[customerIdCol]
+
+      if (!customerId) {
         return NextResponse.json({ error: 'Cliente não encontrado.' }, { status: 404 })
       }
 
-      const { paymentLink } = await stripe.createSubscription({
-        customerId: profileData.stripe_customer_id,
+      const { paymentLink } = await provider.createSubscription({
+        customerId,
         planId: 'pro',
         value: Number(newValue),
         interval,
@@ -138,7 +153,7 @@ export async function POST(request: Request) {
 
       await supabase
         .from('profiles')
-        .update({ stripe_subscription_id: null })
+        .update({ [subIdCol]: null })
         .eq('id', user.id)
 
       return NextResponse.json({
