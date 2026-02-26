@@ -61,7 +61,14 @@ export async function POST(request: Request) {
         .eq('id', user.id)
     }
 
-    const baseUrl = new URL(request.url).origin
+    const baseUrl =
+      (() => {
+        try {
+          return new URL(request.url).origin
+        } catch {
+          return process.env.NEXT_PUBLIC_APP_URL || 'https://meu-salario-lime.vercel.app'
+        }
+      })()
     const { paymentLink } = await stripe.createSubscription({
       customerId,
       planId: 'pro',
@@ -79,10 +86,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: paymentLink })
   } catch (error: unknown) {
     console.error('Checkout error:', error)
-    const message = error instanceof Error ? error.message : 'Erro ao processar checkout.'
-    return NextResponse.json({
-      error: message.includes('STRIPE') ? message : 'Erro ao processar checkout. Verifique se o Stripe está configurado.',
-    }, { status: 500 })
+    const err = error as { message?: string; param?: string; code?: string; type?: string }
+    const message = err?.message || 'Erro ao processar checkout.'
+    const isStripeError = message.includes('STRIPE') || err?.type?.includes('Stripe') || err?.code
+    const userMessage = isStripeError
+      ? err?.param === 'success_url'
+        ? 'URL de retorno inválida. Configure NEXT_PUBLIC_APP_URL=https://meu-salario-lime.vercel.app no Vercel.'
+        : message
+      : process.env.NODE_ENV === 'development'
+        ? message
+        : 'Erro ao processar checkout. Verifique as variáveis de ambiente (STRIPE_SECRET_KEY, NEXT_PUBLIC_APP_URL) no Vercel.'
+    return NextResponse.json({ error: userMessage }, { status: 500 })
   }
 }
 
