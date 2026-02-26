@@ -95,9 +95,6 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Checkout error:', error)
     const message = error instanceof Error ? error.message : 'Erro ao processar checkout.'
-    const userMessage = process.env.NODE_ENV === 'development'
-      ? message
-      : 'Erro ao processar checkout. Verifique as variáveis de ambiente (ASAAS_API_KEY e NEXT_PUBLIC_APP_URL).'
-    return NextResponse.json({ error: userMessage }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
