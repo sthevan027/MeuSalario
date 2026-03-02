@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { seedPlans } from '@/app/admin/actions'
+import { seedPlans, updatePlanPrices } from '@/app/admin/actions'
 import { RefreshCw, Package, Crown, Check, X, Users, TrendingUp, DollarSign } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -76,7 +76,7 @@ export default async function AdminPlanosPage() {
             className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-all hover:border-emerald-500/50 hover:from-emerald-500/20 hover:to-teal-500/20"
           >
             <RefreshCw size={16} />
-            Atualizar planos
+            Reset planos
           </button>
         </form>
       </div>
@@ -122,7 +122,7 @@ export default async function AdminPlanosPage() {
         <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 py-16 text-center backdrop-blur-sm">
           <Package size={48} className="mb-3 text-slate-600" />
           <p className="text-slate-300">Nenhum plano cadastrado</p>
-          <p className="mt-1 text-sm text-slate-500">Clique em &quot;Atualizar planos&quot; para seedar</p>
+          <p className="mt-1 text-sm text-slate-500">Clique em &quot;Reset planos&quot; para criar</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -192,29 +192,38 @@ export default async function AdminPlanosPage() {
                     )}
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-baseline justify-between rounded-lg bg-black/20 px-4 py-3">
-                      <div>
-                        <div className="text-xs text-slate-400">Plano Mensal</div>
-                        <div className="mt-0.5 text-2xl font-bold text-white">
-                          {p.price_monthly !== null ? `R$ ${p.price_monthly.toFixed(2)}` : 'Grátis'}
-                        </div>
+                  {/* Formulário de edição de preços */}
+                  <form action={updatePlanPrices} className="space-y-3">
+                    <input type="hidden" name="planId" value={p.id} />
+                    
+                    <div className="rounded-lg bg-black/20 px-4 py-3">
+                      <label className="block text-xs text-slate-400 mb-1">Preço Mensal (R$)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          name="priceMonthly"
+                          step="0.01"
+                          min="0"
+                          defaultValue={p.price_monthly ?? 0}
+                          className="flex-1 rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-lg font-bold text-white outline-none transition-colors focus:border-emerald-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="text-xs text-slate-500">/mês</span>
                       </div>
-                      {p.price_monthly !== null && p.price_monthly > 0 && (
-                        <div className="text-xs text-slate-500">/mês</div>
-                      )}
                     </div>
 
-                    <div className="flex items-baseline justify-between rounded-lg bg-black/20 px-4 py-3">
-                      <div>
-                        <div className="text-xs text-slate-400">Plano Anual</div>
-                        <div className="mt-0.5 text-2xl font-bold text-white">
-                          {p.price_yearly !== null ? `R$ ${p.price_yearly.toFixed(2)}` : 'Grátis'}
-                        </div>
+                    <div className="rounded-lg bg-black/20 px-4 py-3">
+                      <label className="block text-xs text-slate-400 mb-1">Preço Anual (R$)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          name="priceYearly"
+                          step="0.01"
+                          min="0"
+                          defaultValue={p.price_yearly ?? 0}
+                          className="flex-1 rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-lg font-bold text-white outline-none transition-colors focus:border-emerald-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="text-xs text-slate-500">/ano</span>
                       </div>
-                      {p.price_yearly !== null && p.price_yearly > 0 && (
-                        <div className="text-xs text-slate-500">/ano</div>
-                      )}
                     </div>
 
                     {p.price_monthly !== null && p.price_yearly !== null && p.price_monthly > 0 && (
@@ -222,7 +231,14 @@ export default async function AdminPlanosPage() {
                         Economia anual: R$ {((p.price_monthly * 12) - p.price_yearly).toFixed(2)} ({Math.round((1 - p.price_yearly / (p.price_monthly * 12)) * 100)}%)
                       </div>
                     )}
-                  </div>
+
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-500/30 transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
+                    >
+                      Salvar preços
+                    </button>
+                  </form>
                 </div>
               </div>
             )

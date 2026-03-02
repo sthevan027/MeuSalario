@@ -1,7 +1,28 @@
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
-export default function PlanosPage() {
+export const dynamic = 'force-dynamic'
+
+type PlanData = {
+  id: string
+  price_monthly: number
+  price_yearly: number
+}
+
+export default async function PlanosPage() {
+  const supabase = await createSupabaseServerClient()
+  
+  const { data: plans } = await supabase
+    .from('plans')
+    .select('id, price_monthly, price_yearly')
+  
+  const proPlan = (plans as PlanData[] | null)?.find(p => p.id === 'pro')
+  
+  const priceMonthly = proPlan?.price_monthly ?? 10
+  const priceYearly = proPlan?.price_yearly ?? 95
+  const savings = priceMonthly > 0 ? Math.round((1 - priceYearly / (priceMonthly * 12)) * 100) : 0
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />
@@ -71,16 +92,18 @@ export default function PlanosPage() {
 
               <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-400">PRO</div>
               <div className="mb-2 flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-white">R$ 10</span>
+                <span className="text-5xl font-bold text-white">R$ {priceMonthly.toLocaleString('pt-BR', { minimumFractionDigits: priceMonthly % 1 === 0 ? 0 : 2 })}</span>
                 <span className="text-slate-400">/mês</span>
               </div>
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-sm text-slate-400">ou</span>
-                <span className="text-2xl font-bold text-white">R$ 95</span>
+                <span className="text-2xl font-bold text-white">R$ {priceYearly.toLocaleString('pt-BR', { minimumFractionDigits: priceYearly % 1 === 0 ? 0 : 2 })}</span>
                 <span className="text-sm text-slate-400">/ano</span>
-                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300">
-                  Economize 21%
-                </span>
+                {savings > 0 && (
+                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300">
+                    Economize {savings}%
+                  </span>
+                )}
               </div>
               <div className="mb-6 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
                 ✨ 14 dias grátis para experimentar
