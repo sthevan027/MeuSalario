@@ -1,7 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { setUserPlan, setUserRole } from '@/app/admin/actions'
-import { Button } from '@/components/ui/Button'
-import { Crown, Shield, User, Calendar } from 'lucide-react'
+import { Crown, Shield, User, Calendar, Clock } from 'lucide-react'
+import { UserFilters } from '@/components/admin/UserFilters'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,9 +13,23 @@ type ProfileRow = {
   role: 'user' | 'admin'
   subscription_status: string
   created_at: string
+  updated_at: string
 }
 
-export default async function AdminUsuariosPage() {
+type SearchParams = {
+  search?: string
+  plan?: string
+  status?: string
+  page?: string
+}
+
+const ITEMS_PER_PAGE = 20
+
+export default async function AdminUsuariosPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
   const admin = createSupabaseAdminClient()
   if (!admin) {
     return (
@@ -27,11 +42,33 @@ export default async function AdminUsuariosPage() {
     )
   }
 
-  const { data, error} = await admin
+  const search = searchParams.search || ''
+  const planFilter = searchParams.plan || 'all'
+  const statusFilter = searchParams.status || 'all'
+  const page = parseInt(searchParams.page || '1')
+  const offset = (page - 1) * ITEMS_PER_PAGE
+
+  let query = admin
     .from('profiles')
-    .select('id, email, plan, role, subscription_status, created_at')
+    .select('id, email, plan, role, subscription_status, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(100)
+    .range(offset, offset + ITEMS_PER_PAGE - 1)
+
+  if (search) {
+    query = query.ilike('email', `%${search}%`)
+  }
+  if (planFilter !== 'all') {
+    query = query.eq('plan', planFilter)
+  }
+  if (statusFilter !== 'all') {
+    if (statusFilter === 'none') {
+      query = query.or('subscription_status.is.null,subscription_status.eq.')
+    } else {
+      query = query.eq('subscription_status', statusFilter)
+    }
+  }
+
+  const { data, error, count } = await query
 
   if (error) {
     return (
@@ -42,45 +79,56 @@ export default async function AdminUsuariosPage() {
   }
 
   const rows = (data ?? []) as ProfileRow[]
+  const totalPages = Math.ceil((count ?? 0) / ITEMS_PER_PAGE)
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent sm:text-3xl">
             Usuários
           </h1>
           <p className="text-xs text-slate-400 sm:text-sm">
-            Gerencie planos e cargos dos usuários ({rows.length} de 100 exibidos)
+            Gerencie planos e cargos dos usuários ({count ?? 0} total)
           </p>
         </div>
+
+        <Suspense fallback={<div className="h-10 animate-pulse rounded-xl bg-white/5" />}>
+          <UserFilters />
+        </Suspense>
       </div>
 
       {/* Desktop: Tabela */}
       <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-sm lg:block">
-        <div className="grid grid-cols-6 gap-4 border-b border-white/10 bg-white/5 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
-          <div>Usuário</div>
+        <div className="grid grid-cols-7 gap-4 border-b border-white/10 bg-white/5 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="col-span-2">Usuário</div>
           <div>Plano</div>
           <div>Cargo</div>
           <div>Status</div>
           <div>Cadastro</div>
-          <div className="text-right">ID</div>
+          <div className="text-right">Última atividade</div>
         </div>
 
         {rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <User size={48} className="mb-3 text-slate-600" />
-            <p className="text-slate-300">Nenhum usuário cadastrado ainda</p>
+            <p className="text-slate-300">Nenhum usuário encontrado</p>
+            {(search || planFilter !== 'all' || statusFilter !== 'all') && (
+              <p className="mt-1 text-sm text-slate-500">Tente ajustar os filtros</p>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-white/5">
             {rows.map((u) => (
-              <div key={u.id} className="grid grid-cols-6 gap-4 px-6 py-4 text-sm transition-colors hover:bg-white/5">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
-                    <User size={14} className="text-blue-400" />
+              <div key={u.id} className="grid grid-cols-7 gap-4 px-6 py-4 text-sm transition-colors hover:bg-white/5">
+                <div className="col-span-2 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
+                    <User size={16} className="text-blue-400" />
                   </div>
-                  <div className="truncate text-slate-100">{u.email ?? '-'}</div>
+                  <div className="min-w-0">
+                    <div className="truncate text-slate-100 font-medium">{u.email ?? '-'}</div>
+                    <div className="text-xs font-mono text-slate-500">{u.id.slice(0, 8)}...</div>
+                  </div>
                 </div>
 
                 <div className="flex items-center">
@@ -142,17 +190,7 @@ export default async function AdminUsuariosPage() {
                 </div>
 
                 <div className="flex items-center">
-                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                    u.subscription_status === 'active' 
-                      ? 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20' 
-                      : u.subscription_status === 'trialing'
-                      ? 'bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/20'
-                      : u.subscription_status === 'past_due'
-                      ? 'bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20'
-                      : 'bg-slate-500/10 text-slate-400 ring-1 ring-slate-500/20'
-                  }`}>
-                    {u.subscription_status}
-                  </span>
+                  <StatusBadge status={u.subscription_status} />
                 </div>
 
                 <div className="flex items-center gap-1.5 text-slate-400">
@@ -160,8 +198,14 @@ export default async function AdminUsuariosPage() {
                   <span className="text-xs">{new Date(u.created_at).toLocaleDateString('pt-BR')}</span>
                 </div>
 
-                <div className="flex items-center justify-end">
-                  <span className="text-xs font-mono text-slate-500">{u.id.slice(0, 8)}</span>
+                <div className="flex items-center justify-end gap-1.5 text-slate-500">
+                  <Clock size={12} />
+                  <span className="text-xs">
+                    {u.updated_at 
+                      ? new Date(u.updated_at).toLocaleDateString('pt-BR')
+                      : '-'
+                    }
+                  </span>
                 </div>
               </div>
             ))}
@@ -174,12 +218,11 @@ export default async function AdminUsuariosPage() {
         {rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 py-12 text-center backdrop-blur-sm">
             <User size={48} className="mb-3 text-slate-600" />
-            <p className="text-slate-300">Nenhum usuário cadastrado ainda</p>
+            <p className="text-slate-300">Nenhum usuário encontrado</p>
           </div>
         ) : (
           rows.map((u) => (
             <div key={u.id} className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-4 backdrop-blur-sm">
-              {/* Header com email e badges */}
               <div className="mb-3 flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
@@ -206,26 +249,14 @@ export default async function AdminUsuariosPage() {
                 </div>
               </div>
 
-              {/* Info e Status */}
               <div className="mb-3 flex items-center justify-between border-t border-white/5 pt-3">
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <Calendar size={12} />
                   <span className="text-xs">{new Date(u.created_at).toLocaleDateString('pt-BR')}</span>
                 </div>
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                  u.subscription_status === 'active' 
-                    ? 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20' 
-                    : u.subscription_status === 'trialing'
-                    ? 'bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/20'
-                    : u.subscription_status === 'past_due'
-                    ? 'bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20'
-                    : 'bg-slate-500/10 text-slate-400 ring-1 ring-slate-500/20'
-                }`}>
-                  {u.subscription_status || 'none'}
-                </span>
+                <StatusBadge status={u.subscription_status} small />
               </div>
 
-              {/* Ações: Plano e Cargo */}
               <div className="grid grid-cols-2 gap-2">
                 <form action={setUserPlan} className="flex flex-col gap-1.5">
                   <input type="hidden" name="userId" value={u.id} />
@@ -285,7 +316,80 @@ export default async function AdminUsuariosPage() {
           ))
         )}
       </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <Pagination currentPage={page} totalPages={totalPages} searchParams={searchParams} />
+      )}
     </div>
   )
 }
 
+function StatusBadge({ status, small = false }: { status: string; small?: boolean }) {
+  const statusConfig: Record<string, { bg: string; text: string; ring: string; label: string }> = {
+    active: { bg: 'bg-emerald-500/10', text: 'text-emerald-300', ring: 'ring-emerald-500/20', label: 'Ativo' },
+    trialing: { bg: 'bg-blue-500/10', text: 'text-blue-300', ring: 'ring-blue-500/20', label: 'Trial' },
+    past_due: { bg: 'bg-rose-500/10', text: 'text-rose-300', ring: 'ring-rose-500/20', label: 'Inadimplente' },
+    canceled: { bg: 'bg-orange-500/10', text: 'text-orange-300', ring: 'ring-orange-500/20', label: 'Cancelado' },
+  }
+
+  const config = statusConfig[status] || { 
+    bg: 'bg-slate-500/10', 
+    text: 'text-slate-400', 
+    ring: 'ring-slate-500/20', 
+    label: status || 'Sem assinatura' 
+  }
+
+  return (
+    <span className={`inline-flex rounded-full ${config.bg} ${config.text} ring-1 ${config.ring} ${
+      small ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs'
+    } font-medium`}>
+      {config.label}
+    </span>
+  )
+}
+
+function Pagination({ 
+  currentPage, 
+  totalPages, 
+  searchParams 
+}: { 
+  currentPage: number
+  totalPages: number
+  searchParams: SearchParams 
+}) {
+  const createPageUrl = (page: number) => {
+    const params = new URLSearchParams()
+    if (searchParams.search) params.set('search', searchParams.search)
+    if (searchParams.plan) params.set('plan', searchParams.plan)
+    if (searchParams.status) params.set('status', searchParams.status)
+    params.set('page', page.toString())
+    return `?${params.toString()}`
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-2">
+      {currentPage > 1 && (
+        <a
+          href={createPageUrl(currentPage - 1)}
+          className="rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-300 hover:bg-white/10"
+        >
+          Anterior
+        </a>
+      )}
+      
+      <span className="text-sm text-slate-400">
+        Página {currentPage} de {totalPages}
+      </span>
+
+      {currentPage < totalPages && (
+        <a
+          href={createPageUrl(currentPage + 1)}
+          className="rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-300 hover:bg-white/10"
+        >
+          Próxima
+        </a>
+      )}
+    </div>
+  )
+}

@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { seedPlans } from '@/app/admin/actions'
-import { RefreshCw, Package, Crown, Check, X } from 'lucide-react'
+import { RefreshCw, Package, Crown, Check, X, Users, TrendingUp, DollarSign } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,29 +25,47 @@ export default async function AdminPlanosPage() {
     )
   }
 
-  const { data, error } = await admin
-    .from('plans')
-    .select('id, name, price_monthly, price_yearly, active')
-    .order('id', { ascending: true })
+  const [
+    { data: plansData, error: plansError },
+    { count: freeCount },
+    { count: proCount },
+    { count: activeProCount },
+  ] = await Promise.all([
+    admin.from('plans').select('id, name, price_monthly, price_yearly, active').order('id', { ascending: true }),
+    admin.from('profiles').select('*', { count: 'exact', head: true }).eq('plan', 'free'),
+    admin.from('profiles').select('*', { count: 'exact', head: true }).eq('plan', 'pro'),
+    admin.from('profiles').select('*', { count: 'exact', head: true }).eq('plan', 'pro').in('subscription_status', ['active', 'trialing']),
+  ])
 
-  if (error) {
+  if (plansError) {
     return (
       <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4 text-rose-100 backdrop-blur-sm">
-        Erro ao carregar planos: {error.message}
+        Erro ao carregar planos: {plansError.message}
       </div>
     )
   }
 
-  const rows = (data ?? []) as PlanRow[]
+  const rows = (plansData ?? []) as PlanRow[]
+  const planStats: Record<string, { users: number; activeUsers: number }> = {
+    free: { users: freeCount ?? 0, activeUsers: freeCount ?? 0 },
+    pro: { users: proCount ?? 0, activeUsers: activeProCount ?? 0 },
+  }
+
+  const totalUsers = (freeCount ?? 0) + (proCount ?? 0)
+  const conversionRate = totalUsers > 0 ? ((proCount ?? 0) / totalUsers * 100).toFixed(1) : '0'
+
+  const proPlan = rows.find(p => p.id === 'pro')
+  const monthlyRevenue = (activeProCount ?? 0) * (proPlan?.price_monthly ?? 0)
+  const yearlyRevenue = monthlyRevenue * 12
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent sm:text-3xl">
             Planos
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-xs text-slate-400 sm:text-sm">
             Gerenciamento dos planos da plataforma (preços usados no checkout Asaas)
           </p>
         </div>
@@ -58,9 +76,46 @@ export default async function AdminPlanosPage() {
             className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-all hover:border-emerald-500/50 hover:from-emerald-500/20 hover:to-teal-500/20"
           >
             <RefreshCw size={16} />
-            Atualizar planos (Free/Pro)
+            Atualizar planos
           </button>
         </form>
+      </div>
+
+      {/* Métricas gerais */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-xs font-medium text-blue-300">
+            <Users size={14} />
+            Total de usuários
+          </div>
+          <div className="mt-2 text-2xl font-bold text-white">{totalUsers}</div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-xs font-medium text-amber-300">
+            <Crown size={14} />
+            Usuários Pro
+          </div>
+          <div className="mt-2 text-2xl font-bold text-white">{proCount ?? 0}</div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-pink-500/10 to-rose-500/5 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-xs font-medium text-pink-300">
+            <TrendingUp size={14} />
+            Taxa de conversão
+          </div>
+          <div className="mt-2 text-2xl font-bold text-white">{conversionRate}%</div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-green-500/10 to-emerald-500/5 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-xs font-medium text-green-300">
+            <DollarSign size={14} />
+            Receita mensal
+          </div>
+          <div className="mt-2 text-2xl font-bold text-white">
+            R$ {monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </div>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -71,85 +126,144 @@ export default async function AdminPlanosPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {rows.map((p) => (
-            <div 
-              key={p.id} 
-              className={`group relative overflow-hidden rounded-2xl border p-6 backdrop-blur-sm transition-all hover:shadow-lg ${
-                p.id === 'pro' 
-                  ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 hover:border-amber-500/50 hover:shadow-amber-500/10' 
-                  : 'border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 hover:border-white/20'
-              }`}
-            >
-              <div className="absolute -right-8 -top-8 opacity-10">
-                {p.id === 'pro' ? (
-                  <Crown size={80} className="text-amber-400" />
-                ) : (
-                  <Package size={80} className="text-slate-400" />
-                )}
-              </div>
-
-              <div className="relative">
-                <div className="mb-4 flex items-start justify-between">
-                  <div>
-                    <div className="mb-1 flex items-center gap-2">
-                      {p.id === 'pro' && <Crown size={18} className="text-amber-400" />}
-                      <h3 className="text-2xl font-bold text-white">{p.name}</h3>
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-2 py-0.5 text-xs font-medium text-slate-400">
-                      <span className="font-mono">{p.id}</span>
-                    </div>
-                  </div>
-
-                  {p.active ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-500/20">
-                      <Check size={12} />
-                      Ativo
-                    </span>
+          {rows.map((p) => {
+            const stats = planStats[p.id] || { users: 0, activeUsers: 0 }
+            const userPercentage = totalUsers > 0 ? (stats.users / totalUsers * 100).toFixed(1) : '0'
+            
+            return (
+              <div 
+                key={p.id} 
+                className={`group relative overflow-hidden rounded-2xl border p-6 backdrop-blur-sm transition-all hover:shadow-lg ${
+                  p.id === 'pro' 
+                    ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 hover:border-amber-500/50 hover:shadow-amber-500/10' 
+                    : 'border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 hover:border-white/20'
+                }`}
+              >
+                <div className="absolute -right-8 -top-8 opacity-10">
+                  {p.id === 'pro' ? (
+                    <Crown size={80} className="text-amber-400" />
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-300 ring-1 ring-rose-500/20">
-                      <X size={12} />
-                      Inativo
-                    </span>
+                    <Package size={80} className="text-slate-400" />
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-baseline justify-between rounded-lg bg-black/20 px-4 py-3">
+                <div className="relative">
+                  <div className="mb-4 flex items-start justify-between">
                     <div>
-                      <div className="text-xs text-slate-400">Plano Mensal</div>
-                      <div className="mt-0.5 text-2xl font-bold text-white">
-                        {p.price_monthly !== null ? `R$ ${p.price_monthly.toFixed(2)}` : '-'}
+                      <div className="mb-1 flex items-center gap-2">
+                        {p.id === 'pro' && <Crown size={18} className="text-amber-400" />}
+                        <h3 className="text-2xl font-bold text-white">{p.name}</h3>
+                      </div>
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-2 py-0.5 text-xs font-medium text-slate-400">
+                        <span className="font-mono">{p.id}</span>
                       </div>
                     </div>
-                    {p.price_monthly !== null && (
-                      <div className="text-xs text-slate-500">/mês</div>
+
+                    {p.active ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-500/20">
+                        <Check size={12} />
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-300 ring-1 ring-rose-500/20">
+                        <X size={12} />
+                        Inativo
+                      </span>
                     )}
                   </div>
 
-                  <div className="flex items-baseline justify-between rounded-lg bg-black/20 px-4 py-3">
-                    <div>
-                      <div className="text-xs text-slate-400">Plano Anual</div>
-                      <div className="mt-0.5 text-2xl font-bold text-white">
-                        {p.price_yearly !== null ? `R$ ${p.price_yearly.toFixed(2)}` : '-'}
+                  {/* Estatísticas do plano */}
+                  <div className="mb-4 rounded-lg bg-black/20 p-3">
+                    <div className="grid grid-cols-2 gap-3 text-center">
+                      <div>
+                        <div className="text-lg font-bold text-white">{stats.users}</div>
+                        <div className="text-[10px] text-slate-400">Usuários</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-white">{userPercentage}%</div>
+                        <div className="text-[10px] text-slate-400">do total</div>
                       </div>
                     </div>
-                    {p.price_yearly !== null && (
-                      <div className="text-xs text-slate-500">/ano</div>
+                    {p.id === 'pro' && (
+                      <div className="mt-2 border-t border-white/10 pt-2 text-center">
+                        <div className="text-sm font-bold text-emerald-400">{stats.activeUsers} ativos</div>
+                        <div className="text-[10px] text-slate-400">com assinatura válida</div>
+                      </div>
                     )}
                   </div>
 
-                  {p.price_monthly !== null && p.price_yearly !== null && p.price_monthly > 0 && (
-                    <div className="rounded-lg bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-300">
-                      Economia anual: R$ {((p.price_monthly * 12) - p.price_yearly).toFixed(2)}
+                  <div className="space-y-3">
+                    <div className="flex items-baseline justify-between rounded-lg bg-black/20 px-4 py-3">
+                      <div>
+                        <div className="text-xs text-slate-400">Plano Mensal</div>
+                        <div className="mt-0.5 text-2xl font-bold text-white">
+                          {p.price_monthly !== null ? `R$ ${p.price_monthly.toFixed(2)}` : 'Grátis'}
+                        </div>
+                      </div>
+                      {p.price_monthly !== null && p.price_monthly > 0 && (
+                        <div className="text-xs text-slate-500">/mês</div>
+                      )}
                     </div>
-                  )}
+
+                    <div className="flex items-baseline justify-between rounded-lg bg-black/20 px-4 py-3">
+                      <div>
+                        <div className="text-xs text-slate-400">Plano Anual</div>
+                        <div className="mt-0.5 text-2xl font-bold text-white">
+                          {p.price_yearly !== null ? `R$ ${p.price_yearly.toFixed(2)}` : 'Grátis'}
+                        </div>
+                      </div>
+                      {p.price_yearly !== null && p.price_yearly > 0 && (
+                        <div className="text-xs text-slate-500">/ano</div>
+                      )}
+                    </div>
+
+                    {p.price_monthly !== null && p.price_yearly !== null && p.price_monthly > 0 && (
+                      <div className="rounded-lg bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-300">
+                        Economia anual: R$ {((p.price_monthly * 12) - p.price_yearly).toFixed(2)} ({Math.round((1 - p.price_yearly / (p.price_monthly * 12)) * 100)}%)
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Receita estimada */}
+      {proPlan && (
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-6 backdrop-blur-sm">
+          <h3 className="mb-4 text-base font-semibold text-slate-300">
+            Projeção de Receita
+          </h3>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-lg bg-black/20 p-4 text-center">
+              <div className="text-xs text-slate-400">Mensal</div>
+              <div className="mt-1 text-xl font-bold text-white">
+                R$ {monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
             </div>
-          ))}
+            <div className="rounded-lg bg-black/20 p-4 text-center">
+              <div className="text-xs text-slate-400">Trimestral</div>
+              <div className="mt-1 text-xl font-bold text-white">
+                R$ {(monthlyRevenue * 3).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+            <div className="rounded-lg bg-black/20 p-4 text-center">
+              <div className="text-xs text-slate-400">Semestral</div>
+              <div className="mt-1 text-xl font-bold text-white">
+                R$ {(monthlyRevenue * 6).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+            <div className="rounded-lg bg-emerald-500/10 p-4 text-center ring-1 ring-emerald-500/20">
+              <div className="text-xs text-emerald-300">Anual</div>
+              <div className="mt-1 text-xl font-bold text-emerald-400">
+                R$ {yearlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
   )
 }
-
