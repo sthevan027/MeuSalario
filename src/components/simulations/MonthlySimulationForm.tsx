@@ -7,8 +7,10 @@ import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
+import { ExportButtons } from '@/components/simulations/ExportButtons'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { getLastSalaryBase } from '@/lib/last-salary'
+import type { ExportData } from '@/lib/export'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -336,8 +338,33 @@ export function MonthlySimulationForm() {
       </form>
 
       <div className="space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-sm font-semibold sm:text-base">Resultado</h2>
+          <ExportButtons
+            data={{
+              title: `Simulação Mensal - ${contractType.toUpperCase()}`,
+              subtitle: `${selectedMonth}/${selectedYear}`,
+              date: new Date(),
+              items: [
+                ...preview.items,
+                { key: 'bruto', label: 'Salário bruto', amount: preview.bruto, kind: 'info' as const },
+              ],
+              summary: {
+                bruto: preview.bruto,
+                descontos: preview.descontos,
+                liquido: preview.liquido,
+              },
+              metadata: {
+                'Tipo de contrato': contractType.toUpperCase(),
+                'Salário base': parseFloat(salarioBase) || 0,
+                'Mês/Ano': `${selectedMonth}/${selectedYear}`,
+              },
+            } as ExportData}
+            filename={`simulacao-mensal-${contractType}-${selectedMonth}-${selectedYear}`}
+          />
+        </div>
         <ResultBreakdown
-          title="Resultado"
+          title=""
           totalLabel="Salário líquido"
           total={preview.liquido}
           items={[

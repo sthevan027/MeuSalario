@@ -7,8 +7,10 @@ import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
+import { ExportButtons } from '@/components/simulations/ExportButtons'
 import { simulateThirteenth } from '@/lib/calculators/thirteenth'
 import { getLastSalaryBase } from '@/lib/last-salary'
+import type { ExportData } from '@/lib/export'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -114,8 +116,31 @@ export function ThirteenthForm() {
       </form>
 
       <div className="space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-sm font-semibold sm:text-base">13º Salário</h2>
+          <ExportButtons
+            data={{
+              title: 'Simulação de 13º Salário',
+              subtitle: `${mesesTrabalhados} meses trabalhados`,
+              date: new Date(),
+              items: preview.items,
+              summary: {
+                bruto: preview.valorBase,
+                descontos: preview.descontosSegundaParcela,
+                liquido: preview.totalLiquido,
+              },
+              metadata: {
+                'Salário base': parseFloat(salarioBase) || 0,
+                'Meses trabalhados': mesesTrabalhados,
+                'Dependentes': dependentes,
+                '1ª parcela recebida': recebeuPrimeiraParcela ? 'Sim' : 'Não',
+              },
+            } as ExportData}
+            filename={`simulacao-13-salario-${mesesTrabalhados}m`}
+          />
+        </div>
         <ResultBreakdown
-          title="13º Salário"
+          title=""
           totalLabel="Total líquido"
           total={preview.totalLiquido}
           items={preview.items}

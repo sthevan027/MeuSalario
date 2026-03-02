@@ -6,9 +6,11 @@ import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
+import { ExportButtons } from '@/components/simulations/ExportButtons'
 import { simulateTermination } from '@/lib/calculators/termination'
 import { useMemo, useState, useEffect } from 'react'
 import { getLastSalaryBase } from '@/lib/last-salary'
+import type { ExportData } from '@/lib/export'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -310,7 +312,31 @@ export function TerminationForm() {
       </form>
 
       <div className="space-y-4">
-        <ResultBreakdown title="Resultado da rescisão" totalLabel="Total líquido (estimativa)" total={preview.total} items={preview.items} />
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-sm font-semibold sm:text-base">Resultado da rescisão</h2>
+          <ExportButtons
+            data={{
+              title: 'Simulação de Rescisão',
+              subtitle: tipoRescisao.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              date: new Date(),
+              items: preview.items,
+              summary: {
+                bruto: preview.totalBruto,
+                descontos: preview.totalDescontos,
+                liquido: preview.total,
+              },
+              metadata: {
+                'Tipo de rescisão': tipoRescisao.replace(/_/g, ' '),
+                'Salário base': parseFloat(salarioBase.replace(/\./g, '').replace(',', '.')) || 0,
+                'Data de entrada': dataEntrada || '-',
+                'Data de saída': dataSaida || '-',
+                'Aviso prévio': `${avisoPrevioDias} dias`,
+              },
+            } as ExportData}
+            filename={`simulacao-rescisao-${tipoRescisao}`}
+          />
+        </div>
+        <ResultBreakdown title="" totalLabel="Total líquido (estimativa)" total={preview.total} items={preview.items} />
         {preview.totalBruto && preview.totalDescontos && (
           <div className="space-y-2">
             <p className="text-[10px] text-slate-500">

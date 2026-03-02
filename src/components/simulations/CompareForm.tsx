@@ -6,10 +6,12 @@ import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
+import { ExportButtons } from '@/components/simulations/ExportButtons'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import { useMemo, useState, useEffect } from 'react'
 import { formatBRL } from '@/lib/format'
 import { getLastSalaryBase } from '@/lib/last-salary'
+import type { ExportData } from '@/lib/export'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -179,6 +181,35 @@ export function CompareForm() {
           <SubmitButton />
         </div>
       </form>
+
+      <div className="flex items-start justify-between gap-2 mb-4">
+        <h2 className="text-sm font-semibold sm:text-base">Comparação CLT x PJ</h2>
+        <ExportButtons
+          data={{
+            title: 'Comparação CLT x PJ',
+            subtitle: `Diferença: ${formatBRL(preview.deltaLiquido)}`,
+            date: new Date(),
+            items: [
+              { key: 'clt-header', label: '--- CLT ---', amount: 0, kind: 'info' as const },
+              ...preview.clt.items,
+              { key: 'clt-total', label: 'Total Líquido CLT', amount: preview.clt.liquido, kind: 'earning' as const },
+              { key: 'pj-header', label: '--- PJ ---', amount: 0, kind: 'info' as const },
+              ...preview.pj.items,
+              { key: 'pj-total', label: 'Total Líquido PJ', amount: preview.pj.liquido, kind: 'earning' as const },
+            ],
+            summary: {
+              liquido: preview.deltaLiquido,
+            },
+            metadata: {
+              'Salário base': parseFloat(salarioBase) || 0,
+              'Líquido CLT': preview.clt.liquido,
+              'Líquido PJ': preview.pj.liquido,
+              'Diferença': preview.deltaLiquido,
+            },
+          } as ExportData}
+          filename="comparacao-clt-pj"
+        />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ResultBreakdown title="CLT" totalLabel="Líquido CLT" total={preview.clt.liquido} items={preview.clt.items} />
