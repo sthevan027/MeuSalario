@@ -134,7 +134,25 @@ function PlanDistributionChart({ data }: { data: PlanDistributionData[] }) {
               outerRadius={90}
               paddingAngle={2}
               dataKey="value"
-              label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+              label={({ name, percent, cx, cy, midAngle, outerRadius }) => {
+                const RADIAN = Math.PI / 180
+                const radius = (outerRadius as number) + 25
+                const x = (cx as number) + radius * Math.cos(-midAngle * RADIAN)
+                const y = (cy as number) + radius * Math.sin(-midAngle * RADIAN)
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="#f1f5f9"
+                    textAnchor={x > (cx as number) ? 'start' : 'end'}
+                    dominantBaseline="central"
+                    fontSize={12}
+                    fontWeight={600}
+                  >
+                    {`${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                  </text>
+                )
+              }}
               labelLine={false}
             >
               {data.map((entry, index) => (
