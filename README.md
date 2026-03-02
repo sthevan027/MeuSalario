@@ -1,6 +1,18 @@
 # MeuSalario
 
-Plataforma web para **previsão salarial**, simulações e dashboards (CLT/PJ), com **Supabase** (Auth/DB) e **Stripe** (assinatura Pro).
+Plataforma web para **previsão salarial**, simulações e dashboards (CLT/PJ), com **Supabase** (Auth/DB) e **Asaas** (pagamentos - PIX, cartão, boleto).
+
+## Funcionalidades
+
+- **Simulação mensal** (CLT e PJ) com cálculo automático de INSS e IRRF
+- **Comparador CLT x PJ** para ajudar na decisão de carreira
+- **Simulação de rescisão** (sem justa causa, acordo, pedido de demissão)
+- **Simulação de 13º salário** (1ª e 2ª parcela)
+- **Simulação de férias** (vencidas e proporcionais)
+- **Dashboard** com gráficos e estatísticas
+- **Histórico** de simulações com filtros
+- **Exportação** PDF e CSV das simulações
+- **Planos** Free e Pro com pagamento via Asaas
 
 ## Rodar local
 
@@ -16,8 +28,9 @@ Configurar variáveis:
 - Preencha:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY` (necessária para webhook Stripe/admin)
-  - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_APP_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY` (necessária para webhook/admin)
+  - Asaas: `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`, `ASAAS_SANDBOX`
+  - `NEXT_PUBLIC_APP_URL`
 
 Para acessar `/admin`, defina no Supabase o cargo do seu usuário:
 
@@ -33,6 +46,23 @@ Subir o app:
 pnpm dev
 ```
 
+## Testes
+
+O projeto usa Vitest para testes unitários dos cálculos de impostos.
+
+```bash
+pnpm test
+```
+
+Os testes cobrem:
+- Cálculo de INSS (tabela progressiva 2026)
+- Cálculo de IRRF (com isenção até R$ 5.000)
+- DAS do Simples Nacional (Anexos III e V)
+- Simulação mensal CLT e PJ
+- Cálculo de rescisão
+- Cálculo de férias
+- Cálculo de 13º salário
+
 ## Supabase (schema + RLS)
 
 Rode o SQL do arquivo:
@@ -46,18 +76,68 @@ Isso cria:
 - trigger de criação de profile
 - RLS básico
 
-## Stripe
+## Asaas (Pagamentos)
 
-1. Crie uma conta no [Stripe](https://dashboard.stripe.com/) (use modo teste para desenvolvimento).
-2. Obtenha sua `STRIPE_SECRET_KEY` no painel (Chaves de API).
-3. Configure o webhook no painel do Stripe apontando para:
+O MeuSalario usa o [Asaas](https://www.asaas.com/) como gateway de pagamentos, que suporta:
+- **Cartão de crédito** (parcelado ou à vista)
+- **Boleto bancário**
+- **PIX**
+
+### Configuração
+
+1. Crie uma conta no [Asaas](https://www.asaas.com/) (use ambiente sandbox para desenvolvimento)
+2. Obtenha sua `ASAAS_API_KEY` no painel (Integrações > API)
+3. Configure o webhook no painel do Asaas apontando para:
    - `https://seu-dominio.com/api/billing/webhook`
-4. Eventos recomendados: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
-5. Defina o signing secret do webhook em `STRIPE_WEBHOOK_SECRET`.
-6. Configure `NEXT_PUBLIC_APP_URL` (ex: `http://localhost:3000` ou sua URL de produção) para os redirects do Checkout.
+4. Eventos recomendados: `PAYMENT_RECEIVED`, `SUBSCRIPTION_CREATED`
+5. Defina o token do webhook em `ASAAS_WEBHOOK_TOKEN`
+6. Configure `ASAAS_SANDBOX=true` para desenvolvimento, `false` para produção
 
-Os preços dos planos são definidos na tabela `plans` do Supabase e usados no Checkout Stripe.
+Os preços dos planos são definidos na tabela `plans` do Supabase.
+
+## Monitoramento de Erros (Sentry)
+
+O projeto suporta monitoramento de erros via Sentry (opcional).
+
+1. Crie uma conta em [sentry.io](https://sentry.io/)
+2. Crie um projeto Next.js
+3. Copie o DSN e adicione em `NEXT_PUBLIC_SENTRY_DSN` no `.env`
+
+Funções disponíveis:
+- `captureException(error)` - Captura exceções
+- `captureMessage(message, level)` - Captura mensagens
+- `setUser({ id, email })` - Define usuário atual
+
+## Estrutura do Projeto
+
+```
+src/
+├── app/                    # Rotas Next.js (App Router)
+│   ├── (auth)/            # Páginas de autenticação
+│   ├── app/               # Área logada do usuário
+│   ├── admin/             # Painel administrativo
+│   └── api/               # Rotas de API
+├── components/            # Componentes React
+│   ├── auth/              # Formulários de auth
+│   ├── billing/           # Componentes de pagamento
+│   ├── charts/            # Gráficos (Recharts)
+│   ├── dashboard/         # Componentes do dashboard
+│   ├── historico/         # Histórico de simulações
+│   ├── layout/            # Layout e navegação
+│   ├── simulations/       # Formulários de simulação
+│   └── ui/                # Componentes base (Button, Input, etc)
+├── lib/                   # Utilitários e lógica
+│   ├── calculators/       # Cálculos de impostos e simulações
+│   │   └── __tests__/     # Testes unitários
+│   ├── payments/          # Integração com Asaas
+│   └── supabase/          # Cliente Supabase
+└── types/                 # Tipos TypeScript
+```
 
 ## Notas de dependências
 
 - **ESLint 8 e subdependências deprecated:** O `pnpm install` pode mostrar avisos de que `eslint@8.57.1` e pacotes como `glob`, `inflight`, `rimraf` estão deprecated. Isso é esperado: o Next.js 14 usa `eslint-config-next`, que ainda declara suporte apenas a ESLint 7/8. Migrar para ESLint 9 exigiria atualizar o Next.js para uma versão que suporte o plugin em flat config (ex.: Next 15). Por enquanto o lint continua funcionando normalmente.
+
+## Licença
+
+Privado - Todos os direitos reservados.

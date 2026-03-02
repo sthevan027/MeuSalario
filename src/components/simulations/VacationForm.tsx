@@ -7,8 +7,10 @@ import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
+import { ExportButtons } from '@/components/simulations/ExportButtons'
 import { simulateVacation } from '@/lib/calculators/vacation'
 import { getLastSalaryBase } from '@/lib/last-salary'
+import type { ExportData } from '@/lib/export'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -114,8 +116,31 @@ export function VacationForm() {
       </form>
 
       <div className="space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-sm font-semibold sm:text-base">Férias</h2>
+          <ExportButtons
+            data={{
+              title: 'Simulação de Férias',
+              subtitle: temFeriasVencidas ? 'Com férias vencidas' : 'Férias proporcionais',
+              date: new Date(),
+              items: preview.items,
+              summary: {
+                bruto: preview.totalBruto,
+                descontos: preview.descontos,
+                liquido: preview.totalLiquido,
+              },
+              metadata: {
+                'Salário base': parseFloat(salarioBase) || 0,
+                'Meses trabalhados': mesesTrabalhados,
+                'Dependentes': dependentes,
+                'Férias vencidas': temFeriasVencidas ? 'Sim' : 'Não',
+              },
+            } as ExportData}
+            filename={`simulacao-ferias-${mesesTrabalhados}m`}
+          />
+        </div>
         <ResultBreakdown
-          title="Férias"
+          title=""
           totalLabel="Total líquido"
           total={preview.totalLiquido}
           items={preview.items}
