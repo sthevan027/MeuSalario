@@ -4,6 +4,30 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/profile'
 
+export async function updatePlanPrices(formData: FormData): Promise<void> {
+  await requireAdmin()
+
+  const planId = String(formData.get('planId') ?? '')
+  const priceMonthly = parseFloat(String(formData.get('priceMonthly') ?? '0'))
+  const priceYearly = parseFloat(String(formData.get('priceYearly') ?? '0'))
+
+  if (!planId) return
+
+  const admin = createSupabaseAdminClient()
+  if (!admin) return
+
+  await admin
+    .from('plans')
+    .update({ 
+      price_monthly: priceMonthly, 
+      price_yearly: priceYearly 
+    })
+    .eq('id', planId)
+
+  revalidatePath('/admin/planos')
+  revalidatePath('/planos')
+}
+
 export async function setUserPlan(formData: FormData): Promise<void> {
   await requireAdmin()
 
