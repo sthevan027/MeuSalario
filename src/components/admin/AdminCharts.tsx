@@ -148,7 +148,11 @@ function PlanDistributionChart({ data }: { data: PlanDistributionData[] }) {
                 borderRadius: '8px',
                 fontSize: '12px',
               }}
-              formatter={(value) => [`${value ?? 0} usuários`, '']}
+              formatter={(value, name) => {
+                const total = data.reduce((acc, item) => acc + item.value, 0)
+                const percent = total > 0 ? ((Number(value) / total) * 100).toFixed(0) : 0
+                return [`${value} usuários (${percent}%)`, name]
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
