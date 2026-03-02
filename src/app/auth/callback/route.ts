@@ -7,8 +7,11 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const type = requestUrl.searchParams.get('type') // ex: "signup" | "recovery"
+  const next = requestUrl.searchParams.get('next') // destino após OAuth (Google, etc)
 
-  const redirectTo = type === 'recovery' ? '/atualizar-senha' : '/app/dashboard'
+  const redirectTo = type === 'recovery' 
+    ? '/atualizar-senha' 
+    : next ?? '/app/dashboard'
   const redirectUrl = new URL(redirectTo, requestUrl.origin)
 
   if (code) {

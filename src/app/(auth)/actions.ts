@@ -16,6 +16,87 @@ function getOrigin() {
   )
 }
 
+/**
+ * Inicia o fluxo de login/cadastro com Google OAuth
+ */
+export async function signInWithGoogle(nextPath: string = '/app/dashboard'): Promise<ActionState> {
+  const supabase = createSupabaseActionClient()
+  const origin = getOrigin()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  })
+
+  if (error) {
+    return { ok: false, message: error.message }
+  }
+
+  if (data.url) {
+    redirect(data.url)
+  }
+
+  return { ok: false, message: 'Erro ao iniciar login com Google' }
+}
+
+/**
+ * Vincula conta Google a um usuário já autenticado
+ */
+export async function linkGoogleAccount(): Promise<ActionState> {
+  const supabase = createSupabaseActionClient()
+  const origin = getOrigin()
+
+  const { data, error } = await supabase.auth.linkIdentity({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback?next=/app/conta`,
+    },
+  })
+
+  if (error) {
+    return { ok: false, message: error.message }
+  }
+
+  if (data.url) {
+    redirect(data.url)
+  }
+
+  return { ok: false, message: 'Erro ao vincular conta Google' }
+}
+
+/**
+ * Remove vinculação com Google
+ */
+export async function unlinkGoogleAccount(): Promise<ActionState> {
+  const supabase = createSupabaseActionClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return { ok: false, message: 'Usuário não autenticado' }
+  }
+
+  const googleIdentity = user.identities?.find(i => i.provider === 'google')
+  
+  if (!googleIdentity) {
+    return { ok: false, message: 'Conta Google não vinculada' }
+  }
+
+  const { error } = await supabase.auth.unlinkIdentity(googleIdentity)
+
+  if (error) {
+    return { ok: false, message: error.message }
+  }
+
+  return { ok: true, message: 'Conta Google desvinculada com sucesso' }
+}
+
 export async function signIn(_prevState: ActionState | null, formData: FormData): Promise<ActionState> {
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
@@ -40,12 +121,11 @@ export async function signUp(_prevState: ActionState | null, formData: FormData)
     password,
     options: {
       emailRedirectTo: `${getOrigin()}/auth/callback`,
-      data: { name }, // Salva o nome no metadata do usuário
+      data: { name },
     },
   })
 
   if (error) {
-    // Erro típico quando o trigger handle_new_user falha (schema desatualizado no Supabase)
     if (error.message?.toLowerCase().includes('database error saving new user')) {
       return {
         ok: false,
@@ -56,7 +136,6 @@ export async function signUp(_prevState: ActionState | null, formData: FormData)
     return { ok: false, message: error.message }
   }
 
-  // Atualiza o profile com o nome
   if (data.user) {
     await supabase
       .from('profiles')
@@ -138,4 +217,3 @@ export async function signOut() {
   await supabase.auth.signOut()
   redirect('/')
 }
-

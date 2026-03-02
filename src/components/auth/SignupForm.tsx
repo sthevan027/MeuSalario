@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
+import { GoogleSignInButton } from '@/components/auth/GoogleAuthButton'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -37,52 +38,68 @@ export function SignupForm() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
-      <Field label="Nome completo" required>
-        <Input name="name" type="text" autoComplete="name" required placeholder="Seu nome completo" />
-      </Field>
+    <div className="space-y-6">
+      {/* Cadastro com Google */}
+      <GoogleSignInButton nextPath="/app/dashboard" />
 
-      <Field label="Email" required>
-        <Input name="email" type="email" autoComplete="email" required placeholder="voce@exemplo.com" />
-      </Field>
-
-      <Field label="Senha" hint="mín. 6 caracteres" required>
-        <PasswordInput
-          name="password"
-          autoComplete="new-password"
-          required
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </Field>
-
-      <Field label="Confirmar senha" required>
-        <PasswordInput
-          name="confirmPassword"
-          autoComplete="new-password"
-          required
-          minLength={6}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          error={passwordError}
-        />
-      </Field>
-
-      {state ? (
-        <div
-          className={[
-            'rounded-lg border px-3 py-2 text-sm',
-            state.ok
-              ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-50'
-              : 'border-rose-400/20 bg-rose-500/10 text-rose-100',
-          ].join(' ')}
-        >
-          {state.message}
+      {/* Divisor */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-700" />
         </div>
-      ) : null}
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-slate-900 px-4 text-slate-500">ou cadastre com email</span>
+        </div>
+      </div>
 
-      <SubmitButton />
-    </form>
+      {/* Form tradicional */}
+      <form action={handleSubmit} className="space-y-4">
+        <Field label="Nome completo" required>
+          <Input name="name" type="text" autoComplete="name" required placeholder="Seu nome completo" />
+        </Field>
+
+        <Field label="Email" required>
+          <Input name="email" type="email" autoComplete="email" required placeholder="voce@exemplo.com" />
+        </Field>
+
+        <Field label="Senha" hint="mín. 6 caracteres" required>
+          <PasswordInput
+            name="password"
+            autoComplete="new-password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </Field>
+
+        <Field label="Confirmar senha" required>
+          <PasswordInput
+            name="confirmPassword"
+            autoComplete="new-password"
+            required
+            minLength={6}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={passwordError}
+          />
+        </Field>
+
+        {state ? (
+          <div
+            className={[
+              'rounded-lg border px-3 py-2 text-sm',
+              state.ok
+                ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-50'
+                : 'border-rose-400/20 bg-rose-500/10 text-rose-100',
+            ].join(' ')}
+          >
+            {state.message}
+          </div>
+        ) : null}
+
+        <SubmitButton />
+      </form>
+    </div>
   )
 }
