@@ -147,7 +147,9 @@ function PlanDistributionChart({ data }: { data: PlanDistributionData[] }) {
                 border: '1px solid #334155',
                 borderRadius: '8px',
                 fontSize: '12px',
+                color: '#f1f5f9',
               }}
+              itemStyle={{ color: '#f1f5f9' }}
               formatter={(value, name) => {
                 const total = data.reduce((acc, item) => acc + item.value, 0)
                 const percent = total > 0 ? ((Number(value) / total) * 100).toFixed(0) : 0
