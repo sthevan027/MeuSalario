@@ -137,8 +137,9 @@ function PlanDistributionChart({ data }: { data: PlanDistributionData[] }) {
               label={({ name, percent, cx, cy, midAngle, outerRadius }) => {
                 const RADIAN = Math.PI / 180
                 const radius = (outerRadius as number) + 25
-                const x = (cx as number) + radius * Math.cos(-midAngle * RADIAN)
-                const y = (cy as number) + radius * Math.sin(-midAngle * RADIAN)
+                const angle = midAngle ?? 0
+                const x = (cx as number) + radius * Math.cos(-angle * RADIAN)
+                const y = (cy as number) + radius * Math.sin(-angle * RADIAN)
                 return (
                   <text
                     x={x}
