@@ -48,3 +48,33 @@ export async function requireAdmin() {
   return profile
 }
 
+export type UserIdentity = {
+  provider: string
+  id: string
+}
+
+/**
+ * Retorna as identidades (providers OAuth) vinculadas ao usuário
+ */
+export async function getUserIdentities(): Promise<UserIdentity[]> {
+  const supabase = createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user || !user.identities) return []
+
+  return user.identities.map((identity) => ({
+    provider: identity.provider,
+    id: identity.id,
+  }))
+}
+
+/**
+ * Verifica se o usuário tem Google vinculado
+ */
+export async function isGoogleLinked(): Promise<boolean> {
+  const identities = await getUserIdentities()
+  return identities.some((i) => i.provider === 'google')
+}
+

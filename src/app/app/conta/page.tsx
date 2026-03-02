@@ -1,11 +1,15 @@
 import { SubscribeButtons } from '@/components/billing/SubscribeButtons'
 import { ManageSubscription } from '@/components/billing/ManageSubscription'
 import { CancelSubscription } from '@/components/billing/CancelSubscription'
+import { LinkedAccounts } from '@/components/account/LinkedAccounts'
 import { getDisplayName } from '@/lib/greetings'
-import { requireUser } from '@/lib/auth/profile'
+import { requireUser, isGoogleLinked } from '@/lib/auth/profile'
 
 export default async function ContaPage() {
-  const profile = await requireUser()
+  const [profile, googleLinked] = await Promise.all([
+    requireUser(),
+    isGoogleLinked(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -30,6 +34,9 @@ export default async function ContaPage() {
           </div>
         </div>
       </div>
+
+      {/* Contas vinculadas (Google, etc) */}
+      <LinkedAccounts isGoogleLinked={googleLinked} userEmail={profile.email} />
 
       {/* Info do plano */}
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm">
