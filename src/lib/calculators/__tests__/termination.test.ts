@@ -156,14 +156,17 @@ describe('simulateTermination', () => {
   describe('totais', () => {
     it('deve calcular total bruto e líquido corretamente', () => {
       const result = simulateTermination(baseInput)
-      expect(result.totalBruto).toBeGreaterThan(0)
+      expect(result.totalBruto).toBeDefined()
+      expect(result.totalBruto!).toBeGreaterThan(0)
       expect(result.total).toBeGreaterThan(0)
-      expect(result.total).toBeLessThanOrEqual(result.totalBruto)
+      expect(result.total).toBeLessThanOrEqual(result.totalBruto!)
     })
 
     it('total líquido deve ser total bruto menos descontos', () => {
       const result = simulateTermination(baseInput)
-      expect(result.total).toBeCloseTo(result.totalBruto - result.totalDescontos, 2)
+      expect(result.totalBruto).toBeDefined()
+      expect(result.totalDescontos).toBeDefined()
+      expect(result.total).toBeCloseTo(result.totalBruto! - result.totalDescontos!, 2)
     })
   })
 
