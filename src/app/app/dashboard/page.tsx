@@ -19,6 +19,11 @@ const CltVsPjChart = dynamic(
   { ssr: false }
 )
 
+const feedbackEmail = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || 'suporte@meusalario.com'
+const feedbackMailto = `mailto:${feedbackEmail}?subject=${encodeURIComponent('Feedback do MeuSalário')}&body=${encodeURIComponent(
+  'Olá, equipe!\n\nQuero compartilhar este feedback:\n- \n\nContexto:\n- Página/fluxo: dashboard\n\nObrigado!'
+)}`
+
 type SimulationRow = {
   created_at: string
   contract_type: 'clt' | 'pj'
@@ -287,6 +292,31 @@ export default async function DashboardPage() {
         </div>
       ) : null}
 
+      <section className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Atualizações & Feedback</h2>
+            <p className="mt-1 text-sm text-slate-300">
+              Acompanhe as novidades mais recentes e envie sugestões direto por email.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/app/atualizacoes"
+              className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+            >
+              Ver atualizações
+            </Link>
+            <Link
+              href={feedbackMailto}
+              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-teal-600"
+            >
+              Enviar feedback
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* 4 cards: mesmo estilo, só o texto com cor */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
@@ -382,4 +412,3 @@ export default async function DashboardPage() {
     </div>
   )
 }
-
