@@ -38,7 +38,7 @@ export function SubscribeButtons() {
       if (!res.ok) return
 
       const data = await res.json()
-      if (typeof data.savingsPercent === 'number' && data.savingsPercent > 0) {
+      if (typeof data.savingsPercent === 'number' && data.savingsPercent >= 0) {
         setDiscountPercent(data.savingsPercent)
       }
     } catch {
@@ -97,7 +97,7 @@ export function SubscribeButtons() {
             {loading === 'year' ? 'Abrindo...' : 'Assinar Pro (anual)'}
           </Button>
           <div className="absolute -top-2 right-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-            -{discountPercent ?? 17}%
+            {discountPercent === null ? '...' : `-${discountPercent}%`}
           </div>
         </div>
       </div>
