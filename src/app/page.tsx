@@ -291,6 +291,7 @@ export default async function HomePage() {
                   <div><Link href="/como-funciona" className="transition-colors hover:text-emerald-400">Como funciona</Link></div>
                   <div><Link href="/planos" className="transition-colors hover:text-emerald-400">Planos</Link></div>
                   <div><Link href="/faq" className="transition-colors hover:text-emerald-400">FAQ</Link></div>
+                  <div><Link href="/atualizacoes" className="transition-colors hover:text-emerald-400">Atualizações</Link></div>
                 </div>
               </div>
               
