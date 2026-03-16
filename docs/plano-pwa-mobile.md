@@ -1,4 +1,6 @@
-# Plano de Lançamento PWA + Redesign Mobile
+# Plano de Lançamento PWA + Redesign Mobile (alinhado à main atual)
+
+> Atualizado para refletir o estado atual da branch principal do projeto (stack Next.js 14 + React 18 + Vitest).
 
 ## Objetivo
 Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e navegação mobile otimizada, com foco em:
@@ -12,6 +14,15 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 2. Priorizar compatibilidade com o que já está validado.
 3. Garantir cobertura de testes unitários e de integração em cada etapa.
 4. Validar UX mobile em breakpoints reais antes de promover para produção.
+
+## Snapshot técnico da versão atual (main)
+- Framework: **Next.js 14.2.35**.
+- UI: **React 18.3.1**.
+- Testes: **Vitest** (`test:run`).
+- Qualidade: **ESLint via next lint**.
+- Gráficos e UI utilitária: `recharts` e `lucide-react`.
+
+> Decisão: aplicar PWA e melhorias mobile sem ruptura da estrutura existente (App Router atual), evoluindo por camadas.
 
 ## Escopo funcional
 
@@ -89,6 +100,16 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 - Métricas mínimas atingidas (Lighthouse e erros runtime).
 - Aprovação final para produção.
 
+### Fase 5 — Go-live controlado na main
+**Entregas**
+- Publicação gradual (ex.: 10% -> 50% -> 100%).
+- Monitoramento de erros client-side e métricas de navegação mobile.
+- Janela de observação pós-release com checklist de rollback.
+
+**Critérios de saída**
+- Sem crescimento relevante de erro em produção.
+- Instalação PWA e fluxo principal mobile estáveis em produção.
+
 ## Backlog técnico sugerido
 
 ### PWA
@@ -123,11 +144,29 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 - Sem regressão nos fluxos existentes.
 - Documentação de release notes atualizada.
 
+## Etapas práticas de execução (ordem sugerida)
+1. **Preparar base PWA**
+   - Criar manifesto e ícones.
+   - Validar metadata e tema.
+2. **Adicionar Service Worker com escopo mínimo**
+   - Cache shell + estáticos.
+   - Testar atualização de cache por versão.
+3. **Implementar menu inferior mobile**
+   - Componente único (`BottomNav`).
+   - Inserção apenas em telas mobile.
+4. **Criar área de notas de atualização**
+   - Fonte simples (`JSON` ou `MD`).
+   - Tela “Novidades” acessível pelo menu.
+5. **QA e lançamento progressivo**
+   - Rodar lint + testes automatizados.
+   - Verificar instalação e modo offline em dispositivos alvo.
+
 ## Sequência sugerida (sprints curtas)
 1. **Sprint 1:** Fundação PWA (manifest + SW + offline básico).
 2. **Sprint 2:** Menu inferior + ajustes visuais mobile críticos.
 3. **Sprint 3:** Área de notas de atualização + refinamentos.
-4. **Sprint 4:** Hardening, métricas e rollout gradual.
+4. **Sprint 4:** Hardening, métricas e preparo de rollout.
+5. **Sprint 5:** Rollout gradual na main + monitoramento pós-release.
 
 ## Riscos e mitigação
 - **Cache desatualizado no PWA:** usar versionamento e estratégia de invalidação.
