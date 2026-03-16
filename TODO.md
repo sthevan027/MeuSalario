@@ -5,7 +5,7 @@ Lista de tarefas e melhorias para implementar no projeto.
 ## 🎯 Funcionalidades Principais
 
 ### Simulações e Cálculos
-- [ ] **Exportação PDF/CSV** - Permitir exportar simulações em PDF e CSV (mencionado na landing page)
+- [x] **Exportação PDF/CSV** - Permitir exportar simulações em PDF e CSV (mencionado na landing page) ✅
 - [x] **Simulação de 13º salário** - Adicionar cálculo específico para 13º salário proporcional ✅
 - [x] **Simulação de férias** - Cálculo de férias proporcionais e vencidas ✅
 - [ ] **Múltiplos contratos** - Permitir gerenciar múltiplos contratos (ex: CLT + PJ simultâneos)
@@ -110,7 +110,7 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ## 🧪 Testes e Qualidade
 
-- [ ] **Testes unitários** - Testes para funções de cálculo (tax.ts, monthly.ts, etc.)
+- [x] **Testes unitários** - Testes para funções de cálculo (tax.ts, monthly.ts, etc.) ✅
 - [ ] **Testes de integração** - Testes de fluxos completos (criar simulação, salvar, etc.)
 - [ ] **Testes E2E** - Testes end-to-end com Playwright ou Cypress
 - [ ] **Testes de acessibilidade** - Testes automatizados de acessibilidade
@@ -154,11 +154,11 @@ Lista de tarefas e melhorias para implementar no projeto.
 ## Priorização Sugerida
 
 ### Alta Prioridade 🚨
-1. Exportação PDF/CSV (já mencionado na landing)
-2. Debounce nos inputs
-3. Validação e tratamento de erros melhorados
-4. Testes unitários dos cálculos
-5. Modo escuro/claro
+1. Debounce nos inputs
+2. Validação e tratamento de erros melhorados
+3. Modo escuro/claro
+4. Testes de integração dos fluxos principais
+5. Rate limiting e auditoria de ações críticas
 
 ### Média Prioridade 📊
 1. Templates de simulação
@@ -175,9 +175,15 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ---
 
-**Última atualização:** 2026-01-20
+**Última atualização:** 2026-03-16
 
 ## ✅ Recém Implementado (2026-01-21)
+
+### Base e Qualidade (2026-03-16)
+- ✅ Exportação PDF/CSV disponível na interface
+- ✅ Testes unitários ativos para cálculos (Vitest)
+- ✅ UI de assinatura com preços dinâmicos vindos do backend (`/api/billing/prices`)
+- ✅ Redirecionamento da home para dashboard quando sessão ativa é detectada
 
 ### Dashboard e Análises
 - ✅ Gráfico de evolução de descontos (INSS, IRRF, total)
