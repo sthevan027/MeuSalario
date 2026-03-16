@@ -56,6 +56,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           setUsingFallbackPrices(true)
           return
         }
+        if (!res.ok) return
 
         const data = await res.json()
         if (!active) return
@@ -74,6 +75,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         setPriceMonthly(FALLBACK_PRICE_MONTHLY)
         setPriceYearly(FALLBACK_PRICE_YEARLY)
         setUsingFallbackPrices(true)
+      } catch {
+        // Mantém UI utilizável; valor real do checkout continua vindo do backend
       }
     }
 
