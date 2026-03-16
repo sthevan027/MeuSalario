@@ -4,10 +4,8 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Check, Crown, Minus } from 'lucide-react'
 
-const PRICE_MONTHLY = 10
-const PRICE_YEARLY = 95
-const DISCOUNT_REAIS = PRICE_MONTHLY * 12 - PRICE_YEARLY // R$ 25
-const DISCOUNT_PERCENT = Math.round((DISCOUNT_REAIS / (PRICE_MONTHLY * 12)) * 100) // ~21%
+const DEFAULT_PRICE_MONTHLY = 10
+const DEFAULT_PRICE_YEARLY = 95
 
 const FREE_FEATURES = [
   { name: 'Simulação mensal', included: true },
@@ -28,9 +26,45 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const [loading, setLoading] = useState<'month' | 'year' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [priceMonthly, setPriceMonthly] = useState(DEFAULT_PRICE_MONTHLY)
+  const [priceYearly, setPriceYearly] = useState(DEFAULT_PRICE_YEARLY)
+
+  const discountReais = Math.max(0, Number((priceMonthly * 12 - priceYearly).toFixed(2)))
+  const discountPercent =
+    priceMonthly > 0 ? Math.max(0, Math.round((discountReais / (priceMonthly * 12)) * 100)) : 0
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadPrices() {
+      try {
+        const res = await fetch('/api/billing/prices', { cache: 'no-store' })
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (!active) return
+
+        if (typeof data.monthly === 'number' && data.monthly >= 0) {
+          setPriceMonthly(data.monthly)
+        }
+
+        if (typeof data.yearly === 'number' && data.yearly >= 0) {
+          setPriceYearly(data.yearly)
+        }
+      } catch {
+        // Mantém fallback local sem interromper o fluxo
+      }
+    }
+
+    loadPrices()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   // Evita scroll do body quando o modal está aberto
@@ -165,7 +199,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               <div className="mt-0.5 text-xs text-slate-400">Cancele quando quiser</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-white">R$ {PRICE_MONTHLY.toFixed(2)}</div>
+              <div className="text-lg font-bold text-white">R$ {priceMonthly.toFixed(2)}</div>
               <div className="text-xs text-slate-400">por mês</div>
             </div>
           </button>
@@ -180,16 +214,16 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <div className="flex items-center gap-2">
                   <div className="text-sm font-semibold text-white">Anual</div>
                   <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white">
-                    Desconto de R$ {DISCOUNT_REAIS}
+                    Desconto de R$ {discountReais.toFixed(2)}
                   </span>
                 </div>
                 <div className="text-xs text-slate-400">
-                  Economize {DISCOUNT_PERCENT}% · R$ {(PRICE_YEARLY / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                  Economize {discountPercent}% · R$ {(priceYearly / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-white">R$ {PRICE_YEARLY.toFixed(2)}</div>
+              <div className="text-lg font-bold text-white">R$ {priceYearly.toFixed(2)}</div>
               <div className="text-xs text-slate-400">por ano</div>
             </div>
           </button>
