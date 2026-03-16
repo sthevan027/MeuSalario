@@ -28,6 +28,12 @@ const navigation = [
     iconName: 'scale' as const,
     free: false, // Pro only
   },
+  {
+    name: 'Atualizações',
+    href: '/app/atualizacoes',
+    iconName: 'fileText' as const,
+    free: true, // Disponível para Free e Pro
+  },
 ]
 
 // Grupo de simulações (expansível)
