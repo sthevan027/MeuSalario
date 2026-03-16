@@ -1,22 +1,9 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { QuickSimulator } from '@/components/public/QuickSimulator'
 import { Header } from '@/components/layout/Header'
 import { Calculator, TrendingUp, BarChart3, FileText, Zap, History } from 'lucide-react'
-import { isSupabaseConfigured } from '@/lib/env'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export default async function HomePage() {
-  // Se já estiver autenticado, não mostra LP: manda direto pro app.
-  if (isSupabaseConfigured()) {
-    const supabase = createSupabaseServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (user) redirect('/app/dashboard')
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />

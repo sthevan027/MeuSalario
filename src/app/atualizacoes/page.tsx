@@ -36,6 +36,12 @@ const releaseNotes = [
   },
 ] as const
 
+
+const feedbackEmail = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || 'suporte@meusalario.com'
+const feedbackSubject = encodeURIComponent('Feedback do MeuSalário')
+const feedbackBody = encodeURIComponent('Olá, equipe!\n\nGostaria de sugerir a seguinte melhoria no app:\n- \n\nContexto:\n- Página/fluxo: \n- Impacto: \n\nObrigado!')
+const feedbackMailto = `mailto:${feedbackEmail}?subject=${feedbackSubject}&body=${feedbackBody}`
+
 export default function AtualizacoesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -89,6 +95,13 @@ export default function AtualizacoesPage() {
             <p className="text-sm text-slate-200 sm:text-base">
               Quer sugerir a próxima melhoria? Envie feedback e priorizaremos nas próximas versões.
             </p>
+            <div className="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
+              <Link
+                href={feedbackMailto}
+                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-teal-600"
+              >
+                Enviar feedback por email
+              </Link>
             <div className="mt-4">
               <Link
                 href="/faq"
