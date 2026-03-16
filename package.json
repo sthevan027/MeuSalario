@@ -2,6 +2,7 @@
   "name": "meusalario",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=18.16.0",
     "npm": ">=9.0.0"
