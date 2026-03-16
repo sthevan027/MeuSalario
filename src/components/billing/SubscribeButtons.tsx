@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 
 async function startCheckout(interval: 'month' | 'year') {
@@ -30,6 +30,25 @@ async function startCheckout(interval: 'month' | 'year') {
 export function SubscribeButtons() {
   const [loading, setLoading] = useState<'month' | 'year' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [discountPercent, setDiscountPercent] = useState<number | null>(null)
+
+  async function loadDiscount() {
+    try {
+      const res = await fetch('/api/billing/prices', { cache: 'no-store' })
+      if (!res.ok) return
+
+      const data = await res.json()
+      if (typeof data.savingsPercent === 'number' && data.savingsPercent >= 0) {
+        setDiscountPercent(data.savingsPercent)
+      }
+    } catch {
+      // Silencioso: mantém fallback visual
+    }
+  }
+
+  useEffect(() => {
+    void loadDiscount()
+  }, [])
 
   return (
     <div className="space-y-3">
@@ -78,11 +97,10 @@ export function SubscribeButtons() {
             {loading === 'year' ? 'Abrindo...' : 'Assinar Pro (anual)'}
           </Button>
           <div className="absolute -top-2 right-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-            -17%
+            {discountPercent === null ? '...' : `-${discountPercent}%`}
           </div>
         </div>
       </div>
     </div>
   )
 }
-

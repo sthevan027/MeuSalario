@@ -6,10 +6,62 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAppRoute = pathname.startsWith('/app')
   const isAdminRoute = pathname.startsWith('/admin')
+  const isRootRoute = pathname === '/'
   
   // Rotas públicas não precisam de verificação - melhora performance
-  if (!isAppRoute && !isAdminRoute) {
+  // Exceção: na raiz (/) tentamos restaurar sessão e redirecionar para dashboard.
+  if (!isAppRoute && !isAdminRoute && !isRootRoute) {
     return NextResponse.next()
+  }
+
+  // Na home (/), se usuário já tiver sessão válida/renovável, entra direto no app.
+  // Isso evita percepção de "perda de login" ao reabrir o site.
+  if (isRootRoute) {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.next()
+    }
+
+    const response = NextResponse.next({ request: { headers: request.headers } })
+    const supabase = createServerClient(
+      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+          },
+        },
+      }
+    )
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/app/dashboard'
+        url.search = ''
+
+        const redirectResponse = NextResponse.redirect(url)
+        response.cookies.getAll().forEach((cookie) => {
+          redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+        })
+
+        return redirectResponse
+      }
+    } catch {
+      // Home segue pública quando não houver sessão válida.
+    }
+
+    return response
   }
 
   // /app: auth é feita no layout (requireUser) para evitar loop de redirect no Edge
@@ -100,4 +152,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-
