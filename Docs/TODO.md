@@ -2,10 +2,23 @@
 
 Lista de tarefas e melhorias para implementar no projeto.
 
+## 📊 Resumo do Progresso
+
+| Categoria | Concluído | Pendente | Total |
+|-----------|-----------|----------|-------|
+| Funcionalidades Principais | 6 | 18 | 24 |
+| Experiência do Usuário | 0 | 19 | 19 |
+| Segurança e Dados | 0 | 7 | 7 |
+| Monetização | 5 | 2 | 7 |
+| Testes e Qualidade | 0 | 7 | 7 |
+| **Total** | **11** | **53** | **64** |
+
+---
+
 ## 🎯 Funcionalidades Principais
 
 ### Simulações e Cálculos
-- [ ] **Exportação PDF/CSV** - Permitir exportar simulações em PDF e CSV (mencionado na landing page)
+- [ ] **Exportação PDF/CSV** - Permitir exportar simulações em PDF e CSV ⚠️ *Mencionado na landing page, implementação pendente*
 - [x] **Simulação de 13º salário** - Adicionar cálculo específico para 13º salário proporcional ✅
 - [x] **Simulação de férias** - Cálculo de férias proporcionais e vencidas ✅
 - [ ] **Múltiplos contratos** - Permitir gerenciar múltiplos contratos (ex: CLT + PJ simultâneos)
@@ -13,11 +26,11 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Descontos variáveis** - Permitir adicionar descontos customizados (vale transporte, plano de saúde, etc.)
 
 ### Dashboard e Análises
-- [x] **Gráficos adicionais** - Adicionar gráficos de evolução de descontos, comparação CLT vs PJ ao longo do tempo ✅
+- [x] **Gráficos adicionais** - Evolução de descontos, comparação CLT vs PJ ao longo do tempo ✅
 - [x] **Previsão anual** - Projeção de recebimentos ao longo do ano ✅
-- [x] **Métricas de economia** - Mostrar quanto foi "economizado" comparando com estimativas anteriores ✅
+- [x] **Métricas de economia** - Comparando com estimativas anteriores ✅
 - [ ] **Alertas e notificações** - Alertar sobre mudanças significativas nos valores
-- [x] **Filtros no histórico** - Filtrar histórico por tipo de contrato, período, valor mínimo/máximo ✅
+- [x] **Filtros no histórico** - Filtrar por tipo de contrato, período, valor mínimo/máximo ✅
 - [x] **Estatísticas resumidas** - Média, mediana, maior/menor salário líquido no período ✅
 
 ### PJ - Melhorias Específicas
@@ -45,6 +58,8 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Simulação de acordo trabalhista** - Calcular valores em caso de acordo
 - [ ] **Comparação de cenários de rescisão** - Comparar diferentes tipos de rescisão
 
+---
+
 ## 🚀 Experiência do Usuário
 
 ### Interface
@@ -71,7 +86,7 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Contraste de cores** - Verificar e ajustar contraste para WCAG AA
 - [ ] **Foco visível** - Melhorar indicadores de foco em elementos interativos
 
-### Pendente
+### Performance
 - [ ] **Debounce nos inputs** - Reduzir cálculos durante digitação
 - [ ] **Service Worker (PWA)** - Transformar em Progressive Web App
 - [ ] **Bundle analysis** - Analisar e otimizar tamanho do bundle
@@ -79,6 +94,8 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Database indexes** - Adicionar índices para queries frequentes
 - [ ] **Query optimization** - Otimizar queries complexas do dashboard
 - [ ] **Infinite scroll** - Implementar scroll infinito no histórico (se necessário)
+
+---
 
 ## 🔐 Segurança e Dados
 
@@ -90,15 +107,19 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Validação de inputs** - Validação mais rigorosa no servidor
 - [ ] **Sanitização de dados** - Garantir que dados não sejam maliciosos
 
+---
+
 ## 💰 Monetização e Planos
 
-- [x] **Plano anual com desconto** - Implementar desconto para plano anual ✅
-- [x] **Trial estendido** - Oferecer trial de 14 dias para plano Pro ✅
-- [x] **Upgrade/downgrade** - Permitir mudança de plano a qualquer momento ✅
-- [x] **Cancelamento com retenção** - Fluxo de cancelamento com ofertas de retenção ✅
+- [x] **Plano anual com desconto** - 17% de economia ✅
+- [x] **Trial estendido** - Trial de 14 dias para plano Pro ✅
+- [x] **Upgrade/downgrade** - Mudança de plano a qualquer momento ✅
+- [x] **Cancelamento com retenção** - Fluxo com ofertas de retenção (20% ou 30%) ✅
 - [x] **Cupons de desconto** - Sistema de códigos promocionais ✅
 - [ ] **Plano empresarial** - Adicionar plano para empresas (múltiplos usuários)
 - [ ] **Limites do plano Free** - Definir limites claros (ex: 5 simulações/mês)
+
+---
 
 ## 📱 Mobile e Apps
 
@@ -107,6 +128,8 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Notificações push** - Notificar sobre novas funcionalidades ou lembretes
 - [ ] **Widgets** - Widgets para home screen (iOS/Android)
 - [ ] **Deep linking** - Links diretos para simulações específicas
+
+---
 
 ## 🧪 Testes e Qualidade
 
@@ -118,11 +141,15 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Monitoramento de erros** - Integrar Sentry ou similar
 - [ ] **Analytics** - Adicionar analytics (Google Analytics, Plausible, etc.)
 
+---
+
 ## 🌐 Internacionalização
 
 - [ ] **Suporte a múltiplos idiomas** - i18n para inglês, espanhol
 - [ ] **Suporte a outras moedas** - Permitir visualização em outras moedas
 - [ ] **Regiões diferentes** - Adaptar cálculos para outros países (futuro)
+
+---
 
 ## 🔗 Integrações
 
@@ -130,6 +157,8 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **API pública** - API para desenvolvedores integrarem
 - [ ] **Webhooks** - Webhooks para eventos (nova simulação, etc.)
 - [ ] **Integração com calendário** - Lembretes de datas importantes (vencimento de férias, etc.)
+
+---
 
 ## 🎨 Marketing e Growth
 
@@ -139,6 +168,8 @@ Lista de tarefas e melhorias para implementar no projeto.
 - [ ] **Email marketing** - Campanhas de email para reativação
 - [ ] **Social proof** - Depoimentos e avaliações de usuários
 - [ ] **Calculadora pública** - Versão simplificada para compartilhamento
+
+---
 
 ## 🐛 Bugs e Melhorias Técnicas
 
@@ -151,35 +182,58 @@ Lista de tarefas e melhorias para implementar no projeto.
 
 ---
 
-## Priorização Sugerida
+## 🚨 Priorização Sugerida
 
-### Alta Prioridade 🚨
-1. Exportação PDF/CSV (já mencionado na landing)
-2. Debounce nos inputs
-3. Validação e tratamento de erros melhorados
-4. Testes unitários dos cálculos
-5. Modo escuro/claro
+### Alta Prioridade (Próximas Sprints)
+| Item | Motivo |
+|------|--------|
+| Exportação PDF/CSV | Já prometido na landing page |
+| Debounce nos inputs | Performance e UX |
+| Testes unitários | Confiabilidade dos cálculos |
+| Modo escuro/claro | UX solicitada frequentemente |
+| Validação em tempo real | UX nos formulários |
 
-### Média Prioridade 📊
-1. Templates de simulação
-2. Gráficos adicionais no dashboard
-3. Filtros no histórico
-4. Melhorias em rescisão
-5. PWA básico
+### Média Prioridade
+| Item | Motivo |
+|------|--------|
+| Cálculo de MEI | Demanda do mercado |
+| PWA básico | Instalação mobile |
+| Tooltips informativos | Educação do usuário |
+| Vale transporte (CLT) | Funcionalidade comum |
+| Melhorias em rescisão | Completude do produto |
 
-### Baixa Prioridade 💡
-1. App mobile nativo
-2. Integrações externas
-3. Internacionalização
-4. Programa de afiliados
+### Baixa Prioridade
+| Item | Motivo |
+|------|--------|
+| App mobile nativo | Custo alto, PWA é suficiente |
+| Integrações externas | Demanda baixa |
+| Internacionalização | Foco no mercado BR |
+| Programa de afiliados | Marketing futuro |
 
 ---
 
-**Última atualização:** 2026-01-20
+## 🛠️ Stack Técnica Atual
 
-## ✅ Recém Implementado (2026-01-21)
+- **Frontend:** Next.js 14, React 18, TypeScript 5
+- **Styling:** Tailwind CSS 3, @tailwindcss/forms
+- **Gráficos:** Recharts 3
+- **Backend:** Supabase (Auth, Database)
+- **Pagamentos:** Stripe (principal), Asaas (alternativo)
+- **Validação:** Zod 4
+- **Ícones:** Lucide React
+- **Datas:** date-fns 4
 
-### Dashboard e Análises
+---
+
+**Última atualização:** 2026-02-27
+
+---
+
+## ✅ Histórico de Implementações
+
+### Janeiro 2026
+
+#### Dashboard e Análises (2026-01-21)
 - ✅ Gráfico de evolução de descontos (INSS, IRRF, total)
 - ✅ Gráfico de comparação CLT vs PJ ao longo do tempo
 - ✅ Previsão anual com projeção de recebimentos para os próximos 12 meses
@@ -188,15 +242,14 @@ Lista de tarefas e melhorias para implementar no projeto.
 - ✅ Estatísticas resumidas no dashboard (média, mediana, maior, menor)
 - ✅ Componente DashboardStats com análise de tendências
 
-### Simulações
+#### Simulações (2026-01-21)
 - ✅ Simulação de 13º salário (CLT) com cálculo de 1ª e 2ª parcela
 - ✅ Simulação de férias (CLT) com férias vencidas e proporcionais + 1/3
 - ✅ Páginas dedicadas para 13º salário e férias
 - ✅ Integração com histórico e salvamento de simulações
 - ✅ Campo "Salário base" preenchido automaticamente com último valor do histórico
 
-### Monetização (2026-01-20)
-
+#### Monetização (2026-01-20)
 - ✅ Plano anual com desconto (17% de economia)
 - ✅ Trial de 14 dias para novos clientes
 - ✅ Sistema de upgrade/downgrade entre mensal e anual
