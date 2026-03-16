@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FeedbackForm } from '@/components/FeedbackForm'
 
 const releaseNotes = [
   {
@@ -34,13 +35,6 @@ const releaseNotes = [
     kind: 'Feature',
   },
 ] as const
-
-const feedbackEmail = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || 'suporte@meusalario.com'
-const feedbackSubject = encodeURIComponent('Feedback do MeuSalário (Área Logada)')
-const feedbackBody = encodeURIComponent(
-  'Olá, equipe!\n\nGostaria de sugerir a seguinte melhoria no app:\n- \n\nContexto:\n- Página/fluxo: \n- Impacto: \n\nObrigado!'
-)
-const feedbackMailto = `mailto:${feedbackEmail}?subject=${feedbackSubject}&body=${feedbackBody}`
 
 export default function AtualizacoesAppPage() {
   return (
@@ -87,17 +81,14 @@ export default function AtualizacoesAppPage() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 p-6 text-center">
-        <p className="text-sm text-slate-200 sm:text-base">
-          Quer sugerir a próxima melhoria? Envie feedback por email e priorizaremos nas próximas versões.
-        </p>
-        <div className="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
-          <Link
-            href={feedbackMailto}
-            className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-teal-600"
-          >
-            Enviar feedback por email
-          </Link>
+      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 p-6">
+        <div className="mb-4 text-center">
+          <p className="text-sm text-slate-200 sm:text-base">
+            Quer sugerir a próxima melhoria? Envie seu feedback diretamente aqui.
+          </p>
+        </div>
+        <FeedbackForm />
+        <div className="mt-4 text-center">
           <Link
             href="/app/conta"
             className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
