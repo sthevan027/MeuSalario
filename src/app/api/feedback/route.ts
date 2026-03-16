@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { z } from 'zod'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 const feedbackSchema = z.object({
   suggestion: z.string().min(1, 'Sugestão é obrigatória'),
@@ -13,6 +13,10 @@ const feedbackSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  if (!resend) {
+    return NextResponse.json({ error: 'Serviço de email não configurado' }, { status: 500 })
+  }
+
   try {
     const body = await request.json()
     const { suggestion, context, impact, page, userEmail } = feedbackSchema.parse(body)
