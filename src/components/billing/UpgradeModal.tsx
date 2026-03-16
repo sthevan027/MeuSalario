@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Check, Crown, Minus } from 'lucide-react'
 
+const FALLBACK_PRICE_MONTHLY = 10
+const FALLBACK_PRICE_YEARLY = 95
+
 const FREE_FEATURES = [
   { name: 'Simulação mensal', included: true },
   { name: 'Dashboard básico', included: true },
@@ -25,6 +28,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const [mounted, setMounted] = useState(false)
   const [priceMonthly, setPriceMonthly] = useState<number | null>(null)
   const [priceYearly, setPriceYearly] = useState<number | null>(null)
+  const [usingFallbackPrices, setUsingFallbackPrices] = useState(false)
 
   const hasLoadedPrices = priceMonthly !== null && priceYearly !== null
   const discountReais = hasLoadedPrices
@@ -45,7 +49,13 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     async function loadPrices() {
       try {
         const res = await fetch('/api/billing/prices', { cache: 'no-store' })
-        if (!res.ok) return
+        if (!res.ok) {
+          if (!active) return
+          setPriceMonthly(FALLBACK_PRICE_MONTHLY)
+          setPriceYearly(FALLBACK_PRICE_YEARLY)
+          setUsingFallbackPrices(true)
+          return
+        }
 
         const data = await res.json()
         if (!active) return
@@ -57,8 +67,13 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         if (typeof data.yearly === 'number' && data.yearly >= 0) {
           setPriceYearly(data.yearly)
         }
+
+        setUsingFallbackPrices(false)
       } catch {
-        // Mantém UI utilizável; valor real do checkout continua vindo do backend
+        if (!active) return
+        setPriceMonthly(FALLBACK_PRICE_MONTHLY)
+        setPriceYearly(FALLBACK_PRICE_YEARLY)
+        setUsingFallbackPrices(true)
       }
     }
 
@@ -236,6 +251,12 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             </div>
           </button>
         </div>
+
+        {usingFallbackPrices && (
+          <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-500/10 p-2 text-center text-xs text-amber-200">
+            Exibindo valores estimados temporários. O valor final é confirmado no checkout.
+          </div>
+        )}
 
         {/* Nota */}
         <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
