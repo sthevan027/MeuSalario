@@ -26,6 +26,9 @@ export function Header() {
           <Link href="/faq" className="text-slate-300 transition-colors hover:text-emerald-400">
             FAQ
           </Link>
+          <Link href="/atualizacoes" className="text-slate-300 transition-colors hover:text-emerald-400">
+            Atualizações
+          </Link>
         </nav>
         
         {/* Desktop Buttons */}
@@ -78,6 +81,13 @@ export function Header() {
               className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-400"
             >
               FAQ
+            </Link>
+            <Link 
+              href="/atualizacoes" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-400"
+            >
+              Atualizações
             </Link>
             <div className="my-2 border-t border-white/10" />
             <Link 
