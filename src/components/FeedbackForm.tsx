@@ -4,11 +4,21 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
-export function FeedbackForm() {
+type FeedbackFormProps = {
+  initialPage?: string
+  showPageField?: boolean
+  submitLabel?: string
+}
+
+export function FeedbackForm({
+  initialPage = '',
+  showPageField = true,
+  submitLabel = 'Enviar Feedback',
+}: FeedbackFormProps) {
   const [suggestion, setSuggestion] = useState('')
   const [context, setContext] = useState('')
   const [impact, setImpact] = useState('')
-  const [page, setPage] = useState('')
+  const [page, setPage] = useState(initialPage)
   const [userEmail, setUserEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -90,18 +100,20 @@ export function FeedbackForm() {
         />
       </div>
 
-      <div>
-        <label htmlFor="page" className="block text-sm font-medium text-slate-300">
-          Página/Fluxo
-        </label>
-        <Input
-          id="page"
-          value={page}
-          onChange={(e) => setPage(e.target.value)}
-          placeholder="Onde isso acontece? (ex: Dashboard, Simulação)"
-          className="mt-1"
-        />
-      </div>
+      {showPageField ? (
+        <div>
+          <label htmlFor="page" className="block text-sm font-medium text-slate-300">
+            Página/Fluxo
+          </label>
+          <Input
+            id="page"
+            value={page}
+            onChange={(e) => setPage(e.target.value)}
+            placeholder="Onde isso acontece? (ex: Dashboard, Simulação)"
+            className="mt-1"
+          />
+        </div>
+      ) : null}
 
       <div>
         <label htmlFor="impact" className="block text-sm font-medium text-slate-300">
@@ -138,7 +150,7 @@ export function FeedbackForm() {
         disabled={isSubmitting || !suggestion.trim()}
         className="w-full"
       >
-        {isSubmitting ? 'Enviando...' : 'Enviar Feedback'}
+        {isSubmitting ? 'Enviando...' : submitLabel}
       </Button>
     </form>
   )
