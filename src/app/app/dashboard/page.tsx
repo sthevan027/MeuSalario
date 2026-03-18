@@ -8,6 +8,7 @@ import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
 import { LazyChart } from '@/components/charts/LazyChart'
+import { FeedbackForm } from '@/components/FeedbackForm'
 
 const MonthlyNetChart = dynamic(
   () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
@@ -18,11 +19,6 @@ const CltVsPjChart = dynamic(
   () => import('@/components/charts/CltVsPjChart').then(mod => ({ default: mod.CltVsPjChart })),
   { ssr: false }
 )
-
-const feedbackEmail = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || 'suporte@meusalario.com'
-const feedbackMailto = `mailto:${feedbackEmail}?subject=${encodeURIComponent('Feedback do MeuSalário')}&body=${encodeURIComponent(
-  'Olá, equipe!\n\nQuero compartilhar este feedback:\n- \n\nContexto:\n- Página/fluxo: dashboard\n\nObrigado!'
-)}`
 
 type SimulationRow = {
   created_at: string
@@ -293,26 +289,27 @@ export default async function DashboardPage() {
       ) : null}
 
       <section className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="lg:max-w-md">
             <h2 className="text-lg font-semibold text-white">Atualizações & Feedback</h2>
             <p className="mt-1 text-sm text-slate-300">
-              Acompanhe as novidades mais recentes e envie sugestões direto por email.
+              Acompanhe as novidades mais recentes e envie sugestões direto pelo formulário integrado.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/app/atualizacoes"
+                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Ver atualizações
+              </Link>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/app/atualizacoes"
-              className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-            >
-              Ver atualizações
-            </Link>
-            <Link
-              href={feedbackMailto}
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-teal-600"
-            >
-              Enviar feedback
-            </Link>
+          <div className="w-full lg:max-w-xl">
+            <FeedbackForm
+              initialPage="Dashboard"
+              showPageField={false}
+              submitLabel="Enviar sugestão"
+            />
           </div>
         </div>
       </section>

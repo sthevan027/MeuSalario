@@ -3,7 +3,7 @@ import { FeedbackForm } from '@/components/FeedbackForm'
 
 const releaseNotes = [
   {
-    version: 'v0.9.4',
+    version: 'v1.2.1',
     date: '2026-03-16',
     title: 'Sessão e experiência de login na home',
     items: [
@@ -13,7 +13,7 @@ const releaseNotes = [
     kind: 'Correção',
   },
   {
-    version: 'v0.9.3',
+    version: 'v1.2.0',
     date: '2026-03-15',
     title: 'Preços dinâmicos no Billing',
     items: [
@@ -24,7 +24,7 @@ const releaseNotes = [
     kind: 'Melhoria',
   },
   {
-    version: 'v0.9.2',
+    version: 'v1.1.0',
     date: '2026-01-21',
     title: 'Dashboard e simuladores expandidos',
     items: [

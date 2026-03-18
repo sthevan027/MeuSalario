@@ -3,11 +3,12 @@
 > Atualizado para refletir o estado atual da branch principal do projeto (stack Next.js 14 + React 18 + Vitest).
 
 ## Objetivo
-Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e navegação mobile otimizada, com foco em:
+Entregar o **MeuSalário** como um app com experiência de instalação (PWA), redesign visual mobile e trilha segura de publicação, com foco em:
 - instalação no celular;
 - navegação por menu inferior com ícones;
+- evolução do design visual sem quebrar fluxos já validados;
 - área dedicada para notas de atualização (release notes);
-- estabilidade e baixo risco de regressão.
+- versões de teste para coletar feedback antes do rollout total.
 
 ## Princípios de execução
 1. Implementar em etapas pequenas e reversíveis.
@@ -41,6 +42,12 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 - Ajustes de espaçamento, tipografia e áreas de toque (min. 44px).
 - Estados de foco/ativo claros para acessibilidade.
 - Revisão de contraste e legibilidade.
+
+### 2.1) Redesign visual (camada incremental)
+- Atualização de tokens visuais (cores, elevação, bordas e densidade).
+- Revisão de componentes mais usados no mobile (cards, formulários, botões e tabelas responsivas).
+- Padronização de feedback visual para erro, sucesso, loading e bloqueio.
+- Preservar regras de negócio e comportamento funcional já homologado.
 
 ### 3) Notas de atualização
 - Página/área “Novidades” no app.
@@ -95,10 +102,21 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 - Testes de regressão e smoke por dispositivo.
 - Revisão de acessibilidade e desempenho.
 - Checklist de rollout com plano de rollback.
+- Pacote de validação para versão de testes (QA interno + beta).
 
 **Critérios de saída**
 - Métricas mínimas atingidas (Lighthouse e erros runtime).
 - Aprovação final para produção.
+
+### Fase 4.1 — Versão para testes e melhorias (beta)
+**Entregas**
+- Canal de release de testes com changelog dedicado.
+- Instrumentação para coletar feedback (formulário in-app e eventos de uso).
+- Lista priorizada de ajustes rápidos pós-feedback.
+
+**Critérios de saída**
+- Feedback consolidado em até 1 ciclo curto.
+- Correções críticas aplicadas e validadas por testes automatizados.
 
 ### Fase 5 — Go-live controlado na main
 **Entregas**
@@ -125,12 +143,20 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 - [ ] Ajustar safe-area (`env(safe-area-inset-bottom)`).
 - [ ] Revisar componentes para toque e legibilidade.
 - [ ] Testar em 360x800, 390x844, 412x915.
+- [ ] Atualizar tokens de design mobile (cores, raio, sombra, espaçamentos).
+- [ ] Homologar contraste e estados de interação por componente.
 
 ### Notas de atualização
 - [ ] Definir schema (`version`, `date`, `items`, `type`).
 - [ ] Criar parser/render (JSON/MD).
 - [ ] Adicionar filtro “mais recentes”.
 - [ ] Preparar template de publicação por release.
+
+### Versão de testes e melhorias contínuas
+- [ ] Criar trilha de release `beta` com critérios de entrada/saída.
+- [ ] Habilitar coleta de feedback in-app para usuários convidados.
+- [ ] Definir SLA para correções críticas (24h/48h).
+- [ ] Publicar resumo semanal de melhorias aplicadas.
 
 ## Testes e qualidade (obrigatório por etapa)
 - Unitários: componentes de navegação, parser de notas, utilitários de PWA.
@@ -157,15 +183,18 @@ Entregar o **MeuSalário** como um app com experiência de instalação (PWA) e 
 4. **Criar área de notas de atualização**
    - Fonte simples (`JSON` ou `MD`).
    - Tela “Novidades” acessível pelo menu.
-5. **QA e lançamento progressivo**
+5. **Rodar versão beta de testes**
+   - Liberar para grupo controlado.
+   - Coletar feedback e corrigir pontos críticos.
+6. **QA final e lançamento progressivo**
    - Rodar lint + testes automatizados.
    - Verificar instalação e modo offline em dispositivos alvo.
 
 ## Sequência sugerida (sprints curtas)
 1. **Sprint 1:** Fundação PWA (manifest + SW + offline básico).
-2. **Sprint 2:** Menu inferior + ajustes visuais mobile críticos.
-3. **Sprint 3:** Área de notas de atualização + refinamentos.
-4. **Sprint 4:** Hardening, métricas e preparo de rollout.
+2. **Sprint 2:** Menu inferior + redesign visual mobile crítico.
+3. **Sprint 3:** Área de notas de atualização + preparo de beta.
+4. **Sprint 4:** Beta, melhorias guiadas por feedback e hardening.
 5. **Sprint 5:** Rollout gradual na main + monitoramento pós-release.
 
 ## Riscos e mitigação
