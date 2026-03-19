@@ -304,13 +304,6 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
-          <div className="w-full lg:max-w-xl">
-            <FeedbackForm
-              initialPage="Dashboard"
-              showPageField={false}
-              submitLabel="Enviar sugestão"
-            />
-          </div>
         </div>
       </section>
 
