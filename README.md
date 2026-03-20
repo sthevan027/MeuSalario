@@ -46,6 +46,10 @@ Subir o app:
 pnpm dev
 ```
 
+## Documentação de planejamento
+
+- `docs/planejamento-compatibilidade-salarial.md` — proposta da nova atualização de compatibilidade salarial com custo de vida, benefícios e comparação CLT/PJ.
+
 ## Testes
 
 O projeto usa Vitest para testes unitários dos cálculos de impostos.
