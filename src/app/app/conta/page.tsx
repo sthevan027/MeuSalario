@@ -1,15 +1,19 @@
+import Link from 'next/link'
 import { SubscribeButtons } from '@/components/billing/SubscribeButtons'
 import { ManageSubscription } from '@/components/billing/ManageSubscription'
 import { CancelSubscription } from '@/components/billing/CancelSubscription'
 import { LinkedAccounts } from '@/components/account/LinkedAccounts'
 import { getDisplayName } from '@/lib/greetings'
 import { requireUser, isGoogleLinked } from '@/lib/auth/profile'
+import { Shield, Settings } from 'lucide-react'
 
 export default async function ContaPage() {
   const [profile, googleLinked] = await Promise.all([
     requireUser(),
     isGoogleLinked(),
   ])
+
+  const isAdmin = profile.role === 'admin'
 
   return (
     <div className="space-y-6">
@@ -82,6 +86,26 @@ export default async function ContaPage() {
           <ManageSubscription />
           <CancelSubscription />
         </>
+      )}
+
+      {/* Configurações - Admin (mobile e desktop) */}
+      {isAdmin && (
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+            <Settings size={20} />
+            Configurações
+          </h2>
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition-colors hover:bg-white/10 hover:border-emerald-500/30"
+          >
+            <Shield size={20} className="text-emerald-400" />
+            <div className="flex-1">
+              <div className="font-medium text-white">Painel Administrativo</div>
+              <div className="text-xs text-slate-400">Gerenciar usuários e planos</div>
+            </div>
+          </Link>
+        </div>
       )}
     </div>
   )
