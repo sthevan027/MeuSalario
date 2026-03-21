@@ -14,13 +14,25 @@ export type ReleaseNote = {
 
 export const releaseNotes: readonly ReleaseNote[] = [
   {
+    version: 'v1.4.0',
+    date: '2026-03-21',
+    title: 'Compatibilidade salarial com custo de vida',
+    items: [
+      'Nova funcionalidade: descubra se a proposta sustenta sua rotina.',
+      'Simule salário, benefícios (VR/VA, VT, plano de saúde) e custos mensais.',
+      'Classificação objetiva: Confortável, Viável, Apertado ou Inviável.',
+      'Diagnóstico com insights práticos para decisão da oferta.',
+    ],
+    kind: 'Feature',
+  },
+  {
     version: 'v1.3.0',
     date: '2026-03-21',
-    title: 'PWA, menu mobile e compatibilidade salarial',
+    title: 'PWA e expansão mobile',
     items: [
       'App instalável como PWA no celular (Android e iOS).',
       'Menu inferior com navegação por ícones e painel expansível de simulações.',
-      'Nova funcionalidade: compatibilidade salarial com custo de vida.',
+      'Indicador de status offline e aviso quando nova versão está disponível.',
     ],
     kind: 'Feature',
   },

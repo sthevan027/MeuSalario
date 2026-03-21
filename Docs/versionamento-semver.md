@@ -61,6 +61,8 @@ As notas exibidas em `/atualizacoes` e `/app/atualizacoes` seguem esta convenç�
 - **Correção**: incremento de **PATCH**.
 
 Versões atuais publicadas no site:
+- `v1.4.0` (Feature) — Compatibilidade salarial com custo de vida
+- `v1.3.0` (Feature) — PWA e expansão mobile
 - `v1.2.1` (Correção)
 - `v1.2.0` (Melhoria)
 - `v1.1.0` (Feature)
