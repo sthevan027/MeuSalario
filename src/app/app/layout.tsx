@@ -49,6 +49,12 @@ const simulationGroup = {
       free: true,
     },
     {
+      name: 'Compatibilidade Salarial',
+      href: '/app/compatibilidade',
+      iconName: 'calculator' as const,
+      free: true,
+    },
+    {
       name: '13º Salário',
       href: '/app/decimo-terceiro',
       iconName: 'calculator' as const,

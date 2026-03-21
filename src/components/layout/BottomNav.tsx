@@ -19,6 +19,7 @@ export type BottomNavProps = {
 
 const simulationItems = [
   { name: 'Salário Mensal', href: '/app/simulacao', free: true },
+  { name: 'Compatibilidade', href: '/app/compatibilidade', free: true },
   { name: '13º Salário', href: '/app/decimo-terceiro', free: false },
   { name: 'Férias', href: '/app/ferias', free: false },
   { name: 'Rescisão', href: '/app/rescisao', free: false },
