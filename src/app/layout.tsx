@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { RegisterSW } from '@/components/pwa/RegisterSW'
+import { OfflineIndicator } from '@/components/pwa/OfflineIndicator'
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: '#10b981',
+  maximumScale: 5,
+  userScalable: true,
 }
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://meu-salario-lime.vercel.app'
@@ -42,12 +46,25 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  manifest: '/manifest.webmanifest',
+  icons: {
+    apple: '/icons/icon-192.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'MeuSalario',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className="font-sans" suppressHydrationWarning>{children}</body>
+      <body className="font-sans" suppressHydrationWarning>
+        <OfflineIndicator />
+        {children}
+        <RegisterSW />
+      </body>
     </html>
   )
 }
