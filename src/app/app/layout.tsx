@@ -7,6 +7,7 @@ import { NavLink } from '@/components/layout/NavLink'
 import { CollapsibleNavGroup } from '@/components/layout/CollapsibleNavGroup'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { MobileMenu } from '@/components/layout/MobileMenu'
+import { BottomNav } from '@/components/layout/BottomNav'
 import { User, Crown, LogOut, Shield } from 'lucide-react'
 
 const navigation = [
@@ -75,7 +76,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Mobile Menu */}
+      {/* Bottom Nav - menu inferior mobile */}
+      <BottomNav isPro={isPro} />
+
+      {/* Mobile Menu - hambúrguer para overflow */}
       <MobileMenu
         isPro={isPro}
         isAdmin={isAdmin}
@@ -174,8 +178,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-x-hidden lg:ml-64">
+      {/* Main content - padding bottom para BottomNav no mobile */}
+      <main className="flex-1 overflow-x-hidden pb-20 lg:ml-64 lg:pb-0">
         <div className="mx-auto max-w-7xl p-4 pt-20 sm:p-6 lg:p-8 lg:pt-8">{children}</div>
       </main>
     </div>
