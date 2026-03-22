@@ -14,6 +14,19 @@ export type ReleaseNote = {
 
 export const releaseNotes: readonly ReleaseNote[] = [
   {
+    version: 'v1.4.1',
+    date: '2026-03-22',
+    title: 'Redesign do menu inferior e animações',
+    items: [
+      'Novo design do menu inferior com cantos arredondados e visual mais limpo.',
+      'Menu lateral removido da área do app — navegação centralizada no bottom nav (mobile e desktop).',
+      'Animação shimmer ao selecionar itens do menu.',
+      'Modal de simulações com arrastar para baixo para fechar.',
+      'Ícones e textos alinhados; círculo translúcido no item selecionado.',
+    ],
+    kind: 'Melhoria',
+  },
+  {
     version: 'v1.4.0',
     date: '2026-03-21',
     title: 'Compatibilidade salarial com custo de vida',
