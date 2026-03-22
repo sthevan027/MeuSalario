@@ -1,5 +1,18 @@
 # Plano de Otimização - MeuSalario
 
+## Melhorias de carregamento (implementadas)
+
+1. **loading.tsx** — Skeletons exibidos imediatamente ao trocar de tela (Dashboard, Simulação, Conta, Histórico, Atualizações), reduzindo a sensação de lentidão.
+2. **React cache()** — `getProfileOrNull` usa `cache()` para evitar chamadas duplicadas de auth + profile na mesma requisição (layout + página).
+3. **Prefetch** — Links do Next.js continuam com prefetch ativo por padrão para pré-carregar rotas ao passar o mouse/ficar visíveis.
+
+### Sobre o delay de 3–4 segundos
+
+Mesmo em desenvolvimento local, a lentidão pode vir de:
+- **Modo dev** — `next dev` é mais lento (recompilação, checagens extras). Testar com `pnpm build && pnpm start`.
+- **Supabase** — latência de rede se o projeto estiver em região distante.
+- **Waterfall de requests** — layout (auth + profile) + página (dados) em sequência. O `cache()` reduz duplicação do profile.
+
 ## Capacidade atual (estimada)
 
 O sistema está hospedado em:

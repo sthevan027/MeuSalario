@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
@@ -10,8 +11,8 @@ export type Profile = {
   name: string | null
 }
 
-/** Busca perfil do usuário. Em React 19+, envolver com cache() para deduplicar na mesma request. */
-export async function getProfileOrNull(): Promise<Profile | null> {
+/** Busca perfil - cache() deduplica chamadas na mesma request (layout + page). */
+export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
   const supabase = createSupabaseServerClient()
   const {
     data: { user },
@@ -26,7 +27,7 @@ export async function getProfileOrNull(): Promise<Profile | null> {
     .single()
 
   return (data as any) ?? null
-}
+})
 
 export async function requireUser() {
   const profile = await getProfileOrNull()

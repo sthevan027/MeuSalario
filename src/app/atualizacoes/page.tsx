@@ -1,42 +1,7 @@
 import Link from 'next/link'
 import { FeedbackForm } from '@/components/FeedbackForm'
+import { releaseNotes, latestVersion } from '@/data/release-notes'
 import { Header } from '@/components/layout/Header'
-
-const releaseNotes = [
-  {
-    version: 'v1.2.1',
-    date: '2026-03-16',
-    title: 'Sessão e experiência de login na home',
-    items: [
-      'Melhoria no fluxo de sessão na raiz (/): usuários autenticados são redirecionados para /app/dashboard.',
-      'Ajustes de propagação de cookies no redirecionamento para reduzir percepção de perda de login.',
-    ],
-    kind: 'Correção',
-  },
-  {
-    version: 'v1.2.0',
-    date: '2026-03-15',
-    title: 'Preços dinâmicos no Billing',
-    items: [
-      'Nova API /api/billing/prices para retornar preço mensal/anual real do plano Pro.',
-      'Tela de assinatura atualizada para exibir desconto e valores vindos do backend.',
-      'Remoção de valores fixos de preço/desconto na interface de upgrade.',
-    ],
-    kind: 'Melhoria',
-  },
-  {
-    version: 'v1.1.0',
-    date: '2026-01-21',
-    title: 'Dashboard e simuladores expandidos',
-    items: [
-      'Inclusão de simulador de 13º salário e simulador de férias.',
-      'Melhorias no dashboard com métricas, previsão anual e gráficos de evolução.',
-      'Filtros e estatísticas resumidas no histórico de simulações.',
-    ],
-    kind: 'Feature',
-  },
-] as const
-
 
 export default function AtualizacoesPage() {
   return (
@@ -67,6 +32,11 @@ export default function AtualizacoesPage() {
                   <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-bold text-emerald-300">
                     {note.version}
                   </span>
+                  {note.version === latestVersion && (
+                    <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                      Novo
+                    </span>
+                  )}
                   <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
                     {note.kind}
                   </span>

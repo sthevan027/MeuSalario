@@ -9,9 +9,9 @@ export default function AtualizacoesAppPage() {
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-300">
           📝 Release Notes
         </div>
-        <h1 className="text-3xl font-black text-white sm:text-4xl">Atualizações & Feedback</h1>
+        <h1 className="text-3xl font-black text-white sm:text-4xl">Notas de atualização</h1>
         <p className="max-w-3xl text-sm text-slate-300 sm:text-base">
-          Veja as novidades mais recentes e envie feedback sem sair da área logada.
+          Acompanhe as principais melhorias, correções e evoluções do MeuSalário.
         </p>
       </div>
 
@@ -53,12 +53,14 @@ export default function AtualizacoesAppPage() {
       </div>
 
       <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 p-6">
-        <div className="mb-4 text-center">
+        <div className="text-center">
           <p className="text-sm text-slate-200 sm:text-base">
-            Quer sugerir a próxima melhoria? Envie seu feedback diretamente aqui.
+            Quer sugerir a próxima melhoria? Envie seu feedback pelo formulário e priorizaremos nas próximas versões.
           </p>
         </div>
-        <FeedbackForm />
+        <div className="mt-6">
+          <FeedbackForm initialPage="/app/atualizacoes" submitLabel="Enviar feedback para a equipe" />
+        </div>
         <div className="mt-4 text-center">
           <Link
             href="/app/conta"
