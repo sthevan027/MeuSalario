@@ -7,3 +7,24 @@
     @apply bg-slate-950 text-slate-100;
   }
 }
+
+/* Animações do menu inferior */
+@keyframes nav-bounce {
+  0%, 100% { transform: scale(1) translateY(0); }
+  25% { transform: scale(1.2) translateY(-8px); }
+  45% { transform: scale(0.9) translateY(4px); }
+  65% { transform: scale(1.1) translateY(-2px); }
+}
+
+@keyframes nav-shimmer {
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
+}
+
+.animate-nav-bounce {
+  animation: nav-bounce 0.5s ease-out;
+}
+
+.animate-nav-shimmer {
+  animation: nav-shimmer 0.6s ease-out;
+}
