@@ -5,7 +5,9 @@ import { CancelSubscription } from '@/components/billing/CancelSubscription'
 import { LinkedAccounts } from '@/components/account/LinkedAccounts'
 import { getDisplayName } from '@/lib/greetings'
 import { requireUser, isGoogleLinked } from '@/lib/auth/profile'
-import { Shield, Settings } from 'lucide-react'
+import { signOut } from '@/app/(auth)/actions'
+import { Button } from '@/components/ui/Button'
+import { Shield, Settings, LogOut } from 'lucide-react'
 
 export default async function ContaPage() {
   const [profile, googleLinked] = await Promise.all([
@@ -107,6 +109,21 @@ export default async function ContaPage() {
           </Link>
         </div>
       )}
+
+      {/* Sair da conta */}
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm">
+        <h2 className="mb-4 text-lg font-semibold text-white">Sessão</h2>
+        <form action={signOut}>
+          <Button
+            type="submit"
+            variant="secondary"
+            className="w-full justify-center gap-2 border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:border-rose-500/40"
+          >
+            <LogOut size={18} />
+            Sair da conta
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }
