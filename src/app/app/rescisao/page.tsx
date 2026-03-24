@@ -1,8 +1,8 @@
 import { TerminationForm } from '@/components/simulations/TerminationForm'
-import { requirePro } from '@/lib/auth/profile'
+import { requireUser } from '@/lib/auth/profile'
 
 export default async function RescisaoPage() {
-  await requirePro()
+  await requireUser()
 
   return (
     <div className="space-y-6">

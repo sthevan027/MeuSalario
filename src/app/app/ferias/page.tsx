@@ -1,8 +1,8 @@
 import { VacationForm } from '@/components/simulations/VacationForm'
-import { requirePro } from '@/lib/auth/profile'
+import { requireUser } from '@/lib/auth/profile'
 
 export default async function FeriasPage() {
-  await requirePro()
+  await requireUser()
 
   return (
     <div className="space-y-6">

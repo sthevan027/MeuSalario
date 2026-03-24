@@ -1,8 +1,8 @@
 import { CompareForm } from '@/components/simulations/CompareForm'
-import { requirePro } from '@/lib/auth/profile'
+import { requireUser } from '@/lib/auth/profile'
 
 export default async function ComparadorPage() {
-  await requirePro()
+  await requireUser()
 
   return (
     <div className="space-y-6">

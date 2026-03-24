@@ -18,6 +18,7 @@ export const releaseNotes: readonly ReleaseNote[] = [
     date: '2026-03-24',
     title: 'Limite de simulações no plano FREE',
     items: [
+      'Plano FREE: todas as telas e simuladores acessíveis; o limite aplica-se apenas a quantas simulações podem ser salvas no histórico (Pro continua ilimitado).',
       'Plano FREE passa a ter um número de simulações salvas no histórico; cada simulação consome uma unidade até o limite.',
       'Banner no topo do app com “Simulações restantes” e destaque quando o saldo está baixo.',
       'Ao entrar, modal informando quantas simulações ainda dá para usar, com atalho para conta/upgrade.',

@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient, type CookieStore } from '@/lib/supabase/server'
-import { requirePro } from '@/lib/auth/profile'
+import { requireUser } from '@/lib/auth/profile'
 import { HistoryTable } from '@/components/historico/HistoryTable'
 
 type SimulationRow = {
@@ -13,7 +13,7 @@ type SimulationRow = {
 }
 
 export default async function HistoricoPage() {
-  const profile = await requirePro()
+  const profile = await requireUser()
   const cookieStore = cookies()
 
   // Cache 60s; cookies() fora do cache e passado como argumento (fonte dinâmica)

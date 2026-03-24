@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
   if (isAppRoute) {
     if (pathname === '/app' || pathname === '/app/') {
       const url = request.nextUrl.clone()
-      url.pathname = '/app/simulacao'
+      url.pathname = '/app/dashboard'
       return NextResponse.redirect(url)
     }
     return NextResponse.next()

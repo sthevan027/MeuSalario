@@ -11,10 +11,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppUsageExperience isPro={isPro} simulationsRemaining={profile.simulations_remaining} />
 
       {/* Bottom Nav - navegação principal (mobile e desktop) */}
-      <BottomNav isPro={isPro} mobileOnly={false} />
+      <BottomNav mobileOnly={false} />
 
-      {/* Main content - padding bottom para BottomNav */}
-      <main className="flex-1 overflow-x-hidden pb-20">
+      {/* Main content — espaço para BottomNav fixa (~72px + paddings + safe area) */}
+      <main className="flex-1 overflow-x-hidden pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="mx-auto max-w-7xl p-4 pt-6 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>

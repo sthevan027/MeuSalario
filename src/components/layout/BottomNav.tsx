@@ -17,18 +17,17 @@ import {
 } from 'lucide-react'
 
 export type BottomNavProps = {
-  isPro: boolean
   /** Se false, BottomNav também aparece no desktop (quando não há sidebar) */
   mobileOnly?: boolean
 }
 
 const simulationItems = [
-  { name: 'Salário Mensal', href: '/app/simulacao', icon: Calculator, free: true },
-  { name: 'Compatibilidade', href: '/app/compatibilidade', icon: Wallet, free: true },
-  { name: '13º Salário', href: '/app/decimo-terceiro', icon: Calendar, free: false },
-  { name: 'Férias', href: '/app/ferias', icon: Calendar, free: false },
-  { name: 'Rescisão', href: '/app/rescisao', icon: FileText, free: false },
-  { name: 'Histórico', href: '/app/historico', icon: History, free: false },
+  { name: 'Salário Mensal', href: '/app/simulacao', icon: Calculator },
+  { name: 'Compatibilidade', href: '/app/compatibilidade', icon: Wallet },
+  { name: '13º Salário', href: '/app/decimo-terceiro', icon: Calendar },
+  { name: 'Férias', href: '/app/ferias', icon: Calendar },
+  { name: 'Rescisão', href: '/app/rescisao', icon: FileText },
+  { name: 'Histórico', href: '/app/historico', icon: History },
 ]
 
 const simulationPaths = simulationItems.map((i) => i.href)
@@ -39,7 +38,7 @@ const BOTTOM_NAV_HEIGHT_REM = 5
 /** Distância mínima de arrasto para fechar o modal */
 const DRAG_CLOSE_THRESHOLD = 60
 
-export function BottomNav({ isPro, mobileOnly = true }: BottomNavProps) {
+export function BottomNav({ mobileOnly = true }: BottomNavProps) {
   const pathname = usePathname()
   const [simulacaoExpanded, setSimulacaoExpanded] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
@@ -99,8 +98,7 @@ export function BottomNav({ isPro, mobileOnly = true }: BottomNavProps) {
   const navBaseClass = 'fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3'
   const navClassName = mobileOnly ? `${navBaseClass} lg:hidden` : navBaseClass
 
-  const isInicioActive =
-    pathname === '/app/dashboard' || (pathname === '/app/simulacao' && !isPro)
+  const isInicioActive = pathname === '/app/dashboard'
 
   return (
     <>
@@ -112,7 +110,7 @@ export function BottomNav({ isPro, mobileOnly = true }: BottomNavProps) {
       >
         <div className="relative flex min-h-[72px] w-full max-w-2xl items-center justify-between rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur-xl px-1 pt-3 pb-2 shadow-xl shadow-black/20">
           <BottomNavLink
-            href={isPro ? '/app/dashboard' : '/app/simulacao'}
+            href="/app/dashboard"
             icon={LayoutDashboard}
             label="Início"
             isActive={isInicioActive}
@@ -251,9 +249,6 @@ export function BottomNav({ isPro, mobileOnly = true }: BottomNavProps) {
 
               <div className="grid grid-cols-2 gap-3 px-5 pb-8">
                 {simulationItems.map((item) => {
-                  const canAccess = item.free || isPro
-                  if (!canAccess) return null
-
                   const isActive = pathname === item.href
                   const Icon = item.icon
                   return (

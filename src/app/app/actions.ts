@@ -2,7 +2,11 @@
 
 import { revalidateTag } from 'next/cache'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
-import { persistWithSimulationQuota } from '@/lib/simulation-quota'
+import {
+  consumeCompatibilityQuota,
+  persistWithComparisonQuota,
+  persistWithSimulationQuota,
+} from '@/lib/simulation-quota'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import { simulateTermination } from '@/lib/calculators/termination'
@@ -124,7 +128,7 @@ export async function createCompare(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
+  const quotaResult = await persistWithComparisonQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert([
       {
         user_id: user.id,
@@ -151,7 +155,7 @@ export async function createCompare(
     data: {
       input,
       result,
-      simulationsRemaining: quotaResult.quota.simulationsRemaining,
+      comparisonsRemaining: quotaResult.quota.comparisonsRemaining,
       unlimited: quotaResult.quota.unlimited,
     },
   }
