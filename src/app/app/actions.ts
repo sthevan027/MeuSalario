@@ -66,7 +66,7 @@ export async function createMonthlySimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: input.contractType,
@@ -124,7 +124,7 @@ export async function createCompare(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert([
       {
         user_id: user.id,
@@ -192,7 +192,7 @@ export async function createTermination(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: 'clt',
@@ -276,7 +276,7 @@ export async function createThirteenthSimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: 'clt',
@@ -321,7 +321,7 @@ export async function createVacationSimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: 'clt',

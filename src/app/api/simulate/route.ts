@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const result = simulateMonthly(input)
 
-  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+  const quotaResult = await persistWithSimulationQuota(supabase, user.id, async () => {
     const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: input.contractType,

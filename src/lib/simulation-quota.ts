@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export type PlanTypeApi = 'free' | 'premium'
 
@@ -61,9 +62,17 @@ export async function consumeSimulationQuota(
   }
 }
 
-/** Reverte 1 consumo se o insert falhar (somente FREE). */
-export async function refundSimulationQuota(supabase: SupabaseClient): Promise<void> {
-  const { error } = await supabase.rpc('refund_simulation_quota')
+/**
+ * Reverte 1 consumo se o insert falhar (somente FREE).
+ * Só pode ser executado no servidor com SUPABASE_SERVICE_ROLE_KEY — não exponha ao client.
+ */
+export async function refundSimulationQuota(userId: string): Promise<void> {
+  const admin = createSupabaseAdminClient()
+  if (!admin) {
+    console.error('[simulation-quota] refund skipped: service role não configurada')
+    return
+  }
+  const { error } = await admin.rpc('refund_simulation_quota', { p_user_id: userId })
   if (error) {
     console.error('[simulation-quota] refund failed', error)
   }
@@ -97,6 +106,7 @@ export type QuotaPersistMeta = {
 /** Consome quota, executa insert; em falha do insert, estorna o consumo (FREE). */
 export async function persistWithSimulationQuota(
   supabase: SupabaseClient,
+  userId: string,
   persist: () => Promise<{ error: { message: string } | null }>
 ): Promise<
   { ok: true; quota: QuotaPersistMeta } | { ok: false; message: string; code?: string }
@@ -106,7 +116,7 @@ export async function persistWithSimulationQuota(
 
   const { error } = await persist()
   if (error) {
-    await refundSimulationQuota(supabase)
+    await refundSimulationQuota(userId)
     return { ok: false, message: error.message }
   }
 

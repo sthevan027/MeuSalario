@@ -361,21 +361,24 @@ exception
 end;
 $$;
 
-create or replace function public.refund_simulation_quota()
+create or replace function public.refund_simulation_quota(p_user_id uuid)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_uid uuid := auth.uid();
   v_plan text;
 begin
-  if v_uid is null then
+  if coalesce(auth.jwt()->>'role', '') is distinct from 'service_role' then
+    raise exception 'forbidden';
+  end if;
+
+  if p_user_id is null then
     return;
   end if;
 
-  select plan into v_plan from public.profiles where id = v_uid;
+  select plan into v_plan from public.profiles where id = p_user_id;
   if v_plan = 'pro' or v_plan is null then
     return;
   end if;
@@ -383,7 +386,7 @@ begin
   perform set_config('app.skip_profile_guard', 'on', true);
   update public.profiles
   set simulations_remaining = simulations_remaining + 1
-  where id = v_uid;
+  where id = p_user_id;
   perform set_config('app.skip_profile_guard', 'off', true);
 exception
   when others then
@@ -393,4 +396,8 @@ end;
 $$;
 
 grant execute on function public.try_consume_simulation() to authenticated;
-grant execute on function public.refund_simulation_quota() to authenticated;
+
+revoke all on function public.refund_simulation_quota(uuid) from public;
+revoke all on function public.refund_simulation_quota(uuid) from anon;
+revoke all on function public.refund_simulation_quota(uuid) from authenticated;
+grant execute on function public.refund_simulation_quota(uuid) to service_role;
