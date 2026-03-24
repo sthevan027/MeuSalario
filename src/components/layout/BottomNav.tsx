@@ -21,13 +21,14 @@ export type BottomNavProps = {
   mobileOnly?: boolean
 }
 
+/** Itens do painel "Simular": simulações + comparador (histórico ficou na barra principal). */
 const simulationItems = [
   { name: 'Salário Mensal', href: '/app/simulacao', icon: Calculator },
   { name: 'Compatibilidade', href: '/app/compatibilidade', icon: Wallet },
   { name: '13º Salário', href: '/app/decimo-terceiro', icon: Calendar },
   { name: 'Férias', href: '/app/ferias', icon: Calendar },
   { name: 'Rescisão', href: '/app/rescisao', icon: FileText },
-  { name: 'Histórico', href: '/app/historico', icon: History },
+  { name: 'CLT × PJ', href: '/app/comparador', icon: Scale },
 ]
 
 const simulationPaths = simulationItems.map((i) => i.href)
@@ -176,10 +177,10 @@ export function BottomNav({ mobileOnly = true }: BottomNavProps) {
           </div>
 
           <BottomNavLink
-            href="/app/comparador"
-            icon={Scale}
-            label="Comparar"
-            isActive={pathname === '/app/comparador'}
+            href="/app/historico"
+            icon={History}
+            label="Histórico"
+            isActive={pathname === '/app/historico'}
             animationType="shimmer"
           />
 
@@ -240,10 +241,10 @@ export function BottomNav({ mobileOnly = true }: BottomNavProps) {
 
               <div className="px-5 pb-2">
                 <h2 className="text-base font-semibold tracking-tight text-slate-200">
-                  Escolha a simulação
+                  Simulações e comparador
                 </h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Arraste para baixo para fechar
+                  Histórico na barra ao lado. Arraste para baixo para fechar.
                 </p>
               </div>
 
