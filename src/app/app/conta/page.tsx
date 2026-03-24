@@ -65,6 +65,12 @@ export default async function ContaPage() {
               {profile.subscription_status === 'active' ? '✓ Ativo' : 'Sem assinatura'}
             </div>
           </div>
+          {profile.plan !== 'pro' && (
+            <div>
+              <div className="text-xs text-slate-400">Simulações restantes (FREE)</div>
+              <div className="text-sm font-medium text-white">{profile.simulations_remaining}</div>
+            </div>
+          )}
         </div>
       </div>
 

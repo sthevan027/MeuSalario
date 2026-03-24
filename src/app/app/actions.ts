@@ -2,6 +2,7 @@
 
 import { revalidateTag } from 'next/cache'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
+import { persistWithSimulationQuota } from '@/lib/simulation-quota'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import { simulateTermination } from '@/lib/calculators/termination'
@@ -12,7 +13,7 @@ import { toNumberOr } from '@/lib/number'
 
 type ActionState<T> =
   | { ok: true; data: T }
-  | { ok: false; message: string }
+  | { ok: false; message: string; code?: string }
 
 function num(v: FormDataEntryValue | null, fallback = 0) {
   return toNumberOr(v, fallback)
@@ -65,19 +66,28 @@ export async function createMonthlySimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const { error } = await supabase.from('simulations').insert({
-    user_id: user.id,
-    contract_type: input.contractType,
-    input_json: { kind: 'monthly', ...input },
-    result_json: result,
-  })
+  const quotaResult = await persistWithSimulationQuota(supabase, () =>
+    supabase.from('simulations').insert({
+      user_id: user.id,
+      contract_type: input.contractType,
+      input_json: { kind: 'monthly', ...input },
+      result_json: result,
+    })
+  )
 
-  if (error) return { ok: false, message: error.message }
+  if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
-  // Revalida cache do dashboard e histórico
   revalidateTag(`simulations-${user.id}`)
 
-  return { ok: true, data: { input, result } }
+  return {
+    ok: true,
+    data: {
+      input,
+      result,
+      simulationsRemaining: quotaResult.quota.simulationsRemaining,
+      unlimited: quotaResult.quota.unlimited,
+    },
+  }
 }
 
 export async function createCompare(
@@ -113,32 +123,36 @@ export async function createCompare(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const { error } = await supabase.from('simulations').insert([
-    {
-      user_id: user.id,
-      contract_type: 'clt',
-      input_json: { kind: 'compare', side: 'clt', ...input },
-      result_json: result.clt,
-    },
-    {
-      user_id: user.id,
-      contract_type: 'pj',
-      input_json: { kind: 'compare', side: 'pj', ...input },
-      result_json: result.pj,
-    },
-  ])
+  const quotaResult = await persistWithSimulationQuota(supabase, () =>
+    supabase.from('simulations').insert([
+      {
+        user_id: user.id,
+        contract_type: 'clt',
+        input_json: { kind: 'compare', side: 'clt', ...input },
+        result_json: result.clt,
+      },
+      {
+        user_id: user.id,
+        contract_type: 'pj',
+        input_json: { kind: 'compare', side: 'pj', ...input },
+        result_json: result.pj,
+      },
+    ])
+  )
 
-  if (error) return { ok: false, message: error.message }
+  if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
-  // Revalida cache do dashboard e histórico
-  const {
-    data: { user: userCompare },
-  } = await supabase.auth.getUser()
-  if (userCompare) {
-    revalidateTag(`simulations-${userCompare.id}`)
+  revalidateTag(`simulations-${user.id}`)
+
+  return {
+    ok: true,
+    data: {
+      input,
+      result,
+      simulationsRemaining: quotaResult.quota.simulationsRemaining,
+      unlimited: quotaResult.quota.unlimited,
+    },
   }
-
-  return { ok: true, data: { input, result } }
 }
 
 export async function createTermination(
@@ -176,19 +190,28 @@ export async function createTermination(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const { error } = await supabase.from('simulations').insert({
-    user_id: user.id,
-    contract_type: 'clt',
-    input_json: { kind: 'termination', ...input },
-    result_json: result,
-  })
+  const quotaResult = await persistWithSimulationQuota(supabase, () =>
+    supabase.from('simulations').insert({
+      user_id: user.id,
+      contract_type: 'clt',
+      input_json: { kind: 'termination', ...input },
+      result_json: result,
+    })
+  )
 
-  if (error) return { ok: false, message: error.message }
+  if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
-  // Revalida cache do dashboard e histórico
   revalidateTag(`simulations-${user.id}`)
 
-  return { ok: true, data: { input, result } }
+  return {
+    ok: true,
+    data: {
+      input,
+      result,
+      simulationsRemaining: quotaResult.quota.simulationsRemaining,
+      unlimited: quotaResult.quota.unlimited,
+    },
+  }
 }
 
 export async function deleteSimulation(simulationId: string): Promise<ActionState<null>> {
@@ -250,18 +273,28 @@ export async function createThirteenthSimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const { error } = await supabase.from('simulations').insert({
-    user_id: user.id,
-    contract_type: 'clt',
-    input_json: { kind: 'thirteenth', ...input },
-    result_json: result,
-  })
+  const quotaResult = await persistWithSimulationQuota(supabase, () =>
+    supabase.from('simulations').insert({
+      user_id: user.id,
+      contract_type: 'clt',
+      input_json: { kind: 'thirteenth', ...input },
+      result_json: result,
+    })
+  )
 
-  if (error) return { ok: false, message: error.message }
+  if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
   revalidateTag(`simulations-${user.id}`)
 
-  return { ok: true, data: { input, result } }
+  return {
+    ok: true,
+    data: {
+      input,
+      result,
+      simulationsRemaining: quotaResult.quota.simulationsRemaining,
+      unlimited: quotaResult.quota.unlimited,
+    },
+  }
 }
 
 export async function createVacationSimulation(
@@ -284,16 +317,26 @@ export async function createVacationSimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const { error } = await supabase.from('simulations').insert({
-    user_id: user.id,
-    contract_type: 'clt',
-    input_json: { kind: 'vacation', ...input },
-    result_json: result,
-  })
+  const quotaResult = await persistWithSimulationQuota(supabase, () =>
+    supabase.from('simulations').insert({
+      user_id: user.id,
+      contract_type: 'clt',
+      input_json: { kind: 'vacation', ...input },
+      result_json: result,
+    })
+  )
 
-  if (error) return { ok: false, message: error.message }
+  if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
   revalidateTag(`simulations-${user.id}`)
 
-  return { ok: true, data: { input, result } }
+  return {
+    ok: true,
+    data: {
+      input,
+      result,
+      simulationsRemaining: quotaResult.quota.simulationsRemaining,
+      unlimited: quotaResult.quota.unlimited,
+    },
+  }
 }
