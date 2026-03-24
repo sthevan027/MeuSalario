@@ -14,6 +14,21 @@ export type ReleaseNote = {
 
 export const releaseNotes: readonly ReleaseNote[] = [
   {
+    version: 'v1.5.0',
+    date: '2026-03-24',
+    title: 'Limite de simulações no plano FREE',
+    items: [
+      'Plano FREE passa a ter um número de simulações salvas no histórico; cada simulação consome uma unidade até o limite.',
+      'Banner no topo do app com “Simulações restantes” e destaque quando o saldo está baixo.',
+      'Ao entrar, modal informando quantas simulações ainda dá para usar, com atalho para conta/upgrade.',
+      'Ao atingir o limite, bloqueio com orientação para upgrade Pro ou futura compra de pacotes de créditos.',
+      'Feedback após salvar simulação mensal com mensagem de sucesso e saldo atualizado.',
+      'APIs: GET /api/user/usage (saldo e tipo de plano) e POST /api/simulate (simulação mensal com a mesma regra de quota).',
+      'Limite inicial para novos cadastros configurável no Supabase (app_config.free_simulations_limit).',
+    ],
+    kind: 'Feature',
+  },
+  {
     version: 'v1.4.1',
     date: '2026-03-22',
     title: 'Redesign do menu inferior e animações',
