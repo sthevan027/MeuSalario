@@ -66,14 +66,15 @@ export async function createMonthlySimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, () =>
-    supabase.from('simulations').insert({
+  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+    const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: input.contractType,
       input_json: { kind: 'monthly', ...input },
       result_json: result,
     })
-  )
+    return { error }
+  })
 
   if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
@@ -123,8 +124,8 @@ export async function createCompare(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, () =>
-    supabase.from('simulations').insert([
+  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+    const { error } = await supabase.from('simulations').insert([
       {
         user_id: user.id,
         contract_type: 'clt',
@@ -138,7 +139,8 @@ export async function createCompare(
         result_json: result.pj,
       },
     ])
-  )
+    return { error }
+  })
 
   if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
@@ -190,14 +192,15 @@ export async function createTermination(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, () =>
-    supabase.from('simulations').insert({
+  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+    const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: 'clt',
       input_json: { kind: 'termination', ...input },
       result_json: result,
     })
-  )
+    return { error }
+  })
 
   if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
@@ -273,14 +276,15 @@ export async function createThirteenthSimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, () =>
-    supabase.from('simulations').insert({
+  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+    const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: 'clt',
       input_json: { kind: 'thirteenth', ...input },
       result_json: result,
     })
-  )
+    return { error }
+  })
 
   if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 
@@ -317,14 +321,15 @@ export async function createVacationSimulation(
 
   if (!user) return { ok: false, message: 'Você precisa estar logado.' }
 
-  const quotaResult = await persistWithSimulationQuota(supabase, () =>
-    supabase.from('simulations').insert({
+  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+    const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: 'clt',
       input_json: { kind: 'vacation', ...input },
       result_json: result,
     })
-  )
+    return { error }
+  })
 
   if (!quotaResult.ok) return { ok: false, message: quotaResult.message, code: quotaResult.code }
 

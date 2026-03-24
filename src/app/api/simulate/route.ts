@@ -5,6 +5,7 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { persistWithSimulationQuota } from '@/lib/simulation-quota'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { parseMonthlySimulationBody } from '@/lib/simulations/monthly-api-body'
+import type { MonthlySimulationInput } from '@/lib/calculators/types'
 
 /**
  * POST /api/simulate — mesma regra da server action de simulação mensal (com quota FREE).
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  let input
+  let input: MonthlySimulationInput
   try {
     const body = await request.json()
     input = parseMonthlySimulationBody(body)
@@ -33,14 +34,15 @@ export async function POST(request: NextRequest) {
 
   const result = simulateMonthly(input)
 
-  const quotaResult = await persistWithSimulationQuota(supabase, () =>
-    supabase.from('simulations').insert({
+  const quotaResult = await persistWithSimulationQuota(supabase, async () => {
+    const { error } = await supabase.from('simulations').insert({
       user_id: user.id,
       contract_type: input.contractType,
       input_json: { kind: 'monthly', ...input },
       result_json: result,
     })
-  )
+    return { error }
+  })
 
   if (!quotaResult.ok) {
     const status = quotaResult.code === 'QUOTA_EXCEEDED' ? 403 : 400
