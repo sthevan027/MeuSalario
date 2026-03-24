@@ -9,8 +9,12 @@ export type Profile = {
   subscription_status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'none'
   email: string | null
   name: string | null
-  /** Saldo de simulações no plano FREE (ignorado para PRO no consumo). */
+  /** Saldo de simulações salvas no histórico (FREE). */
   simulations_remaining: number
+  /** Saldo de comparações CLT × PJ salvas (FREE). */
+  comparisons_remaining: number
+  /** Saldo de análises de compatibilidade salarial (FREE). */
+  compatibility_checks_remaining: number
 }
 
 /** Busca perfil - cache() deduplica chamadas na mesma request (layout + page). */
@@ -24,17 +28,29 @@ export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
 
   const { data } = await supabase
     .from('profiles')
-    .select('id, plan, role, subscription_status, email, name, simulations_remaining')
+    .select(
+      'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining'
+    )
     .eq('id', user.id)
     .single()
 
   if (!data) return null
 
-  const row = data as Profile & { simulations_remaining?: number | null }
+  const row = data as Profile & {
+    simulations_remaining?: number | null
+    comparisons_remaining?: number | null
+    compatibility_checks_remaining?: number | null
+  }
   return {
     ...row,
     simulations_remaining:
       typeof row.simulations_remaining === 'number' ? row.simulations_remaining : 3,
+    comparisons_remaining:
+      typeof row.comparisons_remaining === 'number' ? row.comparisons_remaining : 2,
+    compatibility_checks_remaining:
+      typeof row.compatibility_checks_remaining === 'number'
+        ? row.compatibility_checks_remaining
+        : 2,
   }
 })
 

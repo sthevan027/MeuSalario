@@ -9,9 +9,16 @@ const STORAGE_KEY = 'meusalario_usage_welcome_seen'
 type Props = {
   isPro: boolean
   simulationsRemaining: number
+  comparisonsRemaining: number
+  compatibilityRemaining: number
 }
 
-export function AppUsageExperience({ isPro, simulationsRemaining }: Props) {
+export function AppUsageExperience({
+  isPro,
+  simulationsRemaining,
+  comparisonsRemaining,
+  compatibilityRemaining,
+}: Props) {
   const [welcomeOpen, setWelcomeOpen] = useState(false)
 
   useEffect(() => {
@@ -25,12 +32,22 @@ export function AppUsageExperience({ isPro, simulationsRemaining }: Props) {
     return null
   }
 
+  const urgent =
+    simulationsRemaining <= 1 || comparisonsRemaining <= 1 || compatibilityRemaining <= 1
+
   return (
     <>
-      <SimulationQuotaBanner remaining={simulationsRemaining} urgent={simulationsRemaining <= 1} />
+      <SimulationQuotaBanner
+        simulations={simulationsRemaining}
+        comparisons={comparisonsRemaining}
+        compatibility={compatibilityRemaining}
+        urgent={urgent}
+      />
       <UsageWelcomeModal
         open={welcomeOpen}
-        remaining={simulationsRemaining}
+        simulations={simulationsRemaining}
+        comparisons={comparisonsRemaining}
+        compatibility={compatibilityRemaining}
         onContinue={() => {
           sessionStorage.setItem(STORAGE_KEY, '1')
           setWelcomeOpen(false)
@@ -38,7 +55,7 @@ export function AppUsageExperience({ isPro, simulationsRemaining }: Props) {
         onGetMore={() => {
           sessionStorage.setItem(STORAGE_KEY, '1')
           setWelcomeOpen(false)
-          window.location.href = '/app/conta'
+          window.location.href = '/planos'
         }}
       />
     </>

@@ -1,7 +1,16 @@
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
+import {
+  getDefaultFreeSimulationsLimit,
+  getDefaultFreeComparisonsLimit,
+  getDefaultFreeCompatibilityLimit,
+} from '@/lib/usage-config'
 
 export default function HowItWorksPage() {
+  const freeSim = getDefaultFreeSimulationsLimit()
+  const freeComp = getDefaultFreeComparisonsLimit()
+  const freeCompat = getDefaultFreeCompatibilityLimit()
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />
@@ -11,7 +20,16 @@ export default function HowItWorksPage() {
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold text-white lg:text-5xl">Como funciona</h1>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              O MeuSalario foi feito para dar previsibilidade: você preenche os campos do seu mês e recebe uma estimativa detalhada.
+              O MeuSalario foi feito para dar previsibilidade: você preenche os campos do seu mês e recebe uma
+              estimativa detalhada.
+            </p>
+            <p className="text-sm text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              No plano <strong className="text-slate-200">Free</strong>, todas as telas estão disponíveis, com
+              limites separados: até <strong className="text-slate-200">{freeSim}</strong> simulações salvas no
+              histórico, <strong className="text-slate-200">{freeComp}</strong> comparações CLT × PJ salvas e{' '}
+              <strong className="text-slate-200">{freeCompat}</strong> análises de compatibilidade ao ver o
+              resultado. No <strong className="text-slate-200">Pro</strong>, esse uso é ilimitado e o dashboard
+              fica completo.
             </p>
           </div>
 
@@ -37,9 +55,10 @@ export default function HowItWorksPage() {
                   2
                 </div>
                 <div>
-                  <h2 className="mb-2 text-xl font-bold text-white">Dashboard e gráficos (Pro)</h2>
+                  <h2 className="mb-2 text-xl font-bold text-white">Dashboard e gráficos</h2>
                   <p className="text-slate-400">
-                    No plano Pro, você tem acesso ao dashboard completo com indicadores principais, evolução mensal e gráficos que mostram a tendência do seu salário.
+                    No Free você acompanha uma visão básica; no Pro, o dashboard ganha indicadores completos,
+                    evolução mensal e gráficos da tendência do salário.
                   </p>
                 </div>
               </div>
@@ -51,9 +70,11 @@ export default function HowItWorksPage() {
                   3
                 </div>
                 <div>
-                  <h2 className="mb-2 text-xl font-bold text-white">Comparador CLT x PJ (Pro)</h2>
+                  <h2 className="mb-2 text-xl font-bold text-white">Compatibilidade salarial</h2>
                   <p className="text-slate-400">
-                    Mesma entrada base, regras distintas. Veja lado a lado o valor líquido real estimado para cada regime, ajustando impostos e percentuais.
+                    Cruze proposta (CLT ou PJ), benefícios e seu custo de vida para ver se sobra dinheiro no fim
+                    do mês. No Free, abrir o resultado completo consome uma unidade do saldo de compatibilidade; no
+                    Pro é ilimitado.
                   </p>
                 </div>
               </div>
@@ -65,9 +86,26 @@ export default function HowItWorksPage() {
                   4
                 </div>
                 <div>
-                  <h2 className="mb-2 text-xl font-bold text-white">Rescisão (Pro)</h2>
+                  <h2 className="mb-2 text-xl font-bold text-white">Comparador CLT x PJ</h2>
                   <p className="text-slate-400">
-                    Estimativas por item: aviso prévio, férias vencidas, férias proporcionais, 13º proporcional e multa FGTS. Tudo detalhado para você saber o que esperar.
+                    Mesma entrada base, regras distintas: líquido estimado lado a lado, com impostos e
+                    percentuais ajustáveis. No Free, cada &quot;Comparar e salvar&quot; usa uma unidade do seu
+                    saldo; no Pro é ilimitado.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-xl font-bold text-white">
+                  5
+                </div>
+                <div>
+                  <h2 className="mb-2 text-xl font-bold text-white">Rescisão, 13º e férias</h2>
+                  <p className="text-slate-400">
+                    Rescisão com aviso, férias, 13º e FGTS; 13º e férias como simuladores dedicados. Tudo entra no
+                    mesmo tipo de cota de simulações salvas no histórico no Free; no Pro, ilimitado.
                   </p>
                 </div>
               </div>

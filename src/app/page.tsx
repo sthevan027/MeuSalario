@@ -3,8 +3,17 @@ import { QuickSimulator } from '@/components/public/QuickSimulator'
 import { Header } from '@/components/layout/Header'
 import { PublicFooter } from '@/components/layout/PublicFooter'
 import { Calculator, TrendingUp, BarChart3, FileText, Zap, History } from 'lucide-react'
+import {
+  getDefaultFreeSimulationsLimit,
+  getDefaultFreeComparisonsLimit,
+  getDefaultFreeCompatibilityLimit,
+} from '@/lib/usage-config'
 
 export default async function HomePage() {
+  const freeSim = getDefaultFreeSimulationsLimit()
+  const freeComp = getDefaultFreeComparisonsLimit()
+  const freeCompat = getDefaultFreeCompatibilityLimit()
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />
@@ -51,7 +60,9 @@ export default async function HomePage() {
             <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5">
               <span className="text-xl">💡</span>
               <p className="text-xs text-slate-300 sm:text-sm">
-                <span className="font-semibold text-emerald-400">100% gratuito.</span> Valores são estimativas configuráveis para máxima previsibilidade.
+                <span className="font-semibold text-emerald-400">Comece grátis:</span> todas as telas, com limites
+                no Free ({freeSim} simulações no histórico, {freeComp} comparações, {freeCompat} compatibilidade).
+                Veja detalhes em <Link href="/planos" className="text-emerald-300 underline-offset-2 hover:underline">Planos</Link>.
               </p>
             </div>
           </div>
@@ -161,23 +172,23 @@ export default async function HomePage() {
               <ul className="mb-8 space-y-3">
                 <li className="flex items-start gap-3 text-slate-300">
                   <span className="text-emerald-400">✓</span>
-                  <span>Simulação mensal básica</span>
+                  <span>Todas as telas: simulação, compatibilidade, comparador, 13º, férias, rescisão e histórico</span>
                 </li>
                 <li className="flex items-start gap-3 text-slate-300">
                   <span className="text-emerald-400">✓</span>
-                  <span>Visualização do salário atual</span>
+                  <span>Até {freeSim} simulações salvas no histórico (mensal, 13º, férias, rescisão)</span>
                 </li>
-                <li className="flex items-start gap-3 text-slate-600">
-                  <span>✗</span>
-                  <span>Sem histórico e gráficos</span>
+                <li className="flex items-start gap-3 text-slate-300">
+                  <span className="text-emerald-400">✓</span>
+                  <span>Até {freeComp} comparações CLT × PJ salvas</span>
                 </li>
-                <li className="flex items-start gap-3 text-slate-600">
-                  <span>✗</span>
-                  <span>Sem comparador CLT x PJ</span>
+                <li className="flex items-start gap-3 text-slate-300">
+                  <span className="text-emerald-400">✓</span>
+                  <span>Até {freeCompat} análises de compatibilidade (resultado completo)</span>
                 </li>
-                <li className="flex items-start gap-3 text-slate-600">
+                <li className="flex items-start gap-3 text-slate-500">
                   <span>✗</span>
-                  <span>Sem simulador de rescisão</span>
+                  <span>Uso ilimitado e dashboard completo — somente Pro</span>
                 </li>
               </ul>
               

@@ -66,10 +66,20 @@ export default async function ContaPage() {
             </div>
           </div>
           {profile.plan !== 'pro' && (
-            <div>
-              <div className="text-xs text-slate-400">Simulações restantes (FREE)</div>
-              <div className="text-sm font-medium text-white">{profile.simulations_remaining}</div>
-            </div>
+            <>
+              <div>
+                <div className="text-xs text-slate-400">Simulações salvas no histórico (FREE)</div>
+                <div className="text-sm font-medium text-white">{profile.simulations_remaining}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Comparações CLT × PJ restantes (FREE)</div>
+                <div className="text-sm font-medium text-white">{profile.comparisons_remaining}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Análises de compatibilidade restantes (FREE)</div>
+                <div className="text-sm font-medium text-white">{profile.compatibility_checks_remaining}</div>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -79,7 +89,7 @@ export default async function ContaPage() {
         <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-6 backdrop-blur-sm">
           <h2 className="mb-2 text-xl font-bold text-white">Desbloquear Pro</h2>
           <p className="mb-4 text-slate-300">
-            Dashboard completo, histórico, gráficos, rescisão, comparador e exportação.
+            Uso ilimitado: histórico, gráficos, exportação e todas as telas sem contagem de cota.
           </p>
           <div className="mb-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
             ✨ 14 dias grátis para experimentar • Use código promocional no checkout

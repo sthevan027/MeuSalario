@@ -7,14 +7,23 @@ import { Button } from '@/components/ui/Button'
 
 type Props = {
   open: boolean
-  remaining: number
+  simulations: number
+  comparisons: number
+  compatibility: number
   onContinue: () => void
   onGetMore: () => void
 }
 
-export function UsageWelcomeModal({ open, remaining, onContinue, onGetMore }: Props) {
+export function UsageWelcomeModal({
+  open,
+  simulations,
+  comparisons,
+  compatibility,
+  onContinue,
+  onGetMore,
+}: Props) {
   const [mounted, setMounted] = useState(false)
-  const urgent = remaining <= 1
+  const urgent = simulations <= 1 || comparisons <= 1 || compatibility <= 1
 
   useEffect(() => {
     setMounted(true)
@@ -63,16 +72,30 @@ export function UsageWelcomeModal({ open, remaining, onContinue, onGetMore }: Pr
         </div>
 
         <h2 id="usage-welcome-title" className="text-xl font-bold text-white">
-          Você ainda tem {remaining} {remaining === 1 ? 'simulação disponível' : 'simulações disponíveis'}
+          Seus limites no plano FREE
         </h2>
 
-        <p className="mt-2 text-sm text-slate-400">
-          Cada simulação salva no histórico usa uma unidade. Acompanhe seu saldo no topo da tela.
+        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+          <li>
+            <strong className="text-white">{simulations}</strong> simulações salvas no histórico (mensal, 13º,
+            férias, rescisão)
+          </li>
+          <li>
+            <strong className="text-white">{comparisons}</strong> comparações CLT × PJ salvas
+          </li>
+          <li>
+            <strong className="text-white">{compatibility}</strong> análises de compatibilidade salarial
+          </li>
+        </ul>
+
+        <p className="mt-3 text-sm text-slate-500">
+          Todas as telas estão liberadas; os números acima voltam ao topo após cada uso. No Pro, tudo é
+          ilimitado.
         </p>
 
         {urgent ? (
           <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-            Quase no limite — considere o Pro para simulações ilimitadas ou compre mais créditos.
+            Algum limite está baixo — considere o Pro ou créditos avulsos quando disponíveis.
           </p>
         ) : null}
 
@@ -81,7 +104,7 @@ export function UsageWelcomeModal({ open, remaining, onContinue, onGetMore }: Pr
             Continuar
           </Button>
           <Button type="button" className="w-full sm:w-auto" onClick={onGetMore}>
-            Obter mais simulações
+            Ver planos / Pro
           </Button>
         </div>
       </div>

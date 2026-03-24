@@ -10,9 +10,18 @@ type Props = {
   onClose: () => void
   onBuyPack: () => void
   onUpgrade: () => void
+  title?: string
+  description?: string
 }
 
-export function SimulationLimitModal({ open, onClose, onBuyPack, onUpgrade }: Props) {
+export function SimulationLimitModal({
+  open,
+  onClose,
+  onBuyPack,
+  onUpgrade,
+  title = 'Você atingiu o limite do plano FREE',
+  description = 'Faça upgrade para o Pro (uso ilimitado) ou adquira créditos quando o checkout estiver disponível.',
+}: Props) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -56,11 +65,9 @@ export function SimulationLimitModal({ open, onClose, onBuyPack, onUpgrade }: Pr
         </div>
 
         <h2 id="usage-limit-title" className="text-xl font-bold text-white">
-          Você atingiu o limite de simulações do plano FREE
+          {title}
         </h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Faça upgrade para o Pro (simulações ilimitadas) ou adquira um pacote avulso quando estiver disponível no checkout.
-        </p>
+        <p className="mt-2 text-sm text-slate-400">{description}</p>
 
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={onBuyPack}>

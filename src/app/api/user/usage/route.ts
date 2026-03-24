@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('plan, simulations_remaining')
+    .select('plan, simulations_remaining, comparisons_remaining, compatibility_checks_remaining')
     .eq('id', user.id)
     .single()
 
@@ -23,13 +23,26 @@ export async function GET() {
   }
 
   const plan = data.plan === 'pro' ? 'pro' : 'free'
-  const remaining =
+  const simulations_remaining =
     typeof data.simulations_remaining === 'number' ? data.simulations_remaining : 3
+  const comparisons_remaining =
+    typeof data.comparisons_remaining === 'number' ? data.comparisons_remaining : 2
+  const compatibility_checks_remaining =
+    typeof data.compatibility_checks_remaining === 'number'
+      ? data.compatibility_checks_remaining
+      : 2
 
-  const payload = buildUsageResponse({ plan, simulations_remaining: remaining })
+  const payload = buildUsageResponse({
+    plan,
+    simulations_remaining,
+    comparisons_remaining,
+    compatibility_checks_remaining,
+  })
 
   return NextResponse.json({
     simulations_remaining: payload.simulations_remaining,
+    comparisons_remaining: payload.comparisons_remaining,
+    compatibility_checks_remaining: payload.compatibility_checks_remaining,
     plan_type: payload.plan_type,
     unlimited: payload.unlimited,
   })

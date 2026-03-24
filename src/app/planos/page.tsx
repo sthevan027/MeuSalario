@@ -2,7 +2,11 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { PublicFooter } from '@/components/layout/PublicFooter'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { getDefaultFreeSimulationsLimit } from '@/lib/usage-config'
+import {
+  getDefaultFreeSimulationsLimit,
+  getDefaultFreeComparisonsLimit,
+  getDefaultFreeCompatibilityLimit,
+} from '@/lib/usage-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +28,8 @@ export default async function PlanosPage() {
   const savings = priceMonthly > 0 ? Math.round((1 - priceYearly / (priceMonthly * 12)) * 100) : 0
 
   const freeSimLimit = getDefaultFreeSimulationsLimit()
+  const freeCompLimit = getDefaultFreeComparisonsLimit()
+  const freeCompatLimit = getDefaultFreeCompatibilityLimit()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -41,8 +47,8 @@ export default async function PlanosPage() {
               Planos e preços
             </h1>
             <p className="mt-4 text-base leading-relaxed text-slate-300 sm:text-lg lg:text-xl">
-              Comece grátis no plano Free e faça upgrade para o Pro quando precisar de histórico completo,
-              gráficos e simuladores avançados.
+              No Free você usa todas as telas com limites separados por tipo; no Pro, histórico e uso avançado
+              ficam ilimitados.
             </p>
           </div>
 
@@ -55,8 +61,8 @@ export default async function PlanosPage() {
                 <span className="text-slate-400">/mês</span>
               </div>
               <p className="mb-6 text-sm leading-relaxed text-slate-400">
-                Acesso a todas as telas do app; no Free, o número de simulações que entram no histórico é
-                limitado.
+                Todas as telas liberadas; cada tipo de uso tem seu próprio saldo no plano Free (valores padrão
+                abaixo — configuráveis no app).
               </p>
 
               <ul className="mb-8 flex-1 space-y-3 text-left">
@@ -65,8 +71,8 @@ export default async function PlanosPage() {
                     ✓
                   </span>
                   <span>
-                    Todas as funcionalidades e telas: simulação mensal, compatibilidade, comparador CLT × PJ,
-                    13º, férias, rescisão, histórico e dashboard
+                    Simulação mensal, compatibilidade, comparador CLT × PJ, 13º, férias, rescisão, histórico e
+                    dashboard
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-slate-200">
@@ -75,14 +81,32 @@ export default async function PlanosPage() {
                   </span>
                   <span>
                     Até <strong className="text-white">{freeSimLimit}</strong> simulações salvas no histórico
-                    (configurável; após o limite, faça upgrade para continuar salvando)
+                    (mensal, 13º, férias, rescisão)
+                  </span>
+                </li>
+                <li className="flex items-start gap-3 text-slate-200">
+                  <span className="mt-0.5 shrink-0 text-emerald-400" aria-hidden>
+                    ✓
+                  </span>
+                  <span>
+                    Até <strong className="text-white">{freeCompLimit}</strong> comparações CLT × PJ salvas
+                    (&quot;Comparar e salvar&quot;)
+                  </span>
+                </li>
+                <li className="flex items-start gap-3 text-slate-200">
+                  <span className="mt-0.5 shrink-0 text-emerald-400" aria-hidden>
+                    ✓
+                  </span>
+                  <span>
+                    Até <strong className="text-white">{freeCompatLimit}</strong> análises de compatibilidade
+                    (ao abrir o resultado completo)
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-slate-500">
                   <span className="mt-0.5 shrink-0" aria-hidden>
                     ✗
                   </span>
-                  <span>Simulações ilimitadas no histórico</span>
+                  <span>Uso ilimitado (simulações, comparações e compatibilidade) — somente Pro</span>
                 </li>
               </ul>
 

@@ -349,3 +349,26 @@ export async function createVacationSimulation(
     },
   }
 }
+
+/** Consome 1 unidade ao exibir o resultado da compatibilidade salarial (plano FREE). */
+export async function reserveCompatibilityAnalysis(): Promise<
+  ActionState<{ compatibilityRemaining: number | null; unlimited: boolean }>
+> {
+  const supabase = createSupabaseActionClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { ok: false, message: 'Você precisa estar logado.' }
+
+  const q = await consumeCompatibilityQuota(supabase)
+  if (!q.ok) return { ok: false, message: q.message, code: q.code }
+
+  return {
+    ok: true,
+    data: {
+      compatibilityRemaining: q.unlimited ? null : q.remaining,
+      unlimited: q.unlimited,
+    },
+  }
+}

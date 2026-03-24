@@ -8,7 +8,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <AppUsageExperience isPro={isPro} simulationsRemaining={profile.simulations_remaining} />
+      <AppUsageExperience
+        isPro={isPro}
+        simulationsRemaining={profile.simulations_remaining}
+        comparisonsRemaining={profile.comparisons_remaining}
+        compatibilityRemaining={profile.compatibility_checks_remaining}
+      />
 
       {/* Bottom Nav - navegação principal (mobile e desktop) */}
       <BottomNav mobileOnly={false} />

@@ -1,6 +1,10 @@
 import { CompatibilityForm } from '@/components/simulations/CompatibilityForm'
+import { requireUser } from '@/lib/auth/profile'
 
-export default function CompatibilidadePage() {
+export default async function CompatibilidadePage() {
+  const profile = await requireUser()
+  const isPro = profile.plan === 'pro'
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -10,7 +14,12 @@ export default function CompatibilidadePage() {
         </p>
       </div>
 
-      <CompatibilityForm />
+      <CompatibilityForm
+        quota={{
+          isPro,
+          compatibilityRemaining: profile.compatibility_checks_remaining,
+        }}
+      />
     </div>
   )
 }
