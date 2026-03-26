@@ -2,32 +2,12 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { safeRedirectPath } from '@/lib/auth/safe-redirect-path'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 
 type ActionState =
   | { ok: true; message?: string }
   | { ok: false; message: string }
-
-/**
- * Garante que o path de redirect é sempre relativo ao próprio app.
- * Previne open redirect: qualquer valor externo (ex.: https://evil.com) vira /app/dashboard.
- */
-function safeRedirectPath(raw: string | null | undefined): string {
-  const fallback = '/app/dashboard'
-  if (!raw) return fallback
-  const s = String(raw).trim()
-  // Deve começar com '/' mas não com '//' (protocol-relative URL)
-  if (!s.startsWith('/') || s.startsWith('//')) return fallback
-  try {
-    // Usa URL para normalizar e garantir que não é URL absoluta disfarçada
-    const url = new URL(s, 'http://localhost')
-    // Se hostname mudou, era URL absoluta
-    if (url.hostname !== 'localhost') return fallback
-    return url.pathname + (url.search || '') + (url.hash || '')
-  } catch {
-    return fallback
-  }
-}
 
 function getOrigin() {
   return (
