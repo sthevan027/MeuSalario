@@ -65,15 +65,67 @@ export default async function ContaPage() {
               {profile.subscription_status === 'active' ? '✓ Ativo' : 'Sem assinatura'}
             </div>
           </div>
+          {profile.plan !== 'pro' && (
+            <>
+              <div>
+                <div className="text-xs text-slate-400">Simulações salvas no histórico (FREE)</div>
+                <div className="text-sm font-medium text-white">{profile.simulations_remaining}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Comparações CLT × PJ restantes (FREE)</div>
+                <div className="text-sm font-medium text-white">{profile.comparisons_remaining}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Análises de compatibilidade restantes (FREE)</div>
+                <div className="text-sm font-medium text-white">{profile.compatibility_checks_remaining}</div>
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Créditos avulsos (FREE) */}
+      {profile.plan !== 'pro' && (
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 backdrop-blur-sm">
+          <h2 className="mb-2 text-lg font-semibold text-white">Comprar créditos avulsos</h2>
+          <p className="mb-4 text-sm text-slate-400">
+            Adicione créditos por funcionalidade sem precisar assinar o Pro. Checkout em breve.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                { label: '+5 simulações', desc: 'Mensal, 13º, férias ou rescisão', color: 'emerald' },
+                { label: '+5 comparações CLT × PJ', desc: '"Comparar e salvar"', color: 'teal' },
+                { label: '+5 compatibilidades', desc: 'Análise de compatibilidade salarial', color: 'sky' },
+                { label: '+5 de cada (combo)', desc: 'Todas as funcionalidades juntas', color: 'violet' },
+              ] as const
+            ).map((pack) => (
+              <div
+                key={pack.label}
+                className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <div>
+                  <div className="text-sm font-semibold text-white">{pack.label}</div>
+                  <div className="mt-0.5 text-xs text-slate-400">{pack.desc}</div>
+                </div>
+                <span className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold text-slate-400">
+                  Em breve
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            Prefere acesso ilimitado? Veja o plano Pro abaixo.
+          </p>
+        </div>
+      )}
 
       {/* Upgrade para Pro */}
       {profile.plan !== 'pro' && (
         <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-6 backdrop-blur-sm">
           <h2 className="mb-2 text-xl font-bold text-white">Desbloquear Pro</h2>
           <p className="mb-4 text-slate-300">
-            Dashboard completo, histórico, gráficos, rescisão, comparador e exportação.
+            Uso ilimitado: histórico, gráficos, exportação e todas as telas sem contagem de cota.
           </p>
           <div className="mb-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
             ✨ 14 dias grátis para experimentar • Use código promocional no checkout

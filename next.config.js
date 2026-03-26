@@ -1,5 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          // Evita MIME-type sniffing
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Impede clickjacking
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // Filtro XSS legacy (browsers antigos)
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          // Controla informações enviadas no Referer
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Restringe APIs sensíveis do navegador
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ]
+  },
+
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
     instrumentationHook: true,

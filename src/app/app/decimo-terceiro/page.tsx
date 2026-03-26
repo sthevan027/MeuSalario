@@ -1,8 +1,8 @@
 import { ThirteenthForm } from '@/components/simulations/ThirteenthForm'
-import { requirePro } from '@/lib/auth/profile'
+import { requireUser } from '@/lib/auth/profile'
 
 export default async function DecimoTerceiroPage() {
-  await requirePro()
+  await requireUser()
 
   return (
     <div className="space-y-6">

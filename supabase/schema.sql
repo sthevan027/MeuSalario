@@ -32,6 +32,35 @@ alter table public.profiles add column if not exists created_at timestamptz;
 alter table public.profiles add column if not exists asaas_customer_id text;
 alter table public.profiles add column if not exists asaas_subscription_id text;
 
+-- Configuração global (ex.: limite inicial de simulações FREE — ver também app_config)
+alter table public.profiles add column if not exists simulations_remaining integer;
+update public.profiles set simulations_remaining = coalesce(simulations_remaining, 3) where simulations_remaining is null;
+alter table public.profiles alter column simulations_remaining set default 3;
+do $$
+begin
+  alter table public.profiles alter column simulations_remaining set not null;
+exception when others then
+  null;
+end $$;
+
+create table if not exists public.app_config (
+  key text primary key,
+  value jsonb not null
+);
+
+alter table public.app_config enable row level security;
+
+drop policy if exists "app_config_select_authenticated" on public.app_config;
+create policy "app_config_select_authenticated"
+  on public.app_config
+  for select
+  to authenticated
+  using (true);
+
+insert into public.app_config (key, value)
+values ('free_simulations_limit', '3'::jsonb)
+on conflict (key) do nothing;
+
 -- SIMULAÇÕES
 create table if not exists public.simulations (
   id uuid primary key default gen_random_uuid(),
@@ -46,11 +75,15 @@ create index if not exists simulations_user_id_created_at_idx
   on public.simulations(user_id, created_at desc);
 
 -- View: simulações com nome do usuário (para visualizar no Table Editor do Supabase)
-create or replace view public.simulations_with_user as
+drop view if exists public.simulations_with_user;
+create view public.simulations_with_user
+with (security_invoker = false) as
 select
   s.id,
   s.user_id,
   coalesce(p.name, p.email, s.user_id::text) as user_name,
+  p.plan,
+  p.role,
   s.contract_type,
   s.input_json,
   s.result_json,
@@ -76,12 +109,29 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_limit int;
 begin
-  insert into public.profiles (id, email, name, role)
-  values (new.id, new.email, new.raw_user_meta_data->>'name', 'user')
-  on conflict (id) do update set 
+  select coalesce(nullif(trim(value #>> '{}'), '')::int, 3) into v_limit
+  from public.app_config
+  where key = 'free_simulations_limit';
+
+  if v_limit is null then
+    v_limit := 3;
+  end if;
+
+  insert into public.profiles (id, email, name, role, simulations_remaining)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'name',
+    'user',
+    v_limit
+  )
+  on conflict (id) do update set
     email = excluded.email,
     name = excluded.name;
+
   return new;
 end;
 $$;
@@ -119,6 +169,14 @@ security definer
 set search_path = public
 as $$
 begin
+  if new.simulations_remaining is distinct from old.simulations_remaining then
+    if coalesce(current_setting('app.skip_profile_guard', true), '') <> 'on'
+       and auth.uid() is not null
+       and auth.uid() = old.id then
+      raise exception 'Não é permitido alterar o saldo de simulações manualmente.';
+    end if;
+  end if;
+
   if auth.uid() is not null and auth.uid() = old.id then
     if new.role is distinct from old.role then
       raise exception 'Não é permitido alterar role.';
@@ -251,3 +309,99 @@ set
   trial_days = excluded.trial_days,
   features = excluded.features,
   active = excluded.active;
+
+-- RPC: quota de simulações (FREE) e estorno se insert falhar
+create or replace function public.try_consume_simulation()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_plan text;
+  v_remaining int;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'code', 'UNAUTHORIZED');
+  end if;
+
+  select plan, simulations_remaining
+  into v_plan, v_remaining
+  from public.profiles
+  where id = v_uid
+  for update;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'code', 'PROFILE_NOT_FOUND');
+  end if;
+
+  if v_plan = 'pro' then
+    return jsonb_build_object('ok', true, 'remaining', null, 'unlimited', true);
+  end if;
+
+  if v_remaining <= 0 then
+    return jsonb_build_object('ok', false, 'code', 'QUOTA_EXCEEDED', 'remaining', 0);
+  end if;
+
+  perform set_config('app.skip_profile_guard', 'on', true);
+
+  update public.profiles
+  set simulations_remaining = simulations_remaining - 1
+  where id = v_uid
+  returning simulations_remaining into v_remaining;
+
+  perform set_config('app.skip_profile_guard', 'off', true);
+
+  return jsonb_build_object(
+    'ok', true,
+    'remaining', v_remaining,
+    'unlimited', false
+  );
+exception
+  when others then
+    perform set_config('app.skip_profile_guard', 'off', true);
+    raise;
+end;
+$$;
+
+create or replace function public.refund_simulation_quota(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_plan text;
+begin
+  if coalesce(auth.jwt()->>'role', '') is distinct from 'service_role' then
+    raise exception 'forbidden';
+  end if;
+
+  if p_user_id is null then
+    return;
+  end if;
+
+  select plan into v_plan from public.profiles where id = p_user_id;
+  if v_plan = 'pro' or v_plan is null then
+    return;
+  end if;
+
+  perform set_config('app.skip_profile_guard', 'on', true);
+  update public.profiles
+  set simulations_remaining = simulations_remaining + 1
+  where id = p_user_id;
+  perform set_config('app.skip_profile_guard', 'off', true);
+exception
+  when others then
+    perform set_config('app.skip_profile_guard', 'off', true);
+    raise;
+end;
+$$;
+
+grant execute on function public.try_consume_simulation() to authenticated;
+
+revoke all on function public.refund_simulation_quota(uuid) from public;
+revoke all on function public.refund_simulation_quota(uuid) from anon;
+revoke all on function public.refund_simulation_quota(uuid) from authenticated;
+grant execute on function public.refund_simulation_quota(uuid) to service_role;

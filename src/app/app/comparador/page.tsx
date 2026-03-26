@@ -1,8 +1,9 @@
 import { CompareForm } from '@/components/simulations/CompareForm'
-import { requirePro } from '@/lib/auth/profile'
+import { requireUser } from '@/lib/auth/profile'
 
 export default async function ComparadorPage() {
-  await requirePro()
+  const profile = await requireUser()
+  const isPro = profile.plan === 'pro'
 
   return (
     <div className="space-y-6">
@@ -11,7 +12,12 @@ export default async function ComparadorPage() {
         <p className="text-sm text-slate-300">Compare lado a lado com percentuais configuráveis.</p>
       </div>
 
-      <CompareForm />
+      <CompareForm
+        quota={{
+          isPro,
+          comparisonsRemaining: profile.comparisons_remaining,
+        }}
+      />
     </div>
   )
 }

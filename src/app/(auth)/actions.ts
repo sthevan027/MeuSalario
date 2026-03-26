@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { safeRedirectPath } from '@/lib/auth/safe-redirect-path'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 
 type ActionState =
@@ -22,11 +23,12 @@ function getOrigin() {
 export async function signInWithGoogle(nextPath: string = '/app/dashboard'): Promise<ActionState> {
   const supabase = createSupabaseActionClient()
   const origin = getOrigin()
+  const safePath = safeRedirectPath(nextPath)
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safePath)}`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -100,7 +102,7 @@ export async function unlinkGoogleAccount(): Promise<ActionState> {
 export async function signIn(_prevState: ActionState | null, formData: FormData): Promise<ActionState> {
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
-  const nextPath = String(formData.get('nextPath') ?? '/app/dashboard') || '/app/dashboard'
+  const nextPath = safeRedirectPath(String(formData.get('nextPath') ?? ''))
 
   const supabase = createSupabaseActionClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })

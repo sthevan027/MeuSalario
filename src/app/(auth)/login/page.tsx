@@ -1,21 +1,18 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { getProfileOrNull } from '@/lib/auth/profile'
 import { isSupabaseConfigured } from '@/lib/env'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { safeRedirectPath } from '@/lib/auth/safe-redirect-path'
 
 export default async function LoginPage({ searchParams }: { searchParams?: Record<string, string> }) {
   const rawNext = searchParams?.next ?? '/app/dashboard'
-  const nextPath = rawNext === '/' ? '/app/dashboard' : rawNext
+  const nextPath = safeRedirectPath(rawNext === '/' ? '/app/dashboard' : rawNext)
 
-  // Se já estiver autenticado, não mostra login: manda direto pro app.
+  // Só redireciona se houver sessão e perfil (evita loop com /app → clear-session)
   if (isSupabaseConfigured()) {
-    const supabase = createSupabaseServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (user) redirect(nextPath)
+    const profile = await getProfileOrNull()
+    if (profile) redirect(nextPath)
   }
 
   return (

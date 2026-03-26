@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import { safeRedirectPath } from '@/lib/auth/safe-redirect-path'
 import { requireEnv } from '@/lib/env'
 
 export async function GET(request: Request) {
@@ -9,9 +10,8 @@ export async function GET(request: Request) {
   const type = requestUrl.searchParams.get('type') // ex: "signup" | "recovery"
   const next = requestUrl.searchParams.get('next') // destino após OAuth (Google, etc)
 
-  const redirectTo = type === 'recovery' 
-    ? '/atualizar-senha' 
-    : next ?? '/app/dashboard'
+  const redirectTo =
+    type === 'recovery' ? '/atualizar-senha' : safeRedirectPath(next)
   const redirectUrl = new URL(redirectTo, requestUrl.origin)
 
   if (code) {
@@ -38,9 +38,9 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
-      redirectUrl.pathname = '/login'
-      redirectUrl.searchParams.set('error', 'auth_callback_error')
-      return NextResponse.redirect(redirectUrl)
+      const loginUrl = new URL('/login', requestUrl.origin)
+      loginUrl.searchParams.set('error', 'auth_callback_error')
+      return NextResponse.redirect(loginUrl)
     }
 
     const response = NextResponse.redirect(redirectUrl)

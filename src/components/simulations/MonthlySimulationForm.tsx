@@ -2,7 +2,9 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createMonthlySimulation } from '@/app/app/actions'
+import { SimulationLimitModal } from '@/components/usage/SimulationLimitModal'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -12,17 +14,43 @@ import { simulateMonthly } from '@/lib/calculators/monthly'
 import { getLastSalaryBase } from '@/lib/last-salary'
 import type { ExportData } from '@/lib/export'
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
+    <Button type="submit" className="w-full" disabled={pending || disabled}>
       {pending ? 'Calculando...' : 'Calcular e salvar'}
     </Button>
   )
 }
 
-export function MonthlySimulationForm() {
+type QuotaProps = {
+  isPro: boolean
+  simulationsRemaining: number
+}
+
+export function MonthlySimulationForm({ quota }: { quota: QuotaProps }) {
+  const router = useRouter()
   const [state, formAction] = useFormState(createMonthlySimulation, null)
+  const [limitModalOpen, setLimitModalOpen] = useState(false)
+
+  const blocked = !quota.isPro && quota.simulationsRemaining <= 0
+
+  useEffect(() => {
+    if (
+      state &&
+      !state.ok &&
+      'code' in state &&
+      state.code === 'QUOTA_EXCEEDED'
+    ) {
+      setLimitModalOpen(true)
+    }
+  }, [state])
+
+  useEffect(() => {
+    if (state?.ok) {
+      router.refresh()
+    }
+  }, [state, router])
   const [contractType, setContractType] = useState<'clt' | 'pj'>('clt')
   const [adiantamentoDia, setAdiantamentoDia] = useState<15 | 20>(15)
   const [bonus, setBonus] = useState('0')
@@ -81,9 +109,55 @@ export function MonthlySimulationForm() {
     })
   }, [state, contractType, defaults.jornadaMensalHoras, adiantamentoDia, bonus, selectedMonth, selectedYear, proLabore, anexoSimples, usaCalculoReal, dependentes, salarioBase])
 
+  const successRemaining =
+    state?.ok &&
+    state.data &&
+    typeof state.data === 'object' &&
+    'simulationsRemaining' in state.data
+      ? (state.data as { simulationsRemaining?: number | null; unlimited?: boolean }).simulationsRemaining
+      : null
+  const successUnlimited =
+    state?.ok &&
+    state.data &&
+    typeof state.data === 'object' &&
+    'unlimited' in state.data
+      ? (state.data as { unlimited?: boolean }).unlimited
+      : false
+
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <SimulationLimitModal
+        open={limitModalOpen}
+        onClose={() => setLimitModalOpen(false)}
+        onBuyPack={() => {
+          setLimitModalOpen(false)
+          window.location.href = '/app/conta'
+        }}
+        onUpgrade={() => {
+          setLimitModalOpen(false)
+          window.location.href = '/app/conta'
+        }}
+      />
+
       <form action={formAction} className="space-y-3">
+        {blocked ? (
+          <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
+            Você não tem simulações disponíveis no plano FREE. Faça upgrade ou aguarde a compra de créditos.
+          </div>
+        ) : null}
+
+        {state?.ok ? (
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+            <p className="font-medium">Simulação realizada com sucesso.</p>
+            <p className="mt-1 text-emerald-200/90">
+              {successUnlimited
+                ? 'Plano Pro: simulações ilimitadas.'
+                : successRemaining !== null && successRemaining !== undefined
+                  ? `Você ainda tem ${successRemaining} ${successRemaining === 1 ? 'simulação restante' : 'simulações restantes'}.`
+                  : 'Saldo atualizado.'}
+            </p>
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Contrato">
             <div className="relative">
@@ -334,7 +408,7 @@ export function MonthlySimulationForm() {
           </div>
         ) : null}
 
-        <SubmitButton />
+        <SubmitButton disabled={blocked} />
       </form>
 
       <div className="space-y-4">

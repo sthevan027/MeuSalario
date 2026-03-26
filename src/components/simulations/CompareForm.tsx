@@ -1,29 +1,64 @@
 'use client'
 
 import { useFormState, useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { createCompare } from '@/app/app/actions'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ResultBreakdown } from '@/components/simulations/ResultBreakdown'
 import { ExportButtons } from '@/components/simulations/ExportButtons'
+import { SimulationLimitModal } from '@/components/usage/SimulationLimitModal'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import { useMemo, useState, useEffect } from 'react'
 import { formatBRL } from '@/lib/format'
 import { getLastSalaryBase } from '@/lib/last-salary'
 import type { ExportData } from '@/lib/export'
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
+    <Button type="submit" className="w-full" disabled={pending || disabled}>
       {pending ? 'Comparando...' : 'Comparar e salvar'}
     </Button>
   )
 }
 
-export function CompareForm() {
+type QuotaProps = {
+  isPro: boolean
+  comparisonsRemaining: number
+}
+
+export function CompareForm({ quota }: { quota: QuotaProps }) {
+  const router = useRouter()
   const [state, formAction] = useFormState(createCompare, null)
+  const [limitModalOpen, setLimitModalOpen] = useState(false)
+  const [comparisonsLeft, setComparisonsLeft] = useState(quota.comparisonsRemaining)
+
+  useEffect(() => {
+    setComparisonsLeft(quota.comparisonsRemaining)
+  }, [quota.comparisonsRemaining])
+
+  useEffect(() => {
+    if (state && !state.ok && 'code' in state && state.code === 'QUOTA_EXCEEDED') {
+      setLimitModalOpen(true)
+    }
+  }, [state])
+
+  useEffect(() => {
+    if (state?.ok) {
+      router.refresh()
+      const rem =
+        state.data &&
+        typeof state.data === 'object' &&
+        'comparisonsRemaining' in state.data
+          ? (state.data as { comparisonsRemaining?: number | null }).comparisonsRemaining
+          : null
+      if (rem != null) setComparisonsLeft(rem)
+    }
+  }, [state, router])
+
+  const blocked = !quota.isPro && comparisonsLeft <= 0
   const [dependentes, setDependentes] = useState('0')
   const [usaCalculoRealPJ, setUsaCalculoRealPJ] = useState(false)
   const [proLabore, setProLabore] = useState('')
@@ -62,9 +97,56 @@ export function CompareForm() {
     })
   }, [state, dependentes, usaCalculoRealPJ, proLabore, anexoSimples, salarioBase])
 
+  const successUnlimited =
+    state?.ok &&
+    state.data &&
+    typeof state.data === 'object' &&
+    'unlimited' in state.data
+      ? (state.data as { unlimited?: boolean }).unlimited
+      : false
+
+  const comparisonsAfterSave =
+    state?.ok &&
+    state.data &&
+    typeof state.data === 'object' &&
+    'comparisonsRemaining' in state.data
+      ? (state.data as { comparisonsRemaining?: number | null }).comparisonsRemaining
+      : null
+
   return (
     <div className="space-y-6">
+      <SimulationLimitModal
+        open={limitModalOpen}
+        onClose={() => setLimitModalOpen(false)}
+        onBuyPack={() => {
+          setLimitModalOpen(false)
+          window.location.href = '/app/conta'
+        }}
+        onUpgrade={() => {
+          setLimitModalOpen(false)
+          window.location.href = '/planos'
+        }}
+        title="Limite de comparações CLT × PJ no plano FREE"
+        description="Faça upgrade para o Pro (comparações ilimitadas) ou use créditos quando o checkout estiver disponível."
+      />
+
       <form action={formAction} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-3">
+        {blocked ? (
+          <div className="lg:col-span-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
+            Você não tem comparações disponíveis no plano FREE. Faça upgrade ou aguarde créditos.
+          </div>
+        ) : null}
+
+        {state?.ok ? (
+          <div className="lg:col-span-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+            <p className="font-medium">Comparação salva no histórico.</p>
+            <p className="mt-1 text-emerald-200/90">
+              {successUnlimited
+                ? 'Plano Pro: comparações ilimitadas.'
+                : `Comparações restantes no FREE: ${comparisonsAfterSave ?? comparisonsLeft}.`}
+            </p>
+          </div>
+        ) : null}
         <Field label="Salário base">
           <Input 
             name="salarioBase" 
@@ -178,7 +260,7 @@ export function CompareForm() {
         ) : null}
 
         <div className="lg:col-span-3">
-          <SubmitButton />
+          <SubmitButton disabled={blocked} />
         </div>
       </form>
 

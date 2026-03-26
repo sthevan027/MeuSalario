@@ -1,6 +1,10 @@
 import { MonthlySimulationForm } from '@/components/simulations/MonthlySimulationForm'
+import { requireUser } from '@/lib/auth/profile'
 
-export default function SimulacaoPage() {
+export default async function SimulacaoPage() {
+  const profile = await requireUser()
+  const isPro = profile.plan === 'pro'
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -10,7 +14,12 @@ export default function SimulacaoPage() {
         </p>
       </div>
 
-      <MonthlySimulationForm />
+      <MonthlySimulationForm
+        quota={{
+          isPro,
+          simulationsRemaining: profile.simulations_remaining,
+        }}
+      />
     </div>
   )
 }

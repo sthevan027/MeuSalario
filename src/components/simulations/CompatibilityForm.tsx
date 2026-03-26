@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { reserveCompatibilityAnalysis } from '@/app/app/actions'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { SimulationLimitModal } from '@/components/usage/SimulationLimitModal'
 import { formatBRL } from '@/lib/format'
 import { simulateSalaryFit } from '@/lib/calculators/compatibility'
 import {
@@ -42,8 +45,56 @@ function formatMoneyInput(n: number): string {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function CompatibilityForm() {
+type QuotaProps = {
+  isPro: boolean
+  compatibilityRemaining: number
+}
+
+export function CompatibilityForm({ quota }: { quota: QuotaProps }) {
+  const router = useRouter()
   const [step, setStep] = useState(1)
+  const [limitModalOpen, setLimitModalOpen] = useState(false)
+  const [goingToResult, setGoingToResult] = useState(false)
+  const [compatReserveError, setCompatReserveError] = useState<string | null>(null)
+  const [compatLeft, setCompatLeft] = useState(quota.compatibilityRemaining)
+
+  useEffect(() => {
+    setCompatLeft(quota.compatibilityRemaining)
+  }, [quota.compatibilityRemaining])
+
+  useEffect(() => {
+    if (step !== 3) setCompatReserveError(null)
+  }, [step])
+
+  async function goToResultStep() {
+    if (quota.isPro) {
+      setStep(4)
+      return
+    }
+    if (compatLeft <= 0) {
+      setLimitModalOpen(true)
+      return
+    }
+    setGoingToResult(true)
+    setCompatReserveError(null)
+    try {
+      const res = await reserveCompatibilityAnalysis()
+      if (!res.ok) {
+        if ('code' in res && res.code === 'QUOTA_EXCEEDED') setLimitModalOpen(true)
+        else setCompatReserveError(res.message)
+        return
+      }
+      if (res.data?.compatibilityRemaining != null) {
+        setCompatLeft(res.data.compatibilityRemaining)
+      }
+      setStep(4)
+      router.refresh()
+    } finally {
+      setGoingToResult(false)
+    }
+  }
+
+  const blockedCompat = !quota.isPro && compatLeft <= 0
   const [contractType, setContractType] = useState<ContractType>('clt')
   const [grossCompensation, setGrossCompensation] = useState('6000')
   const [dependentes, setDependentes] = useState('0')
@@ -150,17 +201,42 @@ export function CompatibilityForm() {
 
   return (
     <div className="space-y-6">
-      {/* Steps */}
+      <SimulationLimitModal
+        open={limitModalOpen}
+        onClose={() => setLimitModalOpen(false)}
+        onBuyPack={() => {
+          setLimitModalOpen(false)
+          window.location.href = '/app/conta'
+        }}
+        onUpgrade={() => {
+          setLimitModalOpen(false)
+          window.location.href = '/planos'
+        }}
+        title="Limite de análises de compatibilidade no plano FREE"
+        description="Cada vez que você vê o resultado completo, conta uma análise. Faça upgrade para o Pro (ilimitado) ou use créditos quando disponíveis."
+      />
+
+      {!quota.isPro && step < 4 ? (
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300">
+          Plano FREE: você tem <strong className="text-white">{compatLeft}</strong> análise
+          {compatLeft === 1 ? '' : 's'} de compatibilidade para ver o resultado completo.
+        </div>
+      ) : null}
+
+      {/* Steps — só volta para etapas anteriores (evita pular para o resultado sem consumir cota) */}
       <div className="flex gap-2">
         {[1, 2, 3, 4].map((s) => (
           <button
             key={s}
             type="button"
-            onClick={() => setStep(s)}
-            className={`h-2 flex-1 rounded-full transition-colors ${
-              step === s ? 'bg-emerald-500' : 'bg-white/10'
+            onClick={() => {
+              if (s < step) setStep(s)
+            }}
+            disabled={s >= step}
+            className={`h-2 flex-1 rounded-full transition-colors disabled:cursor-default ${
+              step === s ? 'bg-emerald-500' : s < step ? 'bg-white/20 hover:bg-white/30' : 'bg-white/10'
             }`}
-            aria-label={`Etapa ${s}`}
+            aria-label={`Etapa ${s}${s >= step ? ' (use Próximo para avançar)' : ''}`}
           />
         ))}
       </div>
@@ -437,6 +513,11 @@ export function CompatibilityForm() {
               />
             </Field>
           </div>
+          {compatReserveError ? (
+            <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
+              {compatReserveError}
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -521,10 +602,17 @@ export function CompatibilityForm() {
         {step < 4 ? (
           <Button
             type="button"
-            onClick={() => setStep((s) => s + 1)}
+            onClick={() => {
+              if (step === 3) {
+                void goToResultStep()
+              } else {
+                setStep((s) => s + 1)
+              }
+            }}
+            disabled={step === 3 && (goingToResult || blockedCompat)}
             className="gap-2"
           >
-            Próximo
+            {step === 3 && goingToResult ? 'Abrindo resultado...' : 'Próximo'}
             <ChevronRight size={18} />
           </Button>
         ) : (
