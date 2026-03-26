@@ -26,13 +26,25 @@ export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
 
   if (!user) return null
 
-  const { data } = await supabase
-    .from('profiles')
-    .select(
-      'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining'
-    )
-    .eq('id', user.id)
-    .single()
+  const selectProfile = () =>
+    supabase
+      .from('profiles')
+      .select(
+        'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining'
+      )
+      .eq('id', user.id)
+      .single()
+
+  let { data, error } = await selectProfile()
+
+  // Sessão válida mas sem linha em profiles → cria via RPC (evita clear-session + signOut em loop)
+  if (!data && error?.code === 'PGRST116') {
+    const { error: rpcError } = await supabase.rpc('ensure_my_profile')
+    if (rpcError) {
+      console.error('[profile] ensure_my_profile:', rpcError.message)
+    }
+    ;({ data, error } = await selectProfile())
+  }
 
   if (!data) return null
 
