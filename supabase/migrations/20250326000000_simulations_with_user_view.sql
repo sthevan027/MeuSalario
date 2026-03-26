@@ -6,8 +6,13 @@
 --   1. Na barra lateral, acesse "Database" → "Views"
 --   2. Abra a view "simulations_with_user"
 --   3. Você verá a coluna "user_name" com o nome (ou email) de cada usuário.
+--
+-- DROP + CREATE: CREATE OR REPLACE falha se a ordem/nome das colunas mudou em relação
+-- à view já existente (ERROR 42P16: cannot change name of view column ...).
 
-create or replace view public.simulations_with_user
+drop view if exists public.simulations_with_user;
+
+create view public.simulations_with_user
 with (security_invoker = false) as
 select
   s.id,

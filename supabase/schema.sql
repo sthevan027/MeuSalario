@@ -75,11 +75,15 @@ create index if not exists simulations_user_id_created_at_idx
   on public.simulations(user_id, created_at desc);
 
 -- View: simulações com nome do usuário (para visualizar no Table Editor do Supabase)
-create or replace view public.simulations_with_user as
+drop view if exists public.simulations_with_user;
+create view public.simulations_with_user
+with (security_invoker = false) as
 select
   s.id,
   s.user_id,
   coalesce(p.name, p.email, s.user_id::text) as user_name,
+  p.plan,
+  p.role,
   s.contract_type,
   s.input_json,
   s.result_json,
