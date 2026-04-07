@@ -12,7 +12,18 @@ import { compareCltVsPj } from '@/lib/calculators/compare'
 import { simulateTermination } from '@/lib/calculators/termination'
 import { simulateThirteenth } from '@/lib/calculators/thirteenth'
 import { simulateVacation } from '@/lib/calculators/vacation'
-import type { MonthlySimulationInput, CompareInput, TerminationInput, ThirteenthInput, VacationInput } from '@/lib/calculators/types'
+import type {
+  MonthlySimulationInput,
+  CompareInput,
+  TerminationInput,
+  ThirteenthInput,
+  VacationInput,
+  MonthlySimulationResult,
+  CompareResult,
+  TerminationResult,
+  ThirteenthResult,
+  VacationResult,
+} from '@/lib/calculators/types'
 import { toNumberOr } from '@/lib/number'
 
 type ActionState<T> =
@@ -23,10 +34,17 @@ function num(v: FormDataEntryValue | null, fallback = 0) {
   return toNumberOr(v, fallback)
 }
 
+type MonthlySimulationActionData = {
+  input: MonthlySimulationInput
+  result: MonthlySimulationResult
+  simulationsRemaining: number | null
+  unlimited: boolean
+}
+
 export async function createMonthlySimulation(
-  _prev: ActionState<any> | null,
+  _prev: ActionState<MonthlySimulationActionData> | null,
   formData: FormData
-): Promise<ActionState<any>> {
+): Promise<ActionState<MonthlySimulationActionData>> {
   const contractType = String(formData.get('contractType') ?? 'clt') as MonthlySimulationInput['contractType']
   const adiantamentoDia = contractType === 'clt' ? (num(formData.get('adiantamentoDia'), 15) === 20 ? 20 : 15) : undefined
 
@@ -95,10 +113,17 @@ export async function createMonthlySimulation(
   }
 }
 
+type CompareActionData = {
+  input: CompareInput
+  result: CompareResult
+  comparisonsRemaining: number | null
+  unlimited: boolean
+}
+
 export async function createCompare(
-  _prev: ActionState<any> | null,
+  _prev: ActionState<CompareActionData> | null,
   formData: FormData
-): Promise<ActionState<any>> {
+): Promise<ActionState<CompareActionData>> {
   // Para PJ: verifica se usa cálculo real ou percentual genérico
   const proLaboreStr = formData.get('proLabore')
   const anexoStr = formData.get('anexoSimplesNacional')
@@ -161,10 +186,17 @@ export async function createCompare(
   }
 }
 
+type TerminationActionData = {
+  input: TerminationInput
+  result: TerminationResult
+  simulationsRemaining: number | null
+  unlimited: boolean
+}
+
 export async function createTermination(
-  _prev: ActionState<any> | null,
+  _prev: ActionState<TerminationActionData> | null,
   formData: FormData
-): Promise<ActionState<any>> {
+): Promise<ActionState<TerminationActionData>> {
   const tipoRescisaoStr = formData.get('tipoRescisao')
   const mesesPeriodoAquisitivoStr = formData.get('mesesPeriodoAquisitivo')
   const input: TerminationInput = {
@@ -260,10 +292,17 @@ export async function deleteSimulation(simulationId: string): Promise<ActionStat
   return { ok: true, data: null }
 }
 
+type ThirteenthActionData = {
+  input: ThirteenthInput
+  result: ThirteenthResult
+  simulationsRemaining: number | null
+  unlimited: boolean
+}
+
 export async function createThirteenthSimulation(
-  _prev: ActionState<any> | null,
+  _prev: ActionState<ThirteenthActionData> | null,
   formData: FormData
-): Promise<ActionState<any>> {
+): Promise<ActionState<ThirteenthActionData>> {
   const input: ThirteenthInput = {
     salarioBase: num(formData.get('salarioBase')),
     mesesTrabalhados: num(formData.get('mesesTrabalhados'), 12),
@@ -305,10 +344,17 @@ export async function createThirteenthSimulation(
   }
 }
 
+type VacationActionData = {
+  input: VacationInput
+  result: VacationResult
+  simulationsRemaining: number | null
+  unlimited: boolean
+}
+
 export async function createVacationSimulation(
-  _prev: ActionState<any> | null,
+  _prev: ActionState<VacationActionData> | null,
   formData: FormData
-): Promise<ActionState<any>> {
+): Promise<ActionState<VacationActionData>> {
   const input: VacationInput = {
     salarioBase: num(formData.get('salarioBase')),
     mesesTrabalhados: num(formData.get('mesesTrabalhados'), 12),
