@@ -38,3 +38,5 @@ next-env.d.ts
 # Ide
 .idea/
 .zed/
+.cursor/
+.vscode/
