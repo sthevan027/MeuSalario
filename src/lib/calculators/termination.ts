@@ -80,7 +80,6 @@ export function simulateTermination(input: TerminationInput): TerminationResult 
   )
 
   const inssRescisao = calcularINSS(verbasTributaveis)
-  const baseCalculoIRRF = money(verbasTributaveis - inssRescisao)
   const irrfRescisao = calcularIRRF(verbasTributaveis, inssRescisao)
   const totalDescontos = money(inssRescisao + irrfRescisao)
 

@@ -40,11 +40,12 @@ export async function createSupabaseServerClient(cookieStore?: CookieStore) {
   client.auth.getUser = async (jwt?: string) => {
     try {
       return await originalGetUser(jwt)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Se for erro de refresh_token inválido/ausente, retorna sessão vazia (usuário não autenticado)
       // Isso evita spam de "refresh_token_not_found" no console quando cookies estão inválidos
-      if (error?.code === 'refresh_token_not_found' || (error?.status === 400 && error?.message?.includes('refresh'))) {
-        return { data: { user: null }, error: null } as any
+      const err = error as { code?: string; status?: number; message?: string }
+      if (err.code === 'refresh_token_not_found' || (err.status === 400 && err.message?.includes('refresh'))) {
+        return { data: { user: null }, error: null } as unknown as Awaited<ReturnType<typeof originalGetUser>>
       }
       throw error
     }
@@ -65,10 +66,10 @@ export async function createSupabaseActionClient() {
       get(name: string) {
         return cookieStore.get(name)?.value
       },
-      set(name: string, value: string, options: any) {
+      set(name: string, value: string, options: Record<string, unknown>) {
         cookieStore.set({ name, value, ...options })
       },
-      remove(name: string, options: any) {
+      remove(name: string, options: Record<string, unknown>) {
         cookieStore.set({ name, value: '', ...options, maxAge: 0 })
       },
     },

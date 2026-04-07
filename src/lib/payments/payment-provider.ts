@@ -62,5 +62,5 @@ export interface PaymentProvider {
   /**
    * Processa webhook do gateway e retorna dados normalizados
    */
-  handleWebhook(payload: any, headers: Headers): Promise<WebhookResult | null>
+  handleWebhook(payload: unknown, headers: Headers): Promise<WebhookResult | null>
 }
