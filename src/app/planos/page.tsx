@@ -7,6 +7,7 @@ import {
   getDefaultFreeComparisonsLimit,
   getDefaultFreeCompatibilityLimit,
 } from '@/lib/usage-config'
+import { parsePlanMoney } from '@/lib/billing/plan-price'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +24,8 @@ export default async function PlanosPage() {
 
   const proPlan = (plans as PlanData[] | null)?.find((p) => p.id === 'pro')
 
-  const priceMonthly = proPlan?.price_monthly ?? 10
-  const priceYearly = proPlan?.price_yearly ?? 95
+  const priceMonthly = parsePlanMoney(proPlan?.price_monthly) ?? 10
+  const priceYearly = parsePlanMoney(proPlan?.price_yearly) ?? 95
   const savings = priceMonthly > 0 ? Math.round((1 - priceYearly / (priceMonthly * 12)) * 100) : 0
 
   const freeSimLimit = getDefaultFreeSimulationsLimit()

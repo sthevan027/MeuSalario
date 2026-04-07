@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
+import { parsePlanMoney } from '@/lib/billing/plan-price'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -21,8 +22,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Plano Pro não encontrado.' }, { status: 404 })
     }
 
-    const monthly = Number(plan.price_monthly)
-    const yearly = Number(plan.price_yearly)
+    const monthly = parsePlanMoney(plan.price_monthly)
+    const yearly = parsePlanMoney(plan.price_yearly)
+
+    if (monthly == null || yearly == null) {
+      return NextResponse.json({ error: 'Preços do plano inválidos.' }, { status: 500 })
+    }
 
     return NextResponse.json({
       monthly,

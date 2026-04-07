@@ -8,11 +8,25 @@ import {
   getDefaultFreeComparisonsLimit,
   getDefaultFreeCompatibilityLimit,
 } from '@/lib/usage-config'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { parsePlanMoney } from '@/lib/billing/plan-price'
+
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const freeSim = getDefaultFreeSimulationsLimit()
   const freeComp = getDefaultFreeComparisonsLimit()
   const freeCompat = getDefaultFreeCompatibilityLimit()
+
+  const supabase = await createSupabaseServerClient()
+  const { data: plans } = await supabase.from('plans').select('id, price_monthly, price_yearly')
+  const proPlan = (plans as { id: string; price_monthly: number; price_yearly: number }[] | null)?.find(
+    (p) => p.id === 'pro'
+  )
+  const priceMonthly = parsePlanMoney(proPlan?.price_monthly) ?? 10
+  const priceYearly = parsePlanMoney(proPlan?.price_yearly) ?? 95
+  const savings =
+    priceMonthly > 0 ? Math.round((1 - priceYearly / (priceMonthly * 12)) * 100) : 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -208,10 +222,22 @@ export default async function HomePage() {
               
               <div className="mb-2 text-xs font-semibold text-emerald-400 sm:text-sm">PRO</div>
               <div className="mb-2 flex items-baseline gap-2">
-                <span className="text-4xl font-bold text-white sm:text-5xl">R$ 10</span>
+                <span className="text-4xl font-bold text-white sm:text-5xl">
+                  R${' '}
+                  {priceMonthly.toLocaleString('pt-BR', {
+                    minimumFractionDigits: priceMonthly % 1 === 0 ? 0 : 2,
+                  })}
+                </span>
                 <span className="text-sm text-slate-400 sm:text-base">/mês</span>
               </div>
-              <div className="mb-4 text-xs text-slate-400 sm:mb-6 sm:text-sm">ou R$ 95/ano (economize 21%)</div>
+              <div className="mb-4 text-xs text-slate-400 sm:mb-6 sm:text-sm">
+                ou R${' '}
+                {priceYearly.toLocaleString('pt-BR', {
+                  minimumFractionDigits: priceYearly % 1 === 0 ? 0 : 2,
+                })}
+                /ano
+                {savings > 0 ? ` (economize ${savings}%)` : ''}
+              </div>
               
               <ul className="mb-8 space-y-3">
                 <li className="flex items-start gap-3 text-white">

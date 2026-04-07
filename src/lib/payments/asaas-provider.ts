@@ -13,6 +13,72 @@ import type {
 } from './payment-provider'
 import { requireEnv } from '@/lib/env'
 
+/**
+ * Quando true (padrão), ajusta notificações do cliente no Asaas via API:
+ * mantém só e-mail de confirmação de pagamento (PAYMENT_RECEIVED);
+ * desativa lembretes, réguas, inadimplência, SMS/Whats etc.
+ * Defina false para deixar as preferências padrão do painel Asaas.
+ */
+export function shouldApplyAsaasReceiptOnlyCustomerEmails(): boolean {
+  return process.env.ASAAS_CUSTOMER_EMAILS_ONLY_PAYMENT_RECEIVED !== 'false'
+}
+
+type AsaasNotificationRow = {
+  id: string
+  event: string
+  deleted?: boolean
+}
+
+/**
+ * Lista todas as notificações do cliente (com paginação).
+ */
+async function listAllCustomerNotifications(customerId: string): Promise<AsaasNotificationRow[]> {
+  const all: AsaasNotificationRow[] = []
+  let offset = 0
+  const limit = 100
+  for (;;) {
+    const res = await asaasRequest<{
+      data?: AsaasNotificationRow[]
+      hasMore?: boolean
+    }>(`/customers/${customerId}/notifications?limit=${limit}&offset=${offset}`)
+    const batch = res.data ?? []
+    all.push(...batch)
+    if (!res.hasMore || batch.length < limit) break
+    offset += limit
+  }
+  return all
+}
+
+/**
+ * Só o cliente recebe e-mail em PAYMENT_RECEIVED (pagamento confirmado).
+ * Demais eventos (cobrança criada, lembrete, vencido, linha digitável, etc.) ficam off para o cliente.
+ * @see https://docs.asaas.com/docs/alterando-notificacoes-de-um-cliente
+ */
+export async function applyAsaasCustomerReceiptOnlyNotifications(customerId: string): Promise<void> {
+  const rows = await listAllCustomerNotifications(customerId)
+  const active = rows.filter((n) => n.id && !n.deleted)
+  if (active.length === 0) return
+
+  const notifications = active.map((n) => {
+    const receiptOnly = n.event === 'PAYMENT_RECEIVED'
+    return {
+      id: n.id,
+      emailEnabledForCustomer: receiptOnly,
+      smsEnabledForCustomer: false,
+      whatsappEnabledForCustomer: false,
+      phoneCallEnabledForCustomer: false,
+    }
+  })
+
+  await asaasRequest('/notifications/batch', {
+    method: 'PUT',
+    body: JSON.stringify({
+      customer: customerId,
+      notifications,
+    }),
+  })
+}
+
 const ASAAS_API_BASE = process.env.ASAAS_SANDBOX === 'true'
   ? 'https://api-sandbox.asaas.com/v3'
   : 'https://api.asaas.com/v3'
@@ -70,6 +136,39 @@ async function asaasRequest<T>(
   return data as T
 }
 
+/**
+ * Resolve o userId do app a partir de uma cobrança (pagamento) no Asaas.
+ * Retorna `email:xxx` quando só há correspondência por e-mail (mesmo contrato do webhook).
+ */
+export async function resolveUserIdForAsaasPayment(
+  paymentId: string,
+  subscriptionIdFromWebhook?: string
+): Promise<string | null> {
+  const paymentDetail = await asaasRequest<{ customer: string; subscription?: string }>(
+    `/payments/${paymentId}`
+  )
+  const subId = paymentDetail.subscription || subscriptionIdFromWebhook
+  if (!subId) {
+    const customer = await asaasRequest<{ email?: string }>(`/customers/${paymentDetail.customer}`)
+    if (!customer?.email) return null
+    return `email:${customer.email}`
+  }
+  const sub = await asaasRequest<{ externalReference?: string }>(`/subscriptions/${subId}`)
+  if (sub.externalReference) return sub.externalReference
+  const customer = await asaasRequest<{ email?: string }>(`/customers/${paymentDetail.customer}`)
+  if (!customer?.email) return null
+  return `email:${customer.email}`
+}
+
+export async function getAsaasPaymentStatus(paymentId: string): Promise<string | null> {
+  try {
+    const p = await asaasRequest<{ status?: string }>(`/payments/${paymentId}`)
+    return p.status ?? null
+  } catch {
+    return null
+  }
+}
+
 function toSubscriptionStatus(asaasStatus: string): SubscriptionStatus {
   switch (asaasStatus?.toUpperCase()) {
     case 'ACTIVE':
@@ -107,13 +206,14 @@ export class AsaasProvider implements PaymentProvider {
     const cycle = data.interval === 'year' ? 'YEARLY' : 'MONTHLY'
 
     // Usa Payment Links (RECURRENT) para checkout hospedado - usuário escolhe cartão, boleto ou PIX
+    const label = data.interval === 'year' ? 'Anual' : 'Mensal'
     const link = await asaasRequest<AsaasPaymentLink>('/paymentLinks', {
       method: 'POST',
       body: JSON.stringify({
-        name: `MeuSalário Pro - ${data.interval === 'year' ? 'Anual' : 'Mensal'}`,
+        name: `MeuSalário Pro ${label} — R$ ${data.value.toFixed(2)}`,
         description: data.interval === 'year'
-          ? 'Assinatura Pro anual - gráficos, histórico, comparador CLT x PJ e mais.'
-          : 'Assinatura Pro mensal - gráficos, histórico, comparador CLT x PJ e mais.',
+          ? `Assinatura Pro anual (R$ ${data.value.toFixed(2)}) — gráficos, histórico, comparador CLT x PJ e mais.`
+          : `Assinatura Pro mensal (R$ ${data.value.toFixed(2)}) — gráficos, histórico, comparador CLT x PJ e mais.`,
         value: data.value,
         chargeType: 'RECURRENT',
         subscriptionCycle: cycle,
@@ -176,34 +276,12 @@ export class AsaasProvider implements PaymentProvider {
     // PAYMENT_RECEIVED = pagamento confirmado (assinatura ou cobrança única)
     if (event.event === 'PAYMENT_RECEIVED' && event.payment) {
       const payment = event.payment
-      const subscriptionId = payment.subscription
+      const userId = await resolveUserIdForAsaasPayment(payment.id, payment.subscription)
+      if (!userId) return null
 
-      // userId vem do externalReference do payment link (não disponível no webhook de pagamento)
-      // Precisamos buscar o customer para pegar email e fazer match, ou o subscription tem metadata
-      // Asaas não retorna externalReference no webhook de pagamento - precisamos buscar o payment/customer
-      const paymentDetail = await asaasRequest<{ customer: string; subscription?: string }>(
-        `/payments/${payment.id}`
-      )
-      const customerId = paymentDetail.customer
-      const subId = paymentDetail.subscription || subscriptionId
-
+      const paymentDetail = await asaasRequest<{ subscription?: string }>(`/payments/${payment.id}`)
+      const subId = paymentDetail.subscription || payment.subscription
       if (!subId) return null
-
-      // Buscar subscription para ver se tem externalReference
-      const sub = await asaasRequest<{ externalReference?: string }>(`/subscriptions/${subId}`)
-      const userId = sub.externalReference
-
-      if (!userId) {
-        // Fallback: buscar customer por email e fazer match com profiles
-        const customer = await asaasRequest<{ email?: string }>(`/customers/${customerId}`)
-        if (!customer?.email) return null
-        // Retornamos dados para o webhook handler fazer o match por email
-        return {
-          userId: `email:${customer.email}`,
-          status: 'ACTIVE',
-          subscriptionId: subId,
-        }
-      }
 
       return {
         userId,
