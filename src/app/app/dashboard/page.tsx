@@ -6,14 +6,13 @@ import { createSupabaseServerClient, type CookieStore } from '@/lib/supabase/ser
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
-import { FeedbackForm } from '@/components/FeedbackForm'
 import { DashboardCharts } from './DashboardCharts'
 
 type SimulationRow = {
   created_at: string
   contract_type: 'clt' | 'pj'
-  input_json: any
-  result_json: any
+  input_json: Record<string, unknown>
+  result_json: Record<string, unknown>
 }
 
 function monthKey(date: Date) {
@@ -130,10 +129,15 @@ export default async function DashboardPage() {
     
     // Usa o mês/ano da simulação se disponível, senão usa a data de criação
     let simDate: Date
-    const inputMonth = r.input_json?.month
-    const inputYear = r.input_json?.year
+    const inputMonth = Number(r.input_json?.month)
+    const inputYear = Number(r.input_json?.year)
     
-    if (inputMonth && inputYear && inputMonth >= 1 && inputMonth <= 12) {
+    if (
+      Number.isFinite(inputMonth) &&
+      Number.isFinite(inputYear) &&
+      inputMonth >= 1 &&
+      inputMonth <= 12
+    ) {
       // Usa o mês/ano especificado na simulação (mês vem como 1-12)
       simDate = new Date(inputYear, inputMonth - 1, 1)
     } else {
@@ -222,7 +226,7 @@ export default async function DashboardPage() {
 
   // Mapeia para meses
   const cltVsPjByMonth = new Map<string, { clt: number; pj: number }>()
-  for (const [_, group] of compareGroups) {
+  for (const [, group] of compareGroups) {
     if (group.clt !== undefined && group.pj !== undefined) {
       const key = monthKey(group.date)
       cltVsPjByMonth.set(key, { clt: group.clt, pj: group.pj })

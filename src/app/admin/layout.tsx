@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { signOut } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/Button'
 import { requireAdmin } from '@/lib/auth/profile'

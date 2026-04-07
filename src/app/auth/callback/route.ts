@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
     const response = NextResponse.redirect(redirectUrl)
     for (const { name, value, options } of cookiesToSet) {
-      response.cookies.set(name, value, options as any)
+      response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2])
     }
     return response
   }

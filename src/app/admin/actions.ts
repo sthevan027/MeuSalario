@@ -58,7 +58,8 @@ export async function setUserRole(formData: FormData): Promise<void> {
   revalidatePath('/admin/usuarios')
 }
 
-export async function seedPlans(_formData: FormData): Promise<void> {
+export async function seedPlans(formData: FormData): Promise<void> {
+  void formData
   await requireAdmin()
 
   const admin = createSupabaseAdminClient()
