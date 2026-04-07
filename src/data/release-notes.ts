@@ -14,6 +14,20 @@ export type ReleaseNote = {
 
 export const releaseNotes: readonly ReleaseNote[] = [
   {
+    version: 'v1.5.1',
+    date: '2026-04-07',
+    title: 'Correções de segurança e estabilidade da cota',
+    items: [
+      'Correção: parâmetro next no fluxo de login sanitizado no auth/callback, evitando redirecionamentos abertos para sites externos.',
+      'Correção: fim do loop de login quando ainda não existe linha correspondente em profiles.',
+      'Correção: migração da view simulations_with_user no Supabase com DROP VIEW, evitando erro 42P16 ao alterar colunas.',
+      'Correção: estorno de quota de simulações permitido apenas via backend confiável (service_role e usuário explícito), não pela API pública.',
+      'Melhoria: ícones PWA e Apple atualizados e otimizados (incluindo 192×192 e 512×512) para instalação e atalhos no sistema.',
+      'Melhoria: projeto publicado sob licença MIT (arquivo LICENSE no repositório).',
+    ],
+    kind: 'Correção',
+  },
+  {
     version: 'v1.5.0',
     date: '2026-03-24',
     title: 'Limite de simulações no plano FREE',
