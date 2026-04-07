@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET() {
   try {
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
     }
 
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

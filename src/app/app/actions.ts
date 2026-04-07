@@ -63,7 +63,7 @@ export async function createMonthlySimulation(
 
   const result = simulateMonthly(input)
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -121,7 +121,7 @@ export async function createCompare(
 
   const result = compareCltVsPj(input)
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -189,7 +189,7 @@ export async function createTermination(
 
   const result = simulateTermination(input)
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -222,7 +222,7 @@ export async function createTermination(
 }
 
 export async function deleteSimulation(simulationId: string): Promise<ActionState<null>> {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   
   const {
     data: { user },
@@ -273,7 +273,7 @@ export async function createThirteenthSimulation(
 
   const result = simulateThirteenth(input)
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -318,7 +318,7 @@ export async function createVacationSimulation(
 
   const result = simulateVacation(input)
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -354,7 +354,7 @@ export async function createVacationSimulation(
 export async function reserveCompatibilityAnalysis(): Promise<
   ActionState<{ compatibilityRemaining: number | null; unlimited: boolean }>
 > {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

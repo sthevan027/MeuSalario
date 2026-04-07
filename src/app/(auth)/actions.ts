@@ -9,9 +9,10 @@ type ActionState =
   | { ok: true; message?: string }
   | { ok: false; message: string }
 
-function getOrigin() {
+async function getOrigin() {
+  const h = await headers()
   return (
-    headers().get('origin') ??
+    h.get('origin') ??
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.NODE_ENV === 'production' ? 'https://meu-salario-lime.vercel.app' : 'http://localhost:3000')
   )
@@ -21,8 +22,8 @@ function getOrigin() {
  * Inicia o fluxo de login/cadastro com Google OAuth
  */
 export async function signInWithGoogle(nextPath: string = '/app/dashboard'): Promise<ActionState> {
-  const supabase = createSupabaseActionClient()
-  const origin = getOrigin()
+  const supabase = await createSupabaseActionClient()
+  const origin = await getOrigin()
   const safePath = safeRedirectPath(nextPath)
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -51,8 +52,8 @@ export async function signInWithGoogle(nextPath: string = '/app/dashboard'): Pro
  * Vincula conta Google a um usuário já autenticado
  */
 export async function linkGoogleAccount(): Promise<ActionState> {
-  const supabase = createSupabaseActionClient()
-  const origin = getOrigin()
+  const supabase = await createSupabaseActionClient()
+  const origin = await getOrigin()
 
   const { data, error } = await supabase.auth.linkIdentity({
     provider: 'google',
@@ -76,7 +77,7 @@ export async function linkGoogleAccount(): Promise<ActionState> {
  * Remove vinculação com Google
  */
 export async function unlinkGoogleAccount(): Promise<ActionState> {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -104,7 +105,7 @@ export async function signIn(_prevState: ActionState | null, formData: FormData)
   const password = String(formData.get('password') ?? '')
   const nextPath = safeRedirectPath(String(formData.get('nextPath') ?? ''))
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) return { ok: false, message: error.message }
@@ -117,12 +118,13 @@ export async function signUp(_prevState: ActionState | null, formData: FormData)
   const password = String(formData.get('password') ?? '')
   const name = String(formData.get('name') ?? '').trim()
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
+  const origin = await getOrigin()
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${getOrigin()}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback`,
       data: { name },
     },
   })
@@ -157,9 +159,10 @@ export async function requestPasswordReset(
 ): Promise<ActionState> {
   const email = String(formData.get('email') ?? '').trim()
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
+  const origin = await getOrigin()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getOrigin()}/auth/callback?type=recovery`,
+    redirectTo: `${origin}/auth/callback?type=recovery`,
   })
 
   if (error) return { ok: false, message: error.message }
@@ -178,7 +181,7 @@ export async function verifyRecoveryCode(
     return { ok: false, message: 'Preencha o email e o código.' }
   }
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.verifyOtp({
     email,
     token,
@@ -206,7 +209,7 @@ export async function updatePassword(
 ): Promise<ActionState> {
   const password = String(formData.get('password') ?? '')
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.updateUser({ password })
 
   if (error) return { ok: false, message: error.message }
@@ -215,7 +218,7 @@ export async function updatePassword(
 }
 
 export async function signOut() {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   await supabase.auth.signOut()
   redirect('/')
 }

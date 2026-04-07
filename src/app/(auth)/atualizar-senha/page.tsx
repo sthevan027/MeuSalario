@@ -4,7 +4,7 @@ import { UpdatePasswordForm } from '@/components/auth/UpdatePasswordForm'
 import { ValidateCodeForm } from '@/components/auth/ValidateCodeForm'
 
 export default async function AtualizarSenhaPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   return (

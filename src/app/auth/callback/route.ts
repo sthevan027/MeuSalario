@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const redirectUrl = new URL(redirectTo, requestUrl.origin)
 
   if (code) {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[] = []
 
     const supabase = createServerClient(

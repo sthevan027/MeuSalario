@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET() {
   try {
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
 
     const { data: plan, error } = await supabase
       .from('plans')

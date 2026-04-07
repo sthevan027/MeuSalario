@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const { interval } = (await request.json().catch(() => ({}))) as { interval?: 'month' | 'year' }
     const safeInterval: 'month' | 'year' = interval === 'year' ? 'year' : 'month'
 
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

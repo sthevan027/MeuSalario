@@ -1,5 +1,4 @@
 import '@/lib/polyfills'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { unstable_cache } from 'next/cache'
@@ -7,18 +6,8 @@ import { createSupabaseServerClient, type CookieStore } from '@/lib/supabase/ser
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName } from '@/lib/greetings'
-import { LazyChart } from '@/components/charts/LazyChart'
 import { FeedbackForm } from '@/components/FeedbackForm'
-
-const MonthlyNetChart = dynamic(
-  () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
-  { ssr: false }
-)
-
-const CltVsPjChart = dynamic(
-  () => import('@/components/charts/CltVsPjChart').then(mod => ({ default: mod.CltVsPjChart })),
-  { ssr: false }
-)
+import { DashboardCharts } from './DashboardCharts'
 
 type SimulationRow = {
   created_at: string
@@ -93,7 +82,7 @@ function lastNMonthKeys(endDate: Date, n = 12) {
 // Função auxiliar para buscar simulações mensais (usada no cache).
 // cookieStore deve ser obtido fora do unstable_cache e passado como argumento.
 async function getSimulationsData(userId: string, cookieStore: CookieStore) {
-  const supabase = createSupabaseServerClient(cookieStore)
+  const supabase = await createSupabaseServerClient(cookieStore)
   const { data, error } = await supabase
     .from('simulations')
     .select('created_at, contract_type, input_json, result_json')
@@ -111,7 +100,7 @@ export default async function DashboardPage() {
   const displayName = getDisplayName(profile)
 
   // cookies() fora do cache (fonte dinâmica não pode ser usada dentro de unstable_cache)
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   // Cache da query por 60s (menos hits no Supabase; revalida com tag)
   const getCachedSimulations = unstable_cache(
@@ -364,16 +353,10 @@ export default async function DashboardPage() {
       </div>
 
       {/* Gráfico de evolução do salário líquido */}
-      <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
-        <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
-        {hasSeries ? (
-          <div className="mt-4">
-            <LazyChart fallback="Carregando gráfico...">
-              <MonthlyNetChart data={series} />
-            </LazyChart>
-          </div>
-        ) : (
+      {!hasSeries ? (
+        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
+          <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
           <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
             <p className="text-slate-400">Nenhuma simulação ainda</p>
             <p className="mt-1 text-sm text-slate-500">Faça uma simulação para ver o gráfico</p>
@@ -384,21 +367,15 @@ export default async function DashboardPage() {
               Fazer simulação
             </Link>
           </div>
-        )}
-      </div>
-
-      {/* CLT vs PJ */}
-      {hasCltVsPjData && (
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
-          <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
-          <div className="mt-4">
-            <LazyChart fallback="Carregando gráfico...">
-              <CltVsPjChart data={cltVsPjSeries} />
-            </LazyChart>
-          </div>
         </div>
-      )}
+      ) : null}
+
+      <DashboardCharts
+        series={series}
+        hasSeries={hasSeries}
+        cltVsPjSeries={cltVsPjSeries}
+        hasCltVsPjData={hasCltVsPjData}
+      />
     </div>
   )
 }

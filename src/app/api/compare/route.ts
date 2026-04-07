@@ -37,7 +37,7 @@ function num(v: unknown, fallback = 0): number {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

@@ -17,7 +17,7 @@ type PlanData = {
 }
 
 export default async function PlanosPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data: plans } = await supabase.from('plans').select('id, price_monthly, price_yearly')
 
