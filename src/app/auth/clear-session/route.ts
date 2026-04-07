@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { safeRedirectPath } from '@/lib/auth/safe-redirect-path'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 
 /**
@@ -8,10 +9,10 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
-  const redirectTo = requestUrl.searchParams.get('redirect') ?? '/login'
+  const safeNext = safeRedirectPath(requestUrl.searchParams.get('redirect'), '/login')
 
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   await supabase.auth.signOut({ scope: 'local' })
 
-  return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
+  return NextResponse.redirect(new URL(safeNext, requestUrl.origin))
 }

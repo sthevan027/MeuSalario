@@ -22,14 +22,12 @@ const nextConfig = {
 
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
-    instrumentationHook: true,
   },
 
   // Opcional: OUTPUT_STANDALONE=true no build para gerar pasta standalone (Docker/deploy leve)
   ...(process.env.OUTPUT_STANDALONE === 'true' && { output: 'standalone' }),
 
   // Performance
-  swcMinify: true,
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,

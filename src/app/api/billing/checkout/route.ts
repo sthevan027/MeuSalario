@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { getPaymentProvider, getCustomerIdColumn } from '@/lib/payments'
+import {
+  applyAsaasCustomerReceiptOnlyNotifications,
+  shouldApplyAsaasReceiptOnlyCustomerEmails,
+} from '@/lib/payments/asaas-provider'
+import { parsePlanMoney } from '@/lib/billing/plan-price'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -13,7 +18,7 @@ export async function POST(request: Request) {
     const { interval } = (await request.json().catch(() => ({}))) as { interval?: 'month' | 'year' }
     const safeInterval: 'month' | 'year' = interval === 'year' ? 'year' : 'month'
 
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -32,9 +37,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Plano Pro não encontrado.' }, { status: 404 })
     }
 
-    const planValue = safeInterval === 'month' ? plan.price_monthly : plan.price_yearly
+    const rawPrice = safeInterval === 'month' ? plan.price_monthly : plan.price_yearly
+    const planValue = parsePlanMoney(rawPrice)
 
-    if (!planValue || planValue <= 0) {
+    if (planValue == null || planValue <= 0) {
       return NextResponse.json({ error: 'Preço do plano inválido.' }, { status: 500 })
     }
 
@@ -77,10 +83,21 @@ export async function POST(request: Request) {
         }
       })()
 
+    if (customerId && shouldApplyAsaasReceiptOnlyCustomerEmails()) {
+      try {
+        await applyAsaasCustomerReceiptOnlyNotifications(customerId)
+      } catch (e) {
+        console.warn(
+          'Asaas: não foi possível restringir notificações ao e-mail de pagamento confirmado:',
+          e
+        )
+      }
+    }
+
     const { paymentLink } = await provider.createSubscription({
       customerId: customerId || user.id,
       planId: 'pro',
-      value: Number(planValue),
+      value: planValue,
       interval: safeInterval,
       userId: user.id,
       baseUrl,
