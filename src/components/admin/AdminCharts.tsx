@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import {
   AreaChart,
   Area,
@@ -12,7 +11,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts'
 
 type UserGrowthData = {

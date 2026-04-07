@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -29,12 +29,22 @@ export const DeductionsChart = memo(function DeductionsChart({ data }: { data: D
       maximumFractionDigits: 0,
     }).format(value)
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  type PayloadEntry = { value?: number; name?: string; color?: string }
+
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean
+    payload?: PayloadEntry[]
+    label?: string
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-2xl border-2 border-white/25 bg-gradient-to-br from-slate-900/98 to-slate-800/98 px-5 py-3 shadow-2xl backdrop-blur-md">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-          {payload.map((entry: any, index: number) => {
+          {payload.map((entry, index: number) => {
             if (typeof entry.value !== 'number') return null
             return (
               <div key={index} className="flex items-center justify-between gap-4">

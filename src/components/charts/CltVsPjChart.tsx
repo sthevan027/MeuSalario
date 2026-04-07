@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -29,11 +29,21 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
       maximumFractionDigits: 0,
     }).format(value)
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  type PayloadEntry = { dataKey?: string | number; value?: number }
+
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean
+    payload?: PayloadEntry[]
+    label?: string
+  }) => {
     if (active && payload && payload.length) {
-      const cltValue = payload.find((p: any) => p.dataKey === 'clt')?.value
-      const pjValue = payload.find((p: any) => p.dataKey === 'pj')?.value
-      const diffValue = payload.find((p: any) => p.dataKey === 'difference')?.value
+      const cltValue = payload.find((p) => p.dataKey === 'clt')?.value
+      const pjValue = payload.find((p) => p.dataKey === 'pj')?.value
+      const diffValue = payload.find((p) => p.dataKey === 'difference')?.value
 
       return (
         <div className="rounded-2xl border-2 border-white/25 bg-gradient-to-br from-slate-900/98 to-slate-800/98 px-5 py-3 shadow-2xl backdrop-blur-md">

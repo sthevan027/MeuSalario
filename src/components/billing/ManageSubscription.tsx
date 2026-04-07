@@ -37,8 +37,8 @@ export function ManageSubscription() {
       
       const data = await res.json()
       setSubscription(data.subscription)
-    } catch (e: any) {
-      setError(e?.message || 'Erro ao carregar assinatura')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erro ao carregar assinatura')
       console.error('Load subscription error:', e)
     } finally {
       setLoading(false)
@@ -65,8 +65,8 @@ export function ManageSubscription() {
       const data = await res.json()
       setSuccess(data.message || 'Intervalo alterado com sucesso!')
       await loadSubscription()
-    } catch (e: any) {
-      setError(e?.message || 'Erro ao alterar intervalo')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erro ao alterar intervalo')
       console.error('Change interval error:', e)
     } finally {
       setActionLoading(null)

@@ -1,11 +1,11 @@
 'use client'
 
 // Polyfill para Node.js
-if (typeof self === 'undefined') {
-  (globalThis as any).self = globalThis
+if (typeof globalThis.self === 'undefined') {
+  Object.defineProperty(globalThis, 'self', { value: globalThis, configurable: true })
 }
 
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -82,10 +82,6 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
 
     // Verifica se já não existe
     if (!dataWithForecast.some((d) => d.month === nextMonthLabel)) {
-      // Encontra o último valor histórico para conectar a linha
-      const lastHistoricalValue = nonNull[nonNull.length - 1].liquido
-      const lastHistoricalMonth = data.find((d) => d.liquido === lastHistoricalValue)?.month || lastMonth
-      
       // Adiciona o ponto de previsão
       dataWithForecast.push({
         month: nextMonthLabel,
@@ -180,7 +176,18 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
     return ticks.length > 1 ? ticks : undefined
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean
+    payload?: Array<{
+      value?: number
+      payload?: MonthlyNetPoint
+    }>
+    label?: string
+  }) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload
       const value = payload[0].value
@@ -188,7 +195,7 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
       const forecastValue = dataPoint?.forecastValue
 
       if (typeof value === 'number' || (isForecast && typeof forecastValue === 'number')) {
-        const displayValue = typeof value === 'number' ? value : forecastValue
+        const displayValue: number = typeof value === 'number' ? value : (forecastValue as number)
         return (
           <div className="rounded-2xl border-2 border-white/25 bg-gradient-to-br from-slate-900/98 to-slate-800/98 px-5 py-3 shadow-2xl backdrop-blur-md">
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
@@ -355,7 +362,7 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
             animationDuration={1000}
             animationBegin={100}
             animationEasing="ease-in-out"
-            dot={(props: any) => {
+            dot={(props: { cx?: number; cy?: number; payload?: MonthlyNetPoint }) => {
               const value = props?.payload?.liquido
               const isForecast = props?.payload?.isForecast
               if (typeof value !== 'number' && !isForecast) return false
@@ -399,7 +406,7 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
           {forecastValue !== null && nonNull.length > 0 && (
             <Line
               type="monotone"
-              dataKey={(entry: any) => {
+              dataKey={(entry: MonthlyNetPoint) => {
                 if (entry.isForecast) return entry.forecastValue
                 // Retorna o último valor histórico para conectar com a previsão
                 const lastHistoricalValue = nonNull[nonNull.length - 1].liquido
@@ -414,7 +421,7 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
               isAnimationActive={true}
               animationDuration={800}
               animationBegin={400}
-              dot={(props: any) => {
+              dot={(props: { cx?: number; cy?: number; payload?: MonthlyNetPoint }) => {
                 const isForecast = props?.payload?.isForecast
                 if (!isForecast) return false
                 
