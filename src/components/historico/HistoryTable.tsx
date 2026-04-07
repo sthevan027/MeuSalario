@@ -8,8 +8,8 @@ import { HistoryFilters } from '@/components/historico/HistoryFilters'
 type SimulationRow = {
   id: string
   contract_type: 'clt' | 'pj'
-  input_json: any
-  result_json: any
+  input_json: Record<string, unknown>
+  result_json: Record<string, unknown>
   created_at: string
 }
 

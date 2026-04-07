@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { formatBRL } from '@/lib/format'
-import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react'
+import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react'
 
 type SimulationData = {
   liquido: number

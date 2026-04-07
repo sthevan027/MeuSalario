@@ -13,6 +13,7 @@ import { ExportButtons } from '@/components/simulations/ExportButtons'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { getLastSalaryBase } from '@/lib/last-salary'
 import type { ExportData } from '@/lib/export'
+import type { MonthlySimulationInput } from '@/lib/calculators/types'
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus()
@@ -165,7 +166,7 @@ export function MonthlySimulationForm({ quota }: { quota: QuotaProps }) {
                 name="contractType"
                 value={contractType}
                 onChange={(e) => {
-                  setContractType(e.target.value as any)
+                  setContractType(e.target.value as MonthlySimulationInput['contractType'])
                   setBonus('0')
                 }}
                 className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-sky-400/60 focus:bg-slate-800/50"

@@ -35,10 +35,18 @@ export type MobileMenuProps = {
   signOutAction: () => void
 }
 
-export function MobileMenu({ isOpen: externalIsOpen, onClose, isPro, isAdmin, userName, userEmail, navigation, simulationGroup, signOutAction }: MobileMenuProps) {
+export function MobileMenu({
+  isOpen: externalIsOpen,
+  onClose,
+  isPro,
+  isAdmin,
+  userName,
+  navigation,
+  simulationGroup,
+  signOutAction,
+}: MobileMenuProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
-  const setIsOpen = onClose || setInternalIsOpen
   const pathname = usePathname()
 
   // Fecha menu ao navegar

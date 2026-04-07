@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Filter, X } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 
 type FilterState = {
   contractType: 'all' | 'clt' | 'pj'
@@ -24,7 +23,7 @@ export function HistoryFilters({
     kind: 'all',
   })
 
-  const handleFilterChange = (key: keyof FilterState, value: any) => {
+  const handleFilterChange = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     const newFilters = { ...filters, [key]: value }
     setFilters(newFilters)
     onFilterChange(newFilters)
@@ -74,7 +73,9 @@ export function HistoryFilters({
               <label className="mb-2 block text-xs font-medium text-slate-300">Tipo de Contrato</label>
               <select
                 value={filters.contractType}
-                onChange={(e) => handleFilterChange('contractType', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange('contractType', e.target.value as FilterState['contractType'])
+                }
                 className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60"
               >
                 <option value="all">Todos</option>
@@ -87,7 +88,7 @@ export function HistoryFilters({
               <label className="mb-2 block text-xs font-medium text-slate-300">Tipo de Simulação</label>
               <select
                 value={filters.kind}
-                onChange={(e) => handleFilterChange('kind', e.target.value)}
+                onChange={(e) => handleFilterChange('kind', e.target.value as FilterState['kind'])}
                 className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60"
               >
                 <option value="all">Todas</option>
