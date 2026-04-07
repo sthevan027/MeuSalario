@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { requireEnv } from '@/lib/env'
 
-export type CookieStore = ReturnType<typeof cookies>
+export type CookieStore = Awaited<ReturnType<typeof cookies>>
 
 /**
  * Client para Server Components (RSC):
@@ -12,8 +12,8 @@ export type CookieStore = ReturnType<typeof cookies>
  * - Trata erros de refresh_token graciosamente (evita spam de "refresh_token_not_found")
  * - Se cookieStore for passado, usa-o (obrigatório dentro de unstable_cache; cookies() deve ser chamado fora).
  */
-export function createSupabaseServerClient(cookieStore?: CookieStore) {
-  const store = cookieStore ?? cookies()
+export async function createSupabaseServerClient(cookieStore?: CookieStore) {
+  const store = cookieStore ?? (await cookies())
 
   const client = createServerClient(requireEnv('NEXT_PUBLIC_SUPABASE_URL'), requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'), {
     cookies: {
@@ -57,8 +57,8 @@ export function createSupabaseServerClient(cookieStore?: CookieStore) {
  * Client para Server Actions e Route Handlers:
  * - Pode ler + escrever cookies (necessário para login/logout/refresh)
  */
-export function createSupabaseActionClient() {
-  const cookieStore = cookies()
+export async function createSupabaseActionClient() {
+  const cookieStore = await cookies()
 
   return createServerClient(requireEnv('NEXT_PUBLIC_SUPABASE_URL'), requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'), {
     cookies: {
