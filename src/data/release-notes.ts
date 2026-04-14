@@ -14,6 +14,19 @@ export type ReleaseNote = {
 
 export const releaseNotes: readonly ReleaseNote[] = [
   {
+    version: 'v1.6.0',
+    date: '2026-04-14',
+    title: 'Dashboard mais claro, dark e com comparações PJ',
+    items: [
+      'Novo visual do app com fundo preto mais escuro e layout mais minimalista.',
+      'Dashboard: gráficos em grid (2 colunas no desktop), deixando a leitura mais rápida.',
+      'CLT vs PJ: gráfico em barras para facilitar comparação mês a mês.',
+      'Comparação PJ: estimativa de “PJ necessário (bruto)” para equivaler ao líquido do CLT.',
+      'Gráficos: eixo X com apenas o mês (ex.: jan, fev), reduzindo ruído visual.',
+    ],
+    kind: 'Melhoria',
+  },
+  {
     version: 'v1.5.1',
     date: '2026-04-07',
     title: 'Correções de segurança e estabilidade da cota',
