@@ -24,3 +24,21 @@ export function getDisplayName(profile: { name?: string | null; email?: string |
   
   return 'Usuário'
 }
+
+/** Iniciais para avatar (2 letras). */
+export function getProfileInitials(profile: { name?: string | null; email?: string | null }): string {
+  const n = profile.name?.trim()
+  if (n) {
+    const parts = n.split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      const a = parts[0]![0]
+      const b = parts[parts.length - 1]![0]
+      return `${a}${b}`.toUpperCase()
+    }
+    return n.slice(0, 2).toUpperCase()
+  }
+  if (profile.email) {
+    return profile.email.slice(0, 2).toUpperCase()
+  }
+  return 'MS'
+}

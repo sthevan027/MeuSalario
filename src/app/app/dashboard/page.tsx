@@ -6,9 +6,10 @@ import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient, type CookieStore } from '@/lib/supabase/server'
 import { formatBRL } from '@/lib/format'
 import { requireUser } from '@/lib/auth/profile'
-import { getGreeting, getDisplayName } from '@/lib/greetings'
+import { getGreeting, getDisplayName, getProfileInitials } from '@/lib/greetings'
 import { LazyChart } from '@/components/charts/LazyChart'
-import { FeedbackForm } from '@/components/FeedbackForm'
+import { DashboardUpdatesBanner } from '@/components/dashboard/DashboardUpdatesBanner'
+import { Calendar, LineChart as LineChartIcon, Link2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 
 const MonthlyNetChart = dynamic(
   () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
@@ -256,27 +257,48 @@ export default async function DashboardPage() {
 
   const hasCltVsPjData = cltVsPjSeries.some((p) => p.clt !== null || p.pj !== null)
 
-  // Valor anual: soma dos líquidos dos últimos 12 meses (ou projeção média × 12)
+  /** Último mês com CLT e PJ: variação % do PJ face ao CLT (para badge no cartão). */
+  let pjVsCltPct: number | null = null
+  for (let i = cltVsPjSeries.length - 1; i >= 0; i--) {
+    const p = cltVsPjSeries[i]
+    if (p.clt != null && p.pj != null && p.clt !== 0) {
+      pjVsCltPct = ((p.pj - p.clt) / p.clt) * 100
+      break
+    }
+  }
+
   const valorAnual = series.reduce((acc, p) => acc + (p.liquido ?? 0), 0)
   const mesesComDado = series.filter((p) => p.liquido != null).length
   const valorAnualProjecao = mesesComDado > 0 ? (valorAnual / mesesComDado) * 12 : metrics.liquido * 12
 
-  // Dashboard disponível para Free e Pro
+  const initials = getProfileInitials(profile)
+
+  const anualExplicacao =
+    mesesComDado >= 12
+      ? 'Soma dos últimos 12 meses'
+      : `Projeção (média × 12 • ${mesesComDado} ${mesesComDado === 1 ? 'mês' : 'meses'} de dado)`
+
   return (
     <div className="space-y-6">
-      {/* Header simples */}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">
-            {greeting}, <span className="text-emerald-400">{displayName}</span> 👋
-          </h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Acompanhe sua evolução financeira em tempo real
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-800/80 text-sm font-bold text-emerald-400"
+            aria-hidden
+          >
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">
+              {greeting},{' '}
+              <span className="text-emerald-400">{displayName}</span>
+            </h1>
+            <p className="mt-1 text-sm text-slate-400">Acompanhe sua evolução financeira em tempo real</p>
+          </div>
         </div>
         {hasSeries && (
-          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-400" />
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            <div className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
             <span className="text-sm font-medium text-emerald-400">Ativo</span>
           </div>
         )}
@@ -288,40 +310,30 @@ export default async function DashboardPage() {
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 p-5">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="lg:max-w-md">
-            <h2 className="text-lg font-semibold text-white">Atualizações & Feedback</h2>
-            <p className="mt-1 text-sm text-slate-300">
-              Acompanhe as novidades mais recentes e envie sugestões direto pelo formulário integrado.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                href="/app/atualizacoes"
-                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                Ver atualizações
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <DashboardUpdatesBanner />
 
-      {/* 4 cards: mesmo estilo, só o texto com cor */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Bruto</div>
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <Wallet className="h-4 w-4 text-slate-500" aria-hidden />
+            Bruto
+          </div>
           <div className="mt-1 text-xl font-bold tabular-nums text-slate-50 sm:text-2xl">
             {formatBRL(metrics.bruto)}
           </div>
           <div className="mt-1 text-xs text-slate-500">Salário base total</div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Adicionais</span>
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+          <div className="flex items-center justify-between gap-1">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              <TrendingUp className="h-4 w-4 shrink-0" aria-hidden />
+              Adicionais
+            </span>
             {metrics.adicionais > 0 && (
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">BÔNUS</span>
+              <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                Bônus
+              </span>
             )}
           </div>
           <div className="mt-1 text-xl font-bold tabular-nums text-emerald-400 sm:text-2xl">
@@ -330,36 +342,49 @@ export default async function DashboardPage() {
           <div className="mt-1 text-xs text-slate-500">Horas extras e outros</div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-rose-400">Descontos</div>
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-400">
+            <TrendingDown className="h-4 w-4 shrink-0" aria-hidden />
+            Descontos
+          </div>
           <div className="mt-1 text-xl font-bold tabular-nums text-rose-400 sm:text-2xl">
             {formatBRL(metrics.descontos)}
           </div>
           <div className="mt-1 text-xs text-slate-500">INSS, IRRF e outros</div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Líquido</span>
-            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">ATUAL</span>
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+          <div className="flex items-center justify-between gap-1">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-sky-400">
+              <Link2 className="h-4 w-4 shrink-0" aria-hidden />
+              Líquido
+            </span>
+            <span className="shrink-0 rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-bold text-sky-300">
+              Atual
+            </span>
           </div>
-          <div className="mt-1 text-xl font-bold tabular-nums text-emerald-400 sm:text-2xl">
+          <div className="mt-1 text-xl font-bold tabular-nums text-sky-300 sm:text-2xl">
             {formatBRL(metrics.liquido)}
           </div>
           <div className="mt-1 text-xs text-slate-500">Valor que você recebe</div>
         </div>
       </div>
 
-      {/* Retângulo Valor Anual */}
-      <div className="rounded-xl border border-white/10 bg-slate-800/40 px-5 py-4">
-        <div className="text-sm font-medium text-slate-400">Valor anual (previsão)</div>
-        <div className="mt-1 text-2xl font-bold tabular-nums text-slate-50 sm:text-3xl">
-          {formatBRL(mesesComDado >= 12 ? valorAnual : valorAnualProjecao)}
+      <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-[#111]/90 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
+            <Calendar className="h-5 w-5" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-400">Valor anual (previsão)</div>
+            <div className="mt-0.5 text-2xl font-bold tabular-nums text-slate-50 sm:text-3xl">
+              {formatBRL(mesesComDado >= 12 ? valorAnual : valorAnualProjecao)}
+            </div>
+          </div>
         </div>
-        <div className="mt-1 text-xs text-slate-500">
-          {mesesComDado >= 12
-            ? 'Soma dos últimos 12 meses'
-            : `Projeção (média × 12 • ${mesesComDado} ${mesesComDado === 1 ? 'mês' : 'meses'} de dado)`}
+        <div className="flex max-w-xl items-start gap-2 text-xs leading-relaxed text-slate-500 sm:text-right sm:text-sm">
+          <LineChartIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500/80" aria-hidden />
+          <span>{anualExplicacao}</span>
         </div>
       </div>
 
@@ -387,18 +412,38 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* CLT vs PJ */}
-      {hasCltVsPjData && (
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
-          <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
+      <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
+            <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
+          </div>
+          {pjVsCltPct !== null && (
+            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+              {pjVsCltPct >= 0 ? '+' : ''}
+              {pjVsCltPct.toFixed(1)}% PJ
+            </span>
+          )}
+        </div>
+        {hasCltVsPjData ? (
           <div className="mt-4">
             <LazyChart fallback="Carregando gráfico...">
               <CltVsPjChart data={cltVsPjSeries} />
             </LazyChart>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
+            <p className="text-slate-400">Nenhuma comparação CLT × PJ ainda</p>
+            <p className="mt-1 text-sm text-slate-500">Use o comparador para ver a evolução lado a lado</p>
+            <Link
+              href="/app/comparador"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+            >
+              Abrir comparador
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

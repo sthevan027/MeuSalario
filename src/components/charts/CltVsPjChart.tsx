@@ -50,10 +50,10 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
           {typeof pjValue === 'number' && (
             <div className="mb-1 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-purple-500" />
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
                 <span className="text-xs text-slate-300">PJ:</span>
               </div>
-              <span className="text-sm font-bold text-purple-400">{formatBRL(pjValue)}</span>
+              <span className="text-sm font-bold text-emerald-400">{formatBRL(pjValue)}</span>
             </div>
           )}
           {typeof diffValue === 'number' && (
@@ -80,8 +80,8 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
               <stop offset="100%" stopColor="rgba(96,165,250,1)" />
             </linearGradient>
             <linearGradient id="pjGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(168,85,247,1)" />
-              <stop offset="100%" stopColor="rgba(192,132,252,1)" />
+              <stop offset="0%" stopColor="rgba(16,185,129,1)" />
+              <stop offset="100%" stopColor="rgba(52,211,153,1)" />
             </linearGradient>
           </defs>
 
@@ -140,7 +140,7 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
             stroke="url(#pjGradient)"
             strokeWidth={3}
             connectNulls={false}
-            dot={{ r: 5, fill: 'rgba(168,85,247,1)' }}
+            dot={{ r: 5, fill: 'rgba(16,185,129,1)' }}
             activeDot={{ r: 7 }}
           />
         </LineChart>

@@ -1,5 +1,10 @@
 'use client'
 
+/**
+ * Shell legado (drawer móvel + sidebar) com `navigation` por props — não usado pelo `/app` atual.
+ * A área autenticada usa {@link AppAuthenticatedShell} em `src/app/app/layout.tsx` (issue #34).
+ * Manter alinhado em tokens com `AppDesktopSidebar` se este client for reativado.
+ */
 import { useState } from 'react'
 import Link from 'next/link'
 import { signOut } from '@/app/(auth)/actions'

@@ -318,14 +318,14 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
           {typeof avg === 'number' && (
             <ReferenceLine
               y={avg}
-              stroke="rgba(16,185,129,0.5)"
+              stroke="rgba(251,146,60,0.85)"
               strokeDasharray="6 4"
               strokeWidth={2}
               ifOverflow="extendDomain"
               label={{
-                value: `Média: ${formatCompactBRL(avg)}`,
+                value: `Média prevista: ${formatCompactBRL(avg)}`,
                 position: 'insideTopRight',
-                fill: 'rgba(16,185,129,0.9)',
+                fill: 'rgba(251,146,60,0.95)',
                 fontSize: 12,
                 fontWeight: 700,
                 offset: 10,
