@@ -22,10 +22,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 9.15.9
+      - name: Setup pnpm (corepack)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.9 --activate
 
       - name: Get pnpm store path
         id: pnpm-cache
@@ -41,9 +41,6 @@ jobs:
 
       - name: Pnpm version
         run: pnpm -v
-
-      - name: Normalize pnpm-lock.yaml
-        run: node -e "const fs=require('fs');const p='pnpm-lock.yaml';fs.writeFileSync(p, fs.readFileSync(p,'utf8'), 'utf8')"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
