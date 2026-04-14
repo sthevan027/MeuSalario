@@ -8,7 +8,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isAdmin = profile.role === 'admin'
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#050505] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="flex min-h-screen flex-col bg-[#050505]">
       <AppUsageExperience
         isPro={isPro}
         simulationsRemaining={profile.simulations_remaining}

@@ -10,6 +10,7 @@ import { LazyChart } from '@/components/charts/LazyChart'
 import { DashboardUpdatesBanner } from '@/components/dashboard/DashboardUpdatesBanner'
 import { Calendar, LineChart as LineChartIcon, Link2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { CltVsPjChartClient } from './DashboardChartsClient'
+import { DashboardCharts } from './DashboardCharts'
 
 type SimulationRow = {
   created_at: string
@@ -383,9 +384,71 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Gráfico de evolução do salário líquido */}
-      {!hasSeries && (
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
+      {/* Gráficos lado a lado */}
+      {(hasSeries || hasCltVsPjData) && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {hasSeries ? (
+            <DashboardCharts
+              series={series}
+              hasSeries
+              cltVsPjSeries={cltVsPjSeries}
+              hasCltVsPjData={false}
+            />
+          ) : (
+            <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
+              <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
+              <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
+                <p className="text-slate-400">Nenhuma simulação ainda</p>
+                <p className="mt-1 text-sm text-slate-500">Faça uma simulação para ver o gráfico</p>
+                <Link
+                  href="/app/simulacao"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+                >
+                  Fazer simulação
+                </Link>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
+              </div>
+              {pjVsCltPct !== null && (
+                <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                  {pjVsCltPct >= 0 ? '+' : ''}
+                  {pjVsCltPct.toFixed(1)}% PJ
+                </span>
+              )}
+            </div>
+            {hasCltVsPjData ? (
+              <div className="mt-4">
+                <LazyChart fallback="Carregando gráfico...">
+                  <CltVsPjChartClient data={cltVsPjSeries} />
+                </LazyChart>
+              </div>
+            ) : (
+              <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
+                <p className="text-slate-400">Nenhuma comparação CLT × PJ ainda</p>
+                <p className="mt-1 text-sm text-slate-500">Use o comparador para ver a evolução lado a lado</p>
+                <Link
+                  href="/app/comparador"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+                >
+                  Abrir comparador
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Se não houver nada para mostrar, mantém o empty state do mensal */}
+      {!hasSeries && !hasCltVsPjData && (
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
           <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
           <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
@@ -398,41 +461,8 @@ export default async function DashboardPage() {
               Fazer simulação
             </Link>
           </div>
-        </div>)}
-        
-
-      <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
-            <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
-          </div>
-          {pjVsCltPct !== null && (
-            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
-              {pjVsCltPct >= 0 ? '+' : ''}
-              {pjVsCltPct.toFixed(1)}% PJ
-            </span>
-          )}
         </div>
-        {hasCltVsPjData ? (
-          <div className="mt-4">
-            <LazyChart fallback="Carregando gráfico...">
-              <CltVsPjChartClient data={cltVsPjSeries} />
-            </LazyChart>
-          </div>
-        ) : (
-          <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
-            <p className="text-slate-400">Nenhuma comparação CLT × PJ ainda</p>
-            <p className="mt-1 text-sm text-slate-500">Use o comparador para ver a evolução lado a lado</p>
-            <Link
-              href="/app/comparador"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
-            >
-              Abrir comparador
-            </Link>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
