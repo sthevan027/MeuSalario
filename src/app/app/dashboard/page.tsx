@@ -9,6 +9,7 @@ import { getGreeting, getDisplayName, getProfileInitials } from '@/lib/greetings
 import { LazyChart } from '@/components/charts/LazyChart'
 import { DashboardUpdatesBanner } from '@/components/dashboard/DashboardUpdatesBanner'
 import { Calendar, LineChart as LineChartIcon, Link2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import dynamic from 'next/dynamic'
 
 const MonthlyNetChart = dynamic(
   () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
@@ -393,7 +394,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Gráfico de evolução do salário líquido */}
-      {!hasSeries ? (
+      {!hasSeries && (
         <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
           <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
@@ -407,8 +408,8 @@ export default async function DashboardPage() {
               Fazer simulação
             </Link>
           </div>
-        )}
-      </div>
+        </div>)}
+        
 
       <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-2">
