@@ -195,10 +195,12 @@ export function AppDesktopSidebar({ profile, isPro, isAdmin }: Props) {
             <Button
               type="submit"
               variant="secondary"
-              className={`w-full gap-2 text-xs ${rail ? 'justify-center px-0' : 'justify-start'}`}
+              className={`w-full gap-2 border border-white/15 bg-white/10 text-xs text-slate-100 hover:bg-white/15 ${
+                rail ? 'justify-center px-0' : 'justify-start'
+              }`}
               title="Sair"
             >
-              <LogOut size={16} />
+              <LogOut size={16} className="text-rose-300" />
               {!rail && 'Sair'}
             </Button>
           </form>
