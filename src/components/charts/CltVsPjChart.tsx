@@ -26,6 +26,15 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
   const BAR_GAP = 8
   const BAR_CATEGORY_GAP = 22
 
+  const formatMonthTick = (label: string) => {
+    const [mStr, yStr] = String(label).split('/')
+    const m = Number(mStr)
+    const y = Number(yStr)
+    if (!Number.isFinite(m) || !Number.isFinite(y) || m < 1 || m > 12) return label
+    const d = new Date(y, m - 1, 1)
+    return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(d).replace('.', '')
+  }
+
   const formatCompactBRL = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -138,6 +147,7 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
             tickMargin={14}
             interval="preserveStartEnd"
             tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)', fontWeight: 500 }}
+            tickFormatter={formatMonthTick}
             dy={6}
           />
 
