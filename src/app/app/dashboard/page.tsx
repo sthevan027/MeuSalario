@@ -9,17 +9,7 @@ import { getGreeting, getDisplayName, getProfileInitials } from '@/lib/greetings
 import { LazyChart } from '@/components/charts/LazyChart'
 import { DashboardUpdatesBanner } from '@/components/dashboard/DashboardUpdatesBanner'
 import { Calendar, LineChart as LineChartIcon, Link2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
-import dynamic from 'next/dynamic'
-
-const MonthlyNetChart = dynamic(
-  () => import('@/components/charts/MonthlyNetChart').then(mod => ({ default: mod.MonthlyNetChart })),
-  { ssr: false }
-)
-
-const CltVsPjChart = dynamic(
-  () => import('@/components/charts/CltVsPjChart').then(mod => ({ default: mod.CltVsPjChart })),
-  { ssr: false }
-)
+import { CltVsPjChartClient } from './DashboardChartsClient'
 
 type SimulationRow = {
   created_at: string
@@ -427,7 +417,7 @@ export default async function DashboardPage() {
         {hasCltVsPjData ? (
           <div className="mt-4">
             <LazyChart fallback="Carregando gráfico...">
-              <CltVsPjChart data={cltVsPjSeries} />
+              <CltVsPjChartClient data={cltVsPjSeries} />
             </LazyChart>
           </div>
         ) : (
