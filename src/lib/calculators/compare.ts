@@ -2,6 +2,53 @@ import type { CompareInput, CompareResult, MonthlySimulationInput } from '@/lib/
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { money } from '@/lib/calculators/utils'
 
+function estimatePjBrutoForTargetLiquido({
+  targetLiquido,
+  baseInput,
+  proLaboreRatio,
+}: {
+  targetLiquido: number
+  baseInput: Omit<MonthlySimulationInput, 'contractType' | 'salarioBase' | 'proLabore'>
+  proLaboreRatio: number | null
+}): number | null {
+  if (!Number.isFinite(targetLiquido) || targetLiquido <= 0) return null
+
+  const simulateForBruto = (bruto: number) => {
+    const proLabore = proLaboreRatio != null ? Math.max(0, bruto * proLaboreRatio) : undefined
+    return simulateMonthly({
+      ...baseInput,
+      contractType: 'pj',
+      salarioBase: bruto,
+      proLabore,
+    }).liquido
+  }
+
+  // Encontra um teto alto o suficiente
+  let lo = 0
+  let hi = Math.max(1000, targetLiquido * 1.2)
+  let liqHi = simulateForBruto(hi)
+  let guard = 0
+  while (liqHi < targetLiquido && guard < 24) {
+    hi *= 1.6
+    liqHi = simulateForBruto(hi)
+    guard++
+  }
+  if (liqHi < targetLiquido) return null
+
+  // Busca binária pelo bruto que iguala o líquido alvo
+  for (let i = 0; i < 36; i++) {
+    const mid = (lo + hi) / 2
+    const liq = simulateForBruto(mid)
+    if (liq >= targetLiquido) {
+      hi = mid
+    } else {
+      lo = mid
+    }
+  }
+
+  return money(hi)
+}
+
 /**
  * Compara salário líquido entre CLT e PJ
  * 
@@ -46,6 +93,27 @@ export function compareCltVsPj(input: CompareInput): CompareResult {
     descontosPercentual: !usaCalculoRealPJ ? (input.descontosPjPercentual ?? 10) : undefined,
   })
 
-  return { clt, pj, deltaLiquido: money(pj.liquido - clt.liquido) }
+  const proLaboreRatio =
+    usaCalculoRealPJ && input.proLabore != null && input.salarioBase > 0 ? input.proLabore / input.salarioBase : null
+
+  const pjBrutoEquivalenteCltLiquido = estimatePjBrutoForTargetLiquido({
+    targetLiquido: clt.liquido,
+    baseInput: {
+      ...base,
+      anexoSimplesNacional: usaCalculoRealPJ ? input.anexoSimplesNacional : undefined,
+      faturamentoAnualAcumulado: usaCalculoRealPJ ? input.faturamentoAnualAcumulado : undefined,
+      descontosPercentual: !usaCalculoRealPJ ? (input.descontosPjPercentual ?? 10) : undefined,
+    },
+    proLaboreRatio,
+  })
+
+  return {
+    clt,
+    pj: {
+      ...pj,
+      pjBrutoEquivalenteCltLiquido: pjBrutoEquivalenteCltLiquido ?? undefined,
+    },
+    deltaLiquido: money(pj.liquido - clt.liquido),
+  }
 }
 

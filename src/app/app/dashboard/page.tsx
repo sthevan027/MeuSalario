@@ -209,7 +209,7 @@ export default async function DashboardPage() {
   })
 
   // Agrupa por created_at (comparações são salvas juntas)
-  const compareGroups = new Map<string, { clt?: number; pj?: number; date: Date }>()
+  const compareGroups = new Map<string, { clt?: number; pj?: number; pjEqBruto?: number; date: Date }>()
   
   for (const r of compareRows) {
     const result = r.result_json
@@ -223,17 +223,21 @@ export default async function DashboardPage() {
       existing.clt = liquido
     } else if (r.contract_type === 'pj') {
       existing.pj = liquido
+      const pjEq = Number(r.result_json?.pjBrutoEquivalenteCltLiquido ?? NaN)
+      if (Number.isFinite(pjEq) && pjEq > 0) {
+        existing.pjEqBruto = pjEq
+      }
     }
     
     compareGroups.set(groupKey, existing)
   }
 
   // Mapeia para meses
-  const cltVsPjByMonth = new Map<string, { clt: number; pj: number }>()
+  const cltVsPjByMonth = new Map<string, { clt: number; pj: number; pjEqBruto?: number }>()
   for (const [, group] of compareGroups) {
     if (group.clt !== undefined && group.pj !== undefined) {
       const key = monthKey(group.date)
-      cltVsPjByMonth.set(key, { clt: group.clt, pj: group.pj })
+      cltVsPjByMonth.set(key, { clt: group.clt, pj: group.pj, pjEqBruto: group.pjEqBruto })
     }
   }
 
@@ -247,6 +251,7 @@ export default async function DashboardPage() {
       month: monthLabel(k),
       clt,
       pj,
+      pjBrutoEquivalenteCltLiquido: data?.pjEqBruto ?? null,
       difference,
     }
   })
