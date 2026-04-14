@@ -14,7 +14,7 @@ type AdminMobileMenuProps = {
   signOutAction: () => void
 }
 
-export function AdminMobileMenu({ isPro, userName, userEmail, signOutAction }: AdminMobileMenuProps) {
+export function AdminMobileMenu({ isPro, userName, signOutAction }: AdminMobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 

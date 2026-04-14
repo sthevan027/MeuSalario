@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { FEEDBACK_EMAIL } from '@/lib/feedback'
 
 type FeedbackFormProps = {
   initialPage?: string
@@ -10,67 +11,85 @@ type FeedbackFormProps = {
   submitLabel?: string
 }
 
+function buildMailto(params: {
+  suggestion: string
+  context: string
+  impact: string
+  page: string
+  userEmail: string
+}): string {
+  const subject = encodeURIComponent('Feedback MeuSalário')
+  const body = encodeURIComponent(
+    [
+      'Sugestão:',
+      params.suggestion,
+      '',
+      params.context ? `Contexto:\n${params.context}` : '',
+      '',
+      params.page ? `Página/fluxo:\n${params.page}` : '',
+      '',
+      params.impact ? `Impacto:\n${params.impact}` : '',
+      '',
+      params.userEmail ? `Contato:\n${params.userEmail}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  )
+  return `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`
+}
+
 export function FeedbackForm({
   initialPage = '',
   showPageField = true,
-  submitLabel = 'Enviar Feedback',
+  submitLabel = 'Abrir e-mail para enviar',
 }: FeedbackFormProps) {
   const [suggestion, setSuggestion] = useState('')
   const [context, setContext] = useState('')
   const [impact, setImpact] = useState('')
   const [page, setPage] = useState(initialPage)
   const [userEmail, setUserEmail] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
-    setError('')
-
-    try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          suggestion,
-          context,
-          impact,
-          page,
-          userEmail,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Erro ao enviar feedback')
-      }
-
-      setSubmitted(true)
-      setSuggestion('')
-      setContext('')
-      setImpact('')
-      setPage('')
-      setUserEmail('')
-    } catch (err) {
-      setError('Erro ao enviar feedback. Tente novamente.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    const href = buildMailto({ suggestion, context, impact, page, userEmail })
+    window.location.href = href
+    setSubmitted(true)
+    setSuggestion('')
+    setContext('')
+    setImpact('')
+    setPage('')
+    setUserEmail('')
   }
 
   if (submitted) {
     return (
-      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
-        <p className="text-emerald-300">Feedback enviado com sucesso! Obrigado pela sugestão.</p>
+      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-center space-y-2">
+        <p className="text-emerald-300">
+          Se o seu cliente de e-mail não abriu, envie manualmente para{' '}
+          <a className="underline font-medium" href={`mailto:${FEEDBACK_EMAIL}`}>
+            {FEEDBACK_EMAIL}
+          </a>
+          .
+        </p>
+        <button
+          type="button"
+          onClick={() => setSubmitted(false)}
+          className="text-sm text-slate-400 underline hover:text-white"
+        >
+          Enviar outro feedback
+        </button>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <p className="text-sm text-slate-400">
+        Ao enviar, abrimos seu e-mail com a mensagem pronta para{' '}
+        <span className="text-slate-300">{FEEDBACK_EMAIL}</span>.
+      </p>
+
       <div>
         <label htmlFor="suggestion" className="block text-sm font-medium text-slate-300">
           Sugestão *
@@ -131,26 +150,20 @@ export function FeedbackForm({
 
       <div>
         <label htmlFor="userEmail" className="block text-sm font-medium text-slate-300">
-          Seu Email (opcional)
+          Seu e-mail (opcional)
         </label>
         <Input
           id="userEmail"
           type="email"
           value={userEmail}
           onChange={(e) => setUserEmail(e.target.value)}
-          placeholder="Para entrarmos em contato se necessário"
+          placeholder="Para retorno, se quiser"
           className="mt-1"
         />
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
-
-      <Button
-        type="submit"
-        disabled={isSubmitting || !suggestion.trim()}
-        className="w-full"
-      >
-        {isSubmitting ? 'Enviando...' : submitLabel}
+      <Button type="submit" disabled={!suggestion.trim()} className="w-full">
+        {submitLabel}
       </Button>
     </form>
   )

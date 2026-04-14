@@ -13,7 +13,7 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
  *   ?limit=50 (máx 100)
  */
 export async function GET(request: NextRequest) {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

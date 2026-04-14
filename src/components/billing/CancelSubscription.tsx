@@ -46,8 +46,8 @@ export function CancelSubscription() {
       setTimeout(() => {
         window.location.reload()
       }, 2000)
-    } catch (e: any) {
-      setError(e?.message || 'Erro ao cancelar assinatura')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erro ao cancelar assinatura')
       console.error('Cancel subscription error:', e)
     } finally {
       setLoading(false)

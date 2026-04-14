@@ -30,10 +30,10 @@ export async function middleware(request: NextRequest) {
           get(name: string) {
             return request.cookies.get(name)?.value
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: Record<string, unknown>) {
             response.cookies.set({ name, value, ...options })
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: Record<string, unknown>) {
             response.cookies.set({ name, value: '', ...options, maxAge: 0 })
           },
         },
@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // /admin: verificação de sessão no middleware
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: { headers: request.headers },
   })
 
@@ -92,10 +92,10 @@ export async function middleware(request: NextRequest) {
       get(name: string) {
         return request.cookies.get(name)?.value
       },
-      set(name: string, value: string, options: any) {
+      set(name: string, value: string, options: Record<string, unknown>) {
         response.cookies.set({ name, value, ...options })
       },
-      remove(name: string, options: any) {
+      remove(name: string, options: Record<string, unknown>) {
         response.cookies.set({ name, value: '', ...options, maxAge: 0 })
       },
     },
@@ -109,8 +109,9 @@ export async function middleware(request: NextRequest) {
   try {
     const { data } = await supabase.auth.getUser()
     user = data.user
-  } catch (error: any) {
-    if (error?.code !== 'refresh_token_not_found' && error?.status !== 400) {
+  } catch (error: unknown) {
+    const err = error as { code?: string; status?: number }
+    if (err.code !== 'refresh_token_not_found' && err.status !== 400) {
       throw error
     }
   }
@@ -131,7 +132,7 @@ export async function middleware(request: NextRequest) {
     let role: string | null = null
     try {
       const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      role = (data as any)?.role ?? null
+      role = (data as { role?: string } | null)?.role ?? null
     } catch {
       role = null
     }

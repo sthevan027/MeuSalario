@@ -7,7 +7,7 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
  * Retorna null se não houver histórico ou se o usuário não estiver logado
  */
 export async function getLastSalaryBase(): Promise<number | null> {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       offer_discount?: number
     }
 
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

@@ -19,7 +19,7 @@ export type Profile = {
 
 /** Busca perfil - cache() deduplica chamadas na mesma request (layout + page). */
 export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -95,7 +95,7 @@ export type UserIdentity = {
  * Retorna as identidades (providers OAuth) vinculadas ao usuário
  */
 export async function getUserIdentities(): Promise<UserIdentity[]> {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

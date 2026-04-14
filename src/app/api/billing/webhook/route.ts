@@ -31,7 +31,7 @@ function planFromStatus(mapped: string): 'free' | 'pro' {
 export async function POST(request: Request) {
   try {
     const provider = getPaymentProvider()
-    const headersList = headers()
+    const headersList = new Headers(await headers())
     const body = await request.text()
 
     const admin = createSupabaseAdminClient()

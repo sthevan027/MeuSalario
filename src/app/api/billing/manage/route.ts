@@ -5,6 +5,7 @@ import {
   getSubscriptionIdColumn,
   getCustomerIdColumn,
 } from '@/lib/payments'
+import { parsePlanMoney } from '@/lib/billing/plan-price'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET() {
   try {
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
     }
 
-    const supabase = createSupabaseActionClient()
+    const supabase = await createSupabaseActionClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -127,7 +128,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Plano não encontrado.' }, { status: 404 })
       }
 
-      const newValue = interval === 'month' ? plan.price_monthly : plan.price_yearly
+      const raw = interval === 'month' ? plan.price_monthly : plan.price_yearly
+      const newValue = parsePlanMoney(raw)
+      if (newValue == null || newValue <= 0) {
+        return NextResponse.json({ error: 'Preço do plano inválido.' }, { status: 500 })
+      }
 
       await provider.cancelSubscription(subscriptionId, true)
 
@@ -143,12 +148,22 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Cliente não encontrado.' }, { status: 404 })
       }
 
+      const baseUrl =
+        (() => {
+          try {
+            return new URL(request.url).origin
+          } catch {
+            return process.env.NEXT_PUBLIC_APP_URL || 'https://meu-salario-lime.vercel.app'
+          }
+        })()
+
       const { paymentLink } = await provider.createSubscription({
         customerId,
         planId: 'pro',
-        value: Number(newValue),
+        value: newValue,
         interval,
         userId: user.id,
+        baseUrl,
       })
 
       await supabase

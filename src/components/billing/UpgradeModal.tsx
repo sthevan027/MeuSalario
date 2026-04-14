@@ -127,8 +127,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
       if (!data?.url) throw new Error('Checkout sem URL.')
       
       window.location.href = data.url
-    } catch (e: any) {
-      setError(e?.message ?? 'Erro desconhecido')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erro desconhecido')
       setLoading(null)
     }
   }

@@ -53,7 +53,7 @@ const compatBodySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

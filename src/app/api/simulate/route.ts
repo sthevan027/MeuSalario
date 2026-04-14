@@ -12,7 +12,7 @@ import type { MonthlySimulationInput } from '@/lib/calculators/types'
  * Corpo JSON: campos alinhados ao formulário (ex.: salarioBase, contractType, ...).
  */
 export async function POST(request: NextRequest) {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

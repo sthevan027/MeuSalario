@@ -68,8 +68,8 @@ export function SubscribeButtons() {
               setError(null)
               setLoading('month')
               await startCheckout('month')
-            } catch (e: any) {
-              setError(e?.message ?? 'Erro')
+            } catch (e: unknown) {
+              setError(e instanceof Error ? e.message : 'Erro')
               setLoading(null)
             }
           }}
@@ -88,8 +88,8 @@ export function SubscribeButtons() {
                 setError(null)
                 setLoading('year')
                 await startCheckout('year')
-              } catch (e: any) {
-                setError(e?.message ?? 'Erro')
+              } catch (e: unknown) {
+                setError(e instanceof Error ? e.message : 'Erro')
                 setLoading(null)
               }
             }}

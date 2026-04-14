@@ -47,7 +47,7 @@ export function TerminationForm() {
     if (dataFim < dataInicio) return 0
     
     // Calcula diferença em anos e meses
-    let anos = dataFim.getFullYear() - dataInicio.getFullYear()
+    const anos = dataFim.getFullYear() - dataInicio.getFullYear()
     let meses = dataFim.getMonth() - dataInicio.getMonth()
     let dias = dataFim.getDate() - dataInicio.getDate()
     
@@ -232,7 +232,11 @@ export function TerminationForm() {
             <select
               name="tipoRescisao"
               value={tipoRescisao}
-              onChange={(e) => setTipoRescisao(e.target.value as any)}
+              onChange={(e) =>
+                setTipoRescisao(
+                  e.target.value as 'sem_justa_causa' | 'acordo' | 'pedido_demissao' | 'justa_causa'
+                )
+              }
               className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 pr-8 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60 focus:bg-slate-800/50"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,

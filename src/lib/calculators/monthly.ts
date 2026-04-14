@@ -2,9 +2,6 @@ import { clampNumber, money } from '@/lib/calculators/utils'
 import type { MonthlySimulationInput, MonthlySimulationResult } from '@/lib/calculators/types'
 import { calcularDescontosPJ, calcularINSS, calcularIRRF } from '@/lib/calculators/tax'
 
-type ProgressiveSlice = { upTo: number; rate: number }
-type IrBracket = { upTo: number; rate: number; deduction: number }
-
 /**
  * Simula o cálculo de salário mensal (CLT ou PJ)
  * 
@@ -83,7 +80,6 @@ function obterFeriadosNacionais(ano: number): Date[] {
  * Calcula quantos domingos e feriados tem em um mês específico
  */
 function calcularDomingosEFeriados(ano: number, mes: number): { domingos: number; feriados: number; diasUteis: number } {
-  const primeiroDia = new Date(ano, mes, 1)
   const ultimoDia = new Date(ano, mes + 1, 0)
   const totalDias = ultimoDia.getDate()
   
@@ -148,7 +144,6 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
   const bonus = clampNumber(input.bonus ?? 0, 0, 1_000_000)
   const atrasosHoras = clampNumber(input.atrasosHoras, 0, 300)
   const adicionaisPercentual = clampNumber(input.adicionaisPercentual, 0, 200)
-  const descontosPercentual = clampNumber(input.descontosPercentual ?? 10, 0, 100)
   const adiantamentoDia: 15 | 20 = input.adiantamentoDia === 20 ? 20 : 15
 
   const valorHora = salarioBase / jornadaMensalHoras

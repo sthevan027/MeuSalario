@@ -3,7 +3,7 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { buildUsageResponse } from '@/lib/simulation-quota'
 
 export async function GET() {
-  const supabase = createSupabaseActionClient()
+  const supabase = await createSupabaseActionClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

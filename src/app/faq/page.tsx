@@ -1,7 +1,22 @@
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { parsePlanMoney } from '@/lib/billing/plan-price'
 
-export default function FAQPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function FAQPage() {
+  const supabase = await createSupabaseServerClient()
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('price_monthly')
+    .eq('id', 'pro')
+    .single()
+  const priceMonthly = parsePlanMoney(plan?.price_monthly) ?? 10
+  const priceLabel =
+    priceMonthly % 1 === 0
+      ? `R$ ${priceMonthly.toFixed(0)}`
+      : `R$ ${priceMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />
@@ -41,8 +56,12 @@ export default function FAQPage() {
                 Qual a diferença entre Free e Pro?
               </h2>
               <p className="text-slate-300">
-                O plano Free permite simulações básicas. O plano Pro (R$ 10/mês) inclui dashboard completo,
-                gráficos, histórico mensal, comparador CLT x PJ, simulador de rescisão e exportação de dados.
+                O plano Free permite simulações básicas. O plano Pro (a partir de {priceLabel}/mês — veja{' '}
+                <Link href="/planos" className="text-emerald-400 underline-offset-2 hover:underline">
+                  Planos
+                </Link>
+                ) inclui dashboard completo, gráficos, histórico mensal, comparador CLT x PJ, simulador de
+                rescisão e exportação de dados.
               </p>
             </div>
 

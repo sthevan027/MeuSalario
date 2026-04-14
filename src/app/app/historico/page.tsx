@@ -7,19 +7,19 @@ import { HistoryTable } from '@/components/historico/HistoryTable'
 type SimulationRow = {
   id: string
   contract_type: 'clt' | 'pj'
-  input_json: any
-  result_json: any
+  input_json: Record<string, unknown>
+  result_json: Record<string, unknown>
   created_at: string
 }
 
 export default async function HistoricoPage() {
   const profile = await requireUser()
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   // Cache 60s; cookies() fora do cache e passado como argumento (fonte dinâmica)
   const getCachedSimulations = unstable_cache(
     async (store: CookieStore) => {
-      const supabase = createSupabaseServerClient(store)
+      const supabase = await createSupabaseServerClient(store)
       const { data, error } = await supabase
         .from('simulations')
         .select('id, contract_type, input_json, result_json, created_at')

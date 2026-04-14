@@ -3,7 +3,6 @@
 import { memo } from 'react'
 import {
   ResponsiveContainer,
-  LineChart,
   Line,
   BarChart,
   Bar,
@@ -36,7 +35,15 @@ export const AnnualForecastChart = memo(function AnnualForecastChart({ data, ten
       maximumFractionDigits: 0,
     }).format(value)
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean
+    payload?: Array<{ value?: number }>
+    label?: string
+  }) => {
     if (active && payload && payload.length) {
       const value = payload[0].value
       if (typeof value === 'number') {
