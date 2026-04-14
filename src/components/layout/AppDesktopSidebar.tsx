@@ -102,10 +102,12 @@ export function AppDesktopSidebar({ profile, isPro, isAdmin }: Props) {
                 aria-controls="app-sidebar-simular"
                 title="Simular"
               >
-                <Calculator size={22} strokeWidth={2} className="shrink-0" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                  <Calculator size={22} strokeWidth={2} className="shrink-0" />
+                </span>
                 {!rail && (
                   <>
-                    <span className="flex-1">Simular</span>
+                    <span className="flex-1 leading-none">Simular</span>
                     {simGroupOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </>
                 )}
@@ -161,8 +163,10 @@ export function AppDesktopSidebar({ profile, isPro, isAdmin }: Props) {
                 className={`mt-1 flex items-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium text-violet-300 transition hover:bg-white/5 ${rail ? 'justify-center' : ''}`}
                 title="Admin"
               >
-                <Shield size={22} />
-                {!rail && <span>Admin</span>}
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                  <Shield size={22} />
+                </span>
+                {!rail && <span className="truncate leading-none">Admin</span>}
               </Link>
             )}
           </nav>
@@ -278,7 +282,7 @@ function SidebarIconLink({
       <span className={`flex shrink-0 items-center justify-center ${activeSquare ? 'h-10 w-10 rounded-xl' : 'h-10 w-10'}`}>
         {children}
       </span>
-      {!rail && <span className="truncate">{label}</span>}
+      {!rail && <span className="truncate leading-none">{label}</span>}
     </Link>
   )
 }

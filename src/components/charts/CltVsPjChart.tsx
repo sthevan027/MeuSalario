@@ -161,7 +161,10 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
             dx={-6}
           />
 
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+          />
           <Legend
             wrapperStyle={{ paddingTop: '20px' }}
             iconType="rect"
