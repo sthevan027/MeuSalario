@@ -39,10 +39,12 @@ export function DashboardCharts({
   cltVsPjSeries: CltVsPjPoint[]
   hasCltVsPjData: boolean
 }) {
+  if (!hasSeries && !hasCltVsPjData) return null
+
   return (
     <>
       {hasSeries ? (
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
           <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
           <div className="mt-4">
@@ -54,7 +56,7 @@ export function DashboardCharts({
       ) : null}
 
       {hasCltVsPjData ? (
-        <div className="rounded-xl border border-white/10 bg-slate-800/40 p-4 sm:p-6">
+        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
           <p className="mt-0.5 text-sm text-slate-500">Comparação ao longo do tempo</p>
           <div className="mt-4">

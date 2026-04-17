@@ -69,6 +69,11 @@ export type MonthlySimulationResult = {
   das?: number // DAS (Simples Nacional) - apenas para PJ
   inssProLabore?: number // INSS sobre pró-labore - apenas para PJ
   irrfProLabore?: number // IRRF sobre pró-labore - apenas para PJ
+  /**
+   * PJ (apenas em comparações CLT × PJ):
+   * Faturamento bruto PJ estimado necessário para igualar o líquido CLT.
+   */
+  pjBrutoEquivalenteCltLiquido?: number
   liquido: number
   adiantamentoPercentual: number
   adiantamentoDia?: 15 | 20 // Opcional: só existe para CLT

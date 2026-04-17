@@ -6,31 +6,19 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Calculator,
-  Scale,
   Sparkles,
   User,
   ChevronUp,
-  Wallet,
-  Calendar,
-  FileText,
   History,
 } from 'lucide-react'
+import { APP_SIMULATION_ITEMS } from '@/lib/navigation/app-navigation'
 
 export type BottomNavProps = {
   /** Se false, BottomNav também aparece no desktop (quando não há sidebar) */
   mobileOnly?: boolean
 }
 
-/** Itens do painel "Simular": simulações + comparador (histórico ficou na barra principal). */
-const simulationItems = [
-  { name: 'Salário Mensal', href: '/app/simulacao', icon: Calculator },
-  { name: 'Compatibilidade', href: '/app/compatibilidade', icon: Wallet },
-  { name: '13º Salário', href: '/app/decimo-terceiro', icon: Calendar },
-  { name: 'Férias', href: '/app/ferias', icon: Calendar },
-  { name: 'Rescisão', href: '/app/rescisao', icon: FileText },
-  { name: 'CLT × PJ', href: '/app/comparador', icon: Scale },
-]
-
+const simulationItems = APP_SIMULATION_ITEMS
 const simulationPaths = simulationItems.map((i) => i.href)
 
 /** Altura do menu inferior em rem - usado para posicionar a aba acima dele */

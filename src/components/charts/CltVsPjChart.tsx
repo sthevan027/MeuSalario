@@ -3,8 +3,8 @@
 import { memo } from 'react'
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -17,10 +17,24 @@ export type CltVsPjPoint = {
   month: string
   clt: number | null
   pj: number | null
+  pjBrutoEquivalenteCltLiquido?: number | null
   difference: number | null
 }
 
 export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPjPoint[] }) {
+  const BAR_SIZE = 26
+  const BAR_GAP = 8
+  const BAR_CATEGORY_GAP = 22
+
+  const formatMonthTick = (label: string) => {
+    const [mStr, yStr] = String(label).split('/')
+    const m = Number(mStr)
+    const y = Number(yStr)
+    if (!Number.isFinite(m) || !Number.isFinite(y) || m < 1 || m > 12) return label
+    const d = new Date(y, m - 1, 1)
+    return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(d).replace('.', '')
+  }
+
   const formatCompactBRL = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -29,7 +43,7 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
       maximumFractionDigits: 0,
     }).format(value)
 
-  type PayloadEntry = { dataKey?: string | number; value?: number }
+  type PayloadEntry = { dataKey?: string | number; value?: number; name?: string }
 
   const CustomTooltip = ({
     active,
@@ -43,7 +57,9 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
     if (active && payload && payload.length) {
       const cltValue = payload.find((p) => p.dataKey === 'clt')?.value
       const pjValue = payload.find((p) => p.dataKey === 'pj')?.value
-      const diffValue = payload.find((p) => p.dataKey === 'difference')?.value
+      const pjEqBruto = payload.find((p) => p.dataKey === 'pjBrutoEquivalenteCltLiquido')?.value
+      const diffValue =
+        typeof cltValue === 'number' && typeof pjValue === 'number' ? pjValue - cltValue : undefined
 
       return (
         <div className="rounded-2xl border-2 border-white/25 bg-gradient-to-br from-slate-900/98 to-slate-800/98 px-5 py-3 shadow-2xl backdrop-blur-md">
@@ -60,10 +76,19 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
           {typeof pjValue === 'number' && (
             <div className="mb-1 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-purple-500" />
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
                 <span className="text-xs text-slate-300">PJ:</span>
               </div>
-              <span className="text-sm font-bold text-purple-400">{formatBRL(pjValue)}</span>
+              <span className="text-sm font-bold text-emerald-400">{formatBRL(pjValue)}</span>
+            </div>
+          )}
+          {typeof pjEqBruto === 'number' && (
+            <div className="mb-1 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-amber-500" />
+                <span className="text-xs text-slate-300">PJ necessário (bruto):</span>
+              </div>
+              <span className="text-sm font-bold text-amber-300">{formatBRL(pjEqBruto)}</span>
             </div>
           )}
           {typeof diffValue === 'number' && (
@@ -83,23 +108,35 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
   return (
     <div className="h-80 w-full sm:h-96">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ left: 12, right: 20, top: 20, bottom: 12 }}>
+        <BarChart
+          data={data}
+          margin={{ left: 12, right: 20, top: 20, bottom: 12 }}
+          barGap={BAR_GAP}
+          barCategoryGap={BAR_CATEGORY_GAP}
+        >
           <defs>
-            <linearGradient id="cltGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(59,130,246,1)" />
-              <stop offset="100%" stopColor="rgba(96,165,250,1)" />
+            <linearGradient id="cltGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(96,165,250,1)" stopOpacity={1} />
+              <stop offset="55%" stopColor="rgba(59,130,246,1)" stopOpacity={1} />
+              <stop offset="100%" stopColor="rgba(37,99,235,1)" stopOpacity={1} />
             </linearGradient>
-            <linearGradient id="pjGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(168,85,247,1)" />
-              <stop offset="100%" stopColor="rgba(192,132,252,1)" />
+            <linearGradient id="pjGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(110,231,183,1)" stopOpacity={1} />
+              <stop offset="55%" stopColor="rgba(16,185,129,1)" stopOpacity={1} />
+              <stop offset="100%" stopColor="rgba(4,120,87,1)" stopOpacity={1} />
+            </linearGradient>
+            <linearGradient id="pjEqGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(251,191,36,1)" stopOpacity={1} />
+              <stop offset="55%" stopColor="rgba(245,158,11,1)" stopOpacity={1} />
+              <stop offset="100%" stopColor="rgba(180,83,9,1)" stopOpacity={1} />
             </linearGradient>
           </defs>
 
           <CartesianGrid
             strokeDasharray="2 4"
-            stroke="rgba(255,255,255,0.12)"
+            stroke="rgba(255,255,255,0.14)"
             vertical={false}
-            strokeWidth={0.5}
+            strokeWidth={0.6}
           />
 
           <XAxis
@@ -110,6 +147,7 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
             tickMargin={14}
             interval="preserveStartEnd"
             tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)', fontWeight: 500 }}
+            tickFormatter={formatMonthTick}
             dy={6}
           />
 
@@ -123,37 +161,51 @@ export const CltVsPjChart = memo(function CltVsPjChart({ data }: { data: CltVsPj
             dx={-6}
           />
 
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+          />
           <Legend
             wrapperStyle={{ paddingTop: '20px' }}
-            iconType="line"
+            iconType="rect"
             formatter={(value) => (
               <span className="text-xs text-slate-300">{value}</span>
             )}
           />
 
-          <Line
-            type="monotone"
+          <Bar
             dataKey="clt"
             name="CLT"
-            stroke="url(#cltGradient)"
-            strokeWidth={3}
-            connectNulls={false}
-            dot={{ r: 5, fill: 'rgba(59,130,246,1)' }}
-            activeDot={{ r: 7 }}
+            fill="url(#cltGradient)"
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth={1}
+            radius={[10, 10, 2, 2]}
+            barSize={BAR_SIZE}
+            isAnimationActive={false}
           />
 
-          <Line
-            type="monotone"
+          <Bar
             dataKey="pj"
             name="PJ"
-            stroke="url(#pjGradient)"
-            strokeWidth={3}
-            connectNulls={false}
-            dot={{ r: 5, fill: 'rgba(168,85,247,1)' }}
-            activeDot={{ r: 7 }}
+            fill="url(#pjGradient)"
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth={1}
+            radius={[10, 10, 2, 2]}
+            barSize={BAR_SIZE}
+            isAnimationActive={false}
           />
-        </LineChart>
+
+          <Bar
+            dataKey="pjBrutoEquivalenteCltLiquido"
+            name="PJ necessário"
+            fill="url(#pjEqGradient)"
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth={1}
+            radius={[10, 10, 2, 2]}
+            barSize={BAR_SIZE}
+            isAnimationActive={false}
+          />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   )

@@ -207,8 +207,9 @@ export function simulateMonthly(input: MonthlySimulationInput): MonthlySimulatio
       inss = 0
       irrf = 0
     } else {
-      // Sem cálculo real: não calcula descontos (usuário deve informar pró-labore)
-      descontos = 0
+      // Sem cálculo real: aplica percentual genérico (ex.: impostos/custos PJ)
+      const pct = clampNumber(input.descontosPercentual ?? 0, 0, 100)
+      descontos = money(baseCalculo * (pct / 100))
       inss = 0
       irrf = 0
     }

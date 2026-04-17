@@ -92,6 +92,23 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
     }
   }
 
+  const formatMonthTick = (label: string) => {
+    const [mStr, yStr] = String(label).split('/')
+    const m = Number(mStr)
+    const y = Number(yStr)
+    if (!Number.isFinite(m) || !Number.isFinite(y) || m < 1 || m > 12) return label
+    const d = new Date(y, m - 1, 1)
+    return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(d).replace('.', '')
+  }
+
+  const lastHistorical = nonNull.length ? nonNull[nonNull.length - 1] : null
+  const forecastLineDataKey = (entry: MonthlyNetPoint) => {
+    if (!forecastValue || !lastHistorical) return null
+    if (entry.month === lastHistorical.month) return lastHistorical.liquido
+    if (entry.isForecast) return entry.forecastValue ?? forecastValue
+    return null
+  }
+
   const formatCompactBRL = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -285,6 +302,7 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
             tickMargin={14}
             interval="preserveStartEnd"
             tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)', fontWeight: 500 }}
+            tickFormatter={formatMonthTick}
             dy={6}
           />
           
@@ -325,14 +343,14 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
           {typeof avg === 'number' && (
             <ReferenceLine
               y={avg}
-              stroke="rgba(16,185,129,0.5)"
+              stroke="rgba(251,146,60,0.85)"
               strokeDasharray="6 4"
               strokeWidth={2}
               ifOverflow="extendDomain"
               label={{
-                value: `Média: ${formatCompactBRL(avg)}`,
+                value: `Média prevista: ${formatCompactBRL(avg)}`,
                 position: 'insideTopRight',
-                fill: 'rgba(16,185,129,0.9)',
+                fill: 'rgba(251,146,60,0.95)',
                 fontSize: 12,
                 fontWeight: 700,
                 offset: 10,
@@ -406,45 +424,29 @@ export const MonthlyNetChart = memo(function MonthlyNetChart({ data }: { data: M
           {forecastValue !== null && nonNull.length > 0 && (
             <Line
               type="monotone"
-              dataKey={(entry: MonthlyNetPoint) => {
-                if (entry.isForecast) return entry.forecastValue
-                // Retorna o último valor histórico para conectar com a previsão
-                const lastHistoricalValue = nonNull[nonNull.length - 1].liquido
-                const lastHistoricalMonth = data.find((d) => d.liquido === lastHistoricalValue)?.month
-                if (entry.month === lastHistoricalMonth) return entry.liquido
-                return null
-              }}
+              dataKey={forecastLineDataKey}
               stroke="url(#forecastGradient)"
-              strokeWidth={3.5}
-              strokeDasharray="10 6"
-              connectNulls={true}
+              strokeWidth={3}
+              strokeDasharray="8 6"
+              connectNulls
               isAnimationActive={true}
               animationDuration={800}
               animationBegin={400}
               dot={(props: { cx?: number; cy?: number; payload?: MonthlyNetPoint }) => {
                 const isForecast = props?.payload?.isForecast
                 if (!isForecast) return false
-                
                 const value = props?.payload?.forecastValue
                 if (typeof value !== 'number') return false
-                
+
                 return (
                   <>
-                    {/* Círculo de brilho externo amarelo */}
+                    <circle cx={props.cx} cy={props.cy} r={12} fill="rgba(251,191,36,0.20)" stroke="none" />
                     <circle
                       cx={props.cx}
                       cy={props.cy}
-                      r={10}
-                      fill="rgba(251,191,36,0.25)"
-                      stroke="none"
-                    />
-                    {/* Ponto de previsão */}
-                    <circle
-                      cx={props.cx}
-                      cy={props.cy}
-                      r={6.5}
+                      r={7}
                       fill="rgba(251,191,36,1)"
-                      stroke="rgba(255,255,255,0.8)"
+                      stroke="rgba(255,255,255,0.9)"
                       strokeWidth={2.5}
                       filter="url(#glow)"
                     />
