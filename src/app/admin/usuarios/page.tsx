@@ -32,6 +32,13 @@ export default async function AdminUsuariosPage({
   searchParams: SearchParams
 }) {
   const admin = createSupabaseAdminClient()
+  if (!admin) {
+    return (
+      <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4 text-rose-100 backdrop-blur-sm">
+        Supabase Admin não configurado (service role). Verifique as variáveis de ambiente.
+      </div>
+    )
+  }
 
   const search = searchParams.search || ''
   const planFilter = searchParams.plan || 'all'
