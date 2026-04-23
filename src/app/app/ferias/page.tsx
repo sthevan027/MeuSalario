@@ -1,4 +1,5 @@
 import { VacationForm } from '@/components/simulations/VacationForm'
+import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer'
 import { requireUser } from '@/lib/auth/profile'
 
 export default async function FeriasPage() {
@@ -12,6 +13,8 @@ export default async function FeriasPage() {
           Simule o cálculo de férias vencidas e proporcionais com 1/3 constitucional.
         </p>
       </div>
+
+      <SimulationDisclaimer />
 
       <VacationForm />
     </div>

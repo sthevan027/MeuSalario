@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { setUserPlan, setUserRole } from '@/app/admin/actions'
-import { Crown, Shield, User, Calendar } from 'lucide-react'
+import { Crown, Shield, User, Calendar, BarChart2 } from 'lucide-react'
 import { UserFilters } from '@/components/admin/UserFilters'
 import { Suspense } from 'react'
 
@@ -13,6 +13,8 @@ type ProfileRow = {
   role: 'user' | 'admin'
   subscription_status: string
   created_at: string
+  simulation_count: number
+  last_simulation_at: string | null
 }
 
 type SearchParams = {
@@ -30,16 +32,6 @@ export default async function AdminUsuariosPage({
   searchParams: SearchParams
 }) {
   const admin = createSupabaseAdminClient()
-  if (!admin) {
-    return (
-      <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-6 text-slate-100 backdrop-blur-sm">
-        <div className="text-lg font-semibold">Falta configurar o Supabase Admin</div>
-        <p className="mt-1 text-sm text-slate-300">
-          Defina <code>SUPABASE_SERVICE_ROLE_KEY</code> no <code>.env.local</code> e reinicie o servidor.
-        </p>
-      </div>
-    )
-  }
 
   const search = searchParams.search || ''
   const planFilter = searchParams.plan || 'all'
@@ -77,7 +69,29 @@ export default async function AdminUsuariosPage({
     )
   }
 
-  const rows = (data ?? []) as ProfileRow[]
+  const profileIds = (data ?? []).map((u) => u.id)
+
+  const simCountMap: Record<string, { count: number; last: string | null }> = {}
+  if (profileIds.length > 0) {
+    const { data: simData } = await admin
+      .from('simulations')
+      .select('user_id, created_at')
+      .in('user_id', profileIds)
+      .order('created_at', { ascending: false })
+
+    for (const sim of simData ?? []) {
+      if (!simCountMap[sim.user_id]) {
+        simCountMap[sim.user_id] = { count: 0, last: sim.created_at }
+      }
+      simCountMap[sim.user_id].count++
+    }
+  }
+
+  const rows: ProfileRow[] = (data ?? []).map((u) => ({
+    ...u,
+    simulation_count: simCountMap[u.id]?.count ?? 0,
+    last_simulation_at: simCountMap[u.id]?.last ?? null,
+  }))
   const totalPages = Math.ceil((count ?? 0) / ITEMS_PER_PAGE)
 
   return (
@@ -99,11 +113,12 @@ export default async function AdminUsuariosPage({
 
       {/* Desktop: Tabela */}
       <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-sm lg:block">
-        <div className="grid grid-cols-6 gap-4 border-b border-white/10 bg-white/5 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <div className="grid grid-cols-7 gap-4 border-b border-white/10 bg-white/5 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
           <div className="col-span-2">Usuário</div>
           <div>Plano</div>
           <div>Cargo</div>
           <div>Status</div>
+          <div>Simulações</div>
           <div>Cadastro</div>
         </div>
 
@@ -118,7 +133,7 @@ export default async function AdminUsuariosPage({
         ) : (
           <div className="divide-y divide-white/5">
             {rows.map((u) => (
-              <div key={u.id} className="grid grid-cols-6 gap-4 px-6 py-4 text-sm transition-colors hover:bg-white/5">
+              <div key={u.id} className="grid grid-cols-7 gap-4 px-6 py-4 text-sm transition-colors hover:bg-white/5">
                 <div className="col-span-2 flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
                     <User size={16} className="text-blue-400" />
@@ -191,6 +206,18 @@ export default async function AdminUsuariosPage({
                   <StatusBadge status={u.subscription_status} />
                 </div>
 
+                <div className="flex items-center gap-1.5">
+                  <BarChart2 size={12} className="text-slate-500" />
+                  <span className={`text-xs font-medium ${u.simulation_count === 0 ? 'text-slate-600' : 'text-slate-300'}`}>
+                    {u.simulation_count}
+                  </span>
+                  {u.last_simulation_at && (
+                    <span className="text-[10px] text-slate-600">
+                      ({new Date(u.last_simulation_at).toLocaleDateString('pt-BR')})
+                    </span>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <Calendar size={12} />
                   <span className="text-xs">{new Date(u.created_at).toLocaleDateString('pt-BR')}</span>
@@ -238,9 +265,17 @@ export default async function AdminUsuariosPage({
               </div>
 
               <div className="mb-3 flex items-center justify-between border-t border-white/5 pt-3">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Calendar size={12} />
-                  <span className="text-xs">{new Date(u.created_at).toLocaleDateString('pt-BR')}</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <Calendar size={12} />
+                    <span className="text-xs">{new Date(u.created_at).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-slate-400">
+                    <BarChart2 size={12} />
+                    <span className={`text-xs ${u.simulation_count === 0 ? 'text-slate-600' : 'text-slate-300'}`}>
+                      {u.simulation_count} sim.
+                    </span>
+                  </div>
                 </div>
                 <StatusBadge status={u.subscription_status} small />
               </div>

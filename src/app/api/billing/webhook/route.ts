@@ -2,34 +2,27 @@ import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { getPaymentProvider, getSubscriptionIdColumn } from '@/lib/payments'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { captureException, captureMessage } from '@/lib/sentry'
+import { mapWebhookStatus, planFromWebhookStatus } from '@/lib/payments/webhook-helpers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function mapStatus(status: string): 'active' | 'trialing' | 'past_due' | 'canceled' | 'none' {
-  switch (status) {
-    case 'ACTIVE':
-      return 'active'
-    case 'PENDING':
-      return 'trialing'
-    case 'OVERDUE':
-      return 'past_due'
-    case 'CANCELED':
-      return 'canceled'
-    default:
-      return 'none'
-  }
-}
-
-function planFromStatus(mapped: string): 'free' | 'pro' {
-  return mapped === 'active' || mapped === 'trialing' ? 'pro' : 'free'
+function correlationId(): string {
+  return `wh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
 /**
  * POST - Processa webhooks do Asaas
  */
 export async function POST(request: Request) {
+  const cid = correlationId()
+  const log = (msg: string, data?: Record<string, unknown>) =>
+    console.log(JSON.stringify({ cid, msg, ...data }))
+
   try {
+    log('webhook.received')
+
     const provider = getPaymentProvider()
     const headersList = new Headers(await headers())
     const body = await request.text()
@@ -37,14 +30,21 @@ export async function POST(request: Request) {
     const admin = createSupabaseAdminClient()
 
     if (!admin) {
+      log('webhook.error', { reason: 'supabase_admin_not_configured' })
+      captureMessage('Webhook: Supabase Admin não configurado', 'error', {
+        tags: { cid, area: 'billing_webhook' },
+      })
       return NextResponse.json({ error: 'Supabase Admin não configurado.' }, { status: 500 })
     }
 
     const result = await provider.handleWebhook(body, headersList)
 
     if (!result) {
+      log('webhook.skipped', { reason: 'event_not_handled' })
       return NextResponse.json({ received: true, message: 'Evento não processado' })
     }
+
+    log('webhook.parsed', { status: result.status, subscriptionId: result.subscriptionId })
 
     let userId = result.userId
 
@@ -57,13 +57,18 @@ export async function POST(request: Request) {
         .single()
 
       if (!profile?.id) {
+        log('webhook.user_not_found', { email })
+        captureMessage('Webhook: usuário não encontrado por email', 'warning', {
+          tags: { cid, area: 'billing_webhook' },
+          extra: { email },
+        })
         return NextResponse.json({ received: true, message: 'Usuário não encontrado para email' })
       }
       userId = profile.id
     }
 
-    const mappedStatus = mapStatus(result.status)
-    const plan = planFromStatus(mappedStatus)
+    const mappedStatus = mapWebhookStatus(result.status)
+    const plan = planFromWebhookStatus(mappedStatus)
 
     const subIdCol = getSubscriptionIdColumn()
 
@@ -76,24 +81,38 @@ export async function POST(request: Request) {
       updateData[subIdCol] = result.subscriptionId
     }
 
-    await admin
+    const { error: updateError } = await admin
       .from('profiles')
       .update(updateData)
       .eq('id', userId)
 
+    if (updateError) {
+      log('webhook.db_error', { userId, error: updateError.message })
+      captureException(new Error(`Webhook DB update failed: ${updateError.message}`), {
+        tags: { cid, area: 'billing_webhook' },
+        extra: { userId, mappedStatus, plan },
+      })
+      return NextResponse.json({ received: true, error: 'Falha ao atualizar perfil' }, { status: 500 })
+    }
+
+    log('webhook.processed', { userId, mappedStatus, plan })
     return NextResponse.json({ received: true, processed: true })
   } catch (error: unknown) {
-    console.error('Webhook error:', error)
-    const message = error instanceof Error ? error.message : ''
+    const message = error instanceof Error ? error.message : String(error)
+    log('webhook.exception', { error: message })
 
     if (message.includes('signature') || message.includes('Webhook')) {
       return NextResponse.json({ error: message }, { status: 401 })
     }
 
+    captureException(error, {
+      tags: { cid, area: 'billing_webhook' },
+    })
+
+    // Retorna 200 para evitar retries do Asaas em erros não-críticos
     return NextResponse.json({
       received: true,
       error: message,
-      note: 'Erro processado, mas webhook aceito para evitar retries',
     })
   }
 }

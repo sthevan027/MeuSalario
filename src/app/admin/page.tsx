@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { Users, Crown, Activity, UserPlus, TrendingUp, DollarSign, Percent, type LucideIcon } from 'lucide-react'
+import { Users, Crown, Activity, UserPlus, TrendingUp, DollarSign, Percent, BarChart2, UserX, type LucideIcon } from 'lucide-react'
 import { AdminCharts } from '@/components/admin/AdminCharts'
 import { PeriodFilter } from '@/components/admin/PeriodFilter'
 import { Suspense } from 'react'
@@ -35,6 +35,8 @@ export default async function AdminDashboardPage({
 
   const periodDate = getPeriodDate(period)
 
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
   const [
     { count: totalUsers },
     { count: proUsers },
@@ -43,6 +45,8 @@ export default async function AdminDashboardPage({
     { count: freeUsers },
     { data: recentUsers },
     { data: allUsersData },
+    { count: totalSimulations },
+    { data: activeUserIds },
   ] = await Promise.all([
     admin.from('profiles').select('*', { count: 'exact', head: true }),
     admin.from('profiles').select('*', { count: 'exact', head: true }).eq('plan', 'pro'),
@@ -62,7 +66,15 @@ export default async function AdminDashboardPage({
       .from('profiles')
       .select('created_at, plan')
       .order('created_at', { ascending: true }),
+    admin.from('simulations').select('*', { count: 'exact', head: true }),
+    admin
+      .from('simulations')
+      .select('user_id')
+      .gte('created_at', thirtyDaysAgo),
   ])
+
+  const activeUserSet = new Set((activeUserIds ?? []).map((r) => r.user_id))
+  const inactiveUsers = Math.max(0, (totalUsers ?? 0) - activeUserSet.size)
 
   const conversionRate = totalUsers && totalUsers > 0 
     ? ((proUsers ?? 0) / totalUsers * 100).toFixed(1) 
@@ -153,7 +165,7 @@ export default async function AdminDashboardPage({
       </div>
 
       {/* Métricas adicionais */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <MetricCard
           icon={Percent}
           label="Taxa de conversão"
@@ -178,6 +190,32 @@ export default async function AdminDashboardPage({
           iconColor="text-green-400"
           labelColor="text-green-300"
           hoverBorder="hover:border-green-500/30"
+        />
+
+        <MetricCard
+          icon={BarChart2}
+          label="Total de simulações"
+          labelMobile="Simulações"
+          value={totalSimulations ?? 0}
+          subtitle="Todas as simulações salvas"
+          subtitleMobile="Total"
+          gradient="from-cyan-500/10 to-sky-500/5"
+          iconColor="text-cyan-400"
+          labelColor="text-cyan-300"
+          hoverBorder="hover:border-cyan-500/30"
+        />
+
+        <MetricCard
+          icon={UserX}
+          label="Inativos (30d)"
+          labelMobile="Inativos"
+          value={inactiveUsers}
+          subtitle="Sem simulação nos últimos 30 dias"
+          subtitleMobile="Sem sim. 30d"
+          gradient="from-orange-500/10 to-amber-500/5"
+          iconColor="text-orange-400"
+          labelColor="text-orange-300"
+          hoverBorder="hover:border-orange-500/30"
         />
       </div>
 
