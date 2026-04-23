@@ -6,6 +6,7 @@ import { persistWithComparisonQuota } from '@/lib/simulation-quota'
 import { compareCltVsPj } from '@/lib/calculators/compare'
 import type { CompareInput } from '@/lib/calculators/types'
 import { toNumberOr } from '@/lib/number'
+import { getTaxConfig } from '@/lib/tax-config'
 
 /**
  * POST /api/compare
@@ -37,6 +38,8 @@ function num(v: unknown, fallback = 0): number {
 }
 
 export async function POST(request: NextRequest) {
+  await getTaxConfig()
+
   const supabase = await createSupabaseActionClient()
   const {
     data: { user },

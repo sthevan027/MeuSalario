@@ -6,12 +6,15 @@ import { persistWithSimulationQuota } from '@/lib/simulation-quota'
 import { simulateMonthly } from '@/lib/calculators/monthly'
 import { parseMonthlySimulationBody } from '@/lib/simulations/monthly-api-body'
 import type { MonthlySimulationInput } from '@/lib/calculators/types'
+import { getTaxConfig } from '@/lib/tax-config'
 
 /**
  * POST /api/simulate — mesma regra da server action de simulação mensal (com quota FREE).
  * Corpo JSON: campos alinhados ao formulário (ex.: salarioBase, contractType, ...).
  */
 export async function POST(request: NextRequest) {
+  await getTaxConfig()
+
   const supabase = await createSupabaseActionClient()
   const {
     data: { user },

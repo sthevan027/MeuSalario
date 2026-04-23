@@ -1,4 +1,5 @@
 import { CompatibilityForm } from '@/components/simulations/CompatibilityForm'
+import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer'
 import { requireUser } from '@/lib/auth/profile'
 
 export default async function CompatibilidadePage() {
@@ -13,6 +14,8 @@ export default async function CompatibilidadePage() {
           Essa proposta cobre meus custos mensais? Simule salário, benefícios e custo de vida para ver o saldo real.
         </p>
       </div>
+
+      <SimulationDisclaimer />
 
       <CompatibilityForm
         quota={{

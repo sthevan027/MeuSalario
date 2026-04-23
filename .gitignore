@@ -40,3 +40,18 @@ next-env.d.ts
 .zed/
 .cursor/
 .vscode/
+
+# IA
+.claude/
+.codex/
+.cursor/
+.deepseek/
+.gemini/
+.grok/
+.huggingface/
+.openai/
+.perplexity/
+.phind/
+.qwen/
+.sora/
+.vllm/

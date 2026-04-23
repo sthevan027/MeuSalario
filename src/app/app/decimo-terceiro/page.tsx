@@ -1,4 +1,5 @@
 import { ThirteenthForm } from '@/components/simulations/ThirteenthForm'
+import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer'
 import { requireUser } from '@/lib/auth/profile'
 
 export default async function DecimoTerceiroPage() {
@@ -12,6 +13,8 @@ export default async function DecimoTerceiroPage() {
           Simule o cálculo do 13º salário proporcional com descontos de INSS e IRRF.
         </p>
       </div>
+
+      <SimulationDisclaimer />
 
       <ThirteenthForm />
     </div>

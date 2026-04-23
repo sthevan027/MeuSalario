@@ -1,4 +1,5 @@
 import { TerminationForm } from '@/components/simulations/TerminationForm'
+import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer'
 import { requireUser } from '@/lib/auth/profile'
 
 export default async function RescisaoPage() {
@@ -12,6 +13,8 @@ export default async function RescisaoPage() {
           Estimativas configuráveis para aviso prévio, férias, 13º e multa do FGTS.
         </p>
       </div>
+
+      <SimulationDisclaimer />
 
       <TerminationForm />
     </div>

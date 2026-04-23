@@ -1,4 +1,5 @@
 import { MonthlySimulationForm } from '@/components/simulations/MonthlySimulationForm'
+import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer'
 import { requireUser } from '@/lib/auth/profile'
 
 export default async function SimulacaoPage() {
@@ -13,6 +14,8 @@ export default async function SimulacaoPage() {
           Preencha os campos e salve a simulação para aparecer no seu histórico e nos gráficos.
         </p>
       </div>
+
+      <SimulationDisclaimer />
 
       <MonthlySimulationForm
         quota={{

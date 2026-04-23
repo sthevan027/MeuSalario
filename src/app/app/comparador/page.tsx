@@ -1,4 +1,5 @@
 import { CompareForm } from '@/components/simulations/CompareForm'
+import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer'
 import { requireUser } from '@/lib/auth/profile'
 
 export default async function ComparadorPage() {
@@ -11,6 +12,8 @@ export default async function ComparadorPage() {
         <h1 className="text-2xl font-semibold">Comparador CLT x PJ</h1>
         <p className="text-sm text-slate-300">Compare lado a lado com percentuais configuráveis.</p>
       </div>
+
+      <SimulationDisclaimer />
 
       <CompareForm
         quota={{

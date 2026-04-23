@@ -4,6 +4,7 @@ import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { consumeCompatibilityQuota } from '@/lib/simulation-quota'
 import { simulateSalaryFit } from '@/lib/calculators/compatibility'
 import type { SalaryFitInput, BenefitItem, LifeCostInput } from '@/lib/calculators/compatibility-types'
+import { getTaxConfig } from '@/lib/tax-config'
 
 /**
  * POST /api/compatibility
@@ -53,6 +54,8 @@ const compatBodySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  await getTaxConfig()
+
   const supabase = await createSupabaseActionClient()
   const {
     data: { user },
