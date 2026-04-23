@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find /c/Users/sthevan.dev/Documents/Projetos/MeuSalario/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) ! -path \"*/__tests__/*\" ! -path \"*/node_modules/*\" -exec wc -l {} +)",
-      "Bash(git checkout *)"
-    ]
-  }
-}
