@@ -33,6 +33,14 @@ export default async function AdminUsuariosPage({
 }) {
   const admin = createSupabaseAdminClient()
 
+  if (!admin) {
+    return (
+      <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4 text-rose-100 backdrop-blur-sm">
+        Supabase Admin não configurado (service role). Verifique as variáveis de ambiente.
+      </div>
+    )
+  }
+
 
   const search = searchParams.search || ''
   const planFilter = searchParams.plan || 'all'
@@ -146,7 +154,7 @@ export default async function AdminUsuariosPage({
                 </div>
 
                 <div className="flex items-center">
-                  <form action={setUserPlan} className="flex items-center gap-2">
+                  <form className="flex items-center gap-2">
                     <input type="hidden" name="userId" value={u.id} />
                     <select
                       name="plan"
@@ -164,6 +172,7 @@ export default async function AdminUsuariosPage({
                     </select>
                     <button 
                       type="submit"
+                      formAction={setUserPlan as any}
                       className="rounded-md bg-white/5 px-2 py-1 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       ✓
@@ -175,7 +184,7 @@ export default async function AdminUsuariosPage({
                 </div>
 
                 <div className="flex items-center">
-                  <form action={setUserRole} className="flex items-center gap-2">
+                  <form className="flex items-center gap-2">
                     <input type="hidden" name="userId" value={u.id} />
                     <select
                       name="role"
@@ -193,6 +202,7 @@ export default async function AdminUsuariosPage({
                     </select>
                     <button 
                       type="submit"
+                      formAction={setUserRole as any}
                       className="rounded-md bg-white/5 px-2 py-1 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       ✓
@@ -282,7 +292,7 @@ export default async function AdminUsuariosPage({
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <form action={setUserPlan} className="flex flex-col gap-1.5">
+                <form className="flex flex-col gap-1.5">
                   <input type="hidden" name="userId" value={u.id} />
                   <label className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Plano</label>
                   <div className="flex gap-1.5">
@@ -302,6 +312,7 @@ export default async function AdminUsuariosPage({
                     </select>
                     <button 
                       type="submit"
+                      formAction={setUserPlan as any}
                       className="rounded-lg bg-white/5 px-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       ✓
@@ -309,7 +320,7 @@ export default async function AdminUsuariosPage({
                   </div>
                 </form>
 
-                <form action={setUserRole} className="flex flex-col gap-1.5">
+                <form className="flex flex-col gap-1.5">
                   <input type="hidden" name="userId" value={u.id} />
                   <label className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Cargo</label>
                   <div className="flex gap-1.5">
@@ -329,6 +340,7 @@ export default async function AdminUsuariosPage({
                     </select>
                     <button 
                       type="submit"
+                      formAction={setUserRole as any}
                       className="rounded-lg bg-white/5 px-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       ✓
