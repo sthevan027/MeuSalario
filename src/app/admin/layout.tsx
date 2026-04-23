@@ -109,7 +109,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </div>
               </div>
             </div>
-            <form action={signOut}>
+            <form action={signOut as any}>
               <Button type="submit" variant="secondary" className="w-full justify-start gap-2">
                 <LogOut size={16} />
                 Sair
