@@ -17,6 +17,8 @@ const FALLBACK_2026 = {
     { limit: Infinity, rate: 0.275, deduction: 908.73 },
   ],
   irrf_isencao: 5000.0,
+  // Ponto de equilíbrio da Lei 15.270/2025: complemento de isenção zera aqui
+  irrf_isencao_break_even: 7786.72,
   deducao_dependente: 189.59,
   inss_pro_labore_rate: 0.11,
   das_anexo_iii: [

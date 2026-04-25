@@ -30,37 +30,53 @@ export function calcularINSS(salarioBruto: number): number {
 }
 
 /**
+ * Núcleo do cálculo do IRRF sobre uma base já deduzida (salário - INSS - dependentes).
+ * Aplica o complemento de isenção da Lei 15.270/2025: entre R$ 5.000 e R$ 7.786,72 o
+ * imposto é reduzido linearmente para evitar o efeito cliff.
+ */
+function calcularIRRFSobreBase(baseCalculo: number): number {
+  const { irrf_brackets, irrf_isencao, irrf_isencao_break_even } = getTaxConfigSync()
+
+  if (baseCalculo <= 0) return 0
+  if (baseCalculo <= irrf_isencao) return 0
+
+  let irrfNormal = 0
+  for (const bracket of irrf_brackets) {
+    if (baseCalculo <= bracket.limit) {
+      irrfNormal = baseCalculo * bracket.rate - bracket.deduction
+      break
+    }
+  }
+  irrfNormal = Math.max(0, irrfNormal)
+
+  // Complemento de isenção (Lei 15.270/2025): redução gradual entre irrf_isencao e break_even
+  if (irrf_isencao_break_even > irrf_isencao && baseCalculo <= irrf_isencao_break_even) {
+    const lastBracket = irrf_brackets[irrf_brackets.length - 1]
+    const cMax = irrf_isencao * lastBracket.rate - lastBracket.deduction
+    const complemento = cMax * (irrf_isencao_break_even - baseCalculo) / (irrf_isencao_break_even - irrf_isencao)
+    return money(Math.max(0, irrfNormal - complemento))
+  }
+
+  return money(irrfNormal)
+}
+
+/**
  * Calcula o IRRF com alíquotas progressivas
  * Base de cálculo: salário bruto - INSS - dedução por dependentes
- * 
+ *
  * A partir de 2026, há isenção total para rendimentos tributáveis até R$ 5.000,00/mês
- * (Lei nº 15.270/2025 - Reforma da Renda)
- * 
+ * e complemento de isenção gradual até R$ 7.786,72/mês (Lei nº 15.270/2025).
+ *
  * @param salarioBruto - Salário bruto
  * @param inss - Valor do INSS já calculado
  * @param dependentes - Número de dependentes (padrão: 0)
  * @returns Valor do desconto de IRRF
  */
 export function calcularIRRF(salarioBruto: number, inss: number, dependentes: number = 0): number {
-  const { irrf_brackets, irrf_isencao, deducao_dependente } = getTaxConfigSync()
-
+  const { deducao_dependente } = getTaxConfigSync()
   const deducaoDependentes = money(dependentes * deducao_dependente)
   const baseCalculo = salarioBruto - inss - deducaoDependentes
-
-  if (baseCalculo <= 0) return 0
-
-  if (baseCalculo <= irrf_isencao) {
-    return 0
-  }
-
-  for (const bracket of irrf_brackets) {
-    if (baseCalculo <= bracket.limit) {
-      const irrf = baseCalculo * bracket.rate - bracket.deduction
-      return money(Math.max(0, irrf))
-    }
-  }
-
-  return 0
+  return calcularIRRFSobreBase(baseCalculo)
 }
 
 /**
@@ -139,31 +155,16 @@ export function calcularINSSProLabore(proLabore: number): number {
 
 /**
  * Calcula o IRRF sobre pró-labore (remuneração do sócio)
- * Usa a mesma tabela progressiva do IRRF de CLT, pois pró-labore é tributado como rendimento de pessoa física
+ * Usa a mesma tabela progressiva do IRRF de CLT, incluindo o complemento de isenção 2026.
  * Base de cálculo: pró-labore - INSS sobre pró-labore
- * 
+ *
  * @param proLabore - Valor do pró-labore mensal
  * @param inssProLabore - Valor do INSS sobre pró-labore já calculado
  * @returns Valor do IRRF sobre pró-labore
  */
 export function calcularIRRFProLabore(proLabore: number, inssProLabore: number): number {
-  const { irrf_brackets, irrf_isencao } = getTaxConfigSync()
   const baseCalculo = proLabore - inssProLabore
-
-  if (baseCalculo <= 0) return 0
-
-  if (baseCalculo <= irrf_isencao) {
-    return 0
-  }
-
-  for (const bracket of irrf_brackets) {
-    if (baseCalculo <= bracket.limit) {
-      const irrf = baseCalculo * bracket.rate - bracket.deduction
-      return money(Math.max(0, irrf))
-    }
-  }
-
-  return 0
+  return calcularIRRFSobreBase(baseCalculo)
 }
 
 /**

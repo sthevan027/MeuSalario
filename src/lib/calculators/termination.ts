@@ -74,13 +74,17 @@ export function simulateTermination(input: TerminationInput): TerminationResult 
   // Pedido de demissão e justa causa: sem multa
 
   // 8. Cálculo de descontos (INSS e IRRF) sobre verbas rescisórias
-  // Base de cálculo: soma das verbas tributáveis
-  const verbasTributaveis = money(
-    saldoSalario + avisoPrevio + feriasVencidasValor + feriasProporcionais + decimoTerceiroProporcional
-  )
+  //
+  // Bases diferentes por lei:
+  // INSS: aviso prévio indenizado e férias indenizadas NÃO são salário de contribuição
+  //   (Art. 28 §9°d e §9°e da Lei 8.212/91)
+  // IRRF: férias indenizadas são isentas (Art. 6° V da Lei 7.713/88);
+  //   aviso prévio indenizado é incluído (posição conservadora da RFB)
+  const baseINSS = money(saldoSalario + decimoTerceiroProporcional)
+  const baseIRRF = money(saldoSalario + avisoPrevio + decimoTerceiroProporcional)
 
-  const inssRescisao = calcularINSS(verbasTributaveis)
-  const irrfRescisao = calcularIRRF(verbasTributaveis, inssRescisao)
+  const inssRescisao = calcularINSS(baseINSS)
+  const irrfRescisao = calcularIRRF(baseIRRF, inssRescisao)
   const totalDescontos = money(inssRescisao + irrfRescisao)
 
   // Total bruto (antes dos descontos)
