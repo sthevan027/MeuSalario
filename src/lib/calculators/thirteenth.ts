@@ -27,9 +27,11 @@ export function simulateThirteenth(input: ThirteenthInput): ThirteenthResult {
   const primeiraParcela = money(valorBase * 0.5)
 
   // 2ª parcela: 50% do valor base, com descontos
+  // INSS e IRRF são calculados sobre o valor total do 13º (valorBase), não apenas sobre os 50%.
+  // A dedução aparece integralmente na 2ª parcela (prática legal padrão).
   const segundaParcelaBase = money(valorBase * 0.5)
-  const inss = calcularINSS(segundaParcelaBase)
-  const irrf = calcularIRRF(segundaParcelaBase, inss, dependentes)
+  const inss = calcularINSS(valorBase)
+  const irrf = calcularIRRF(valorBase, inss, dependentes)
   const descontosSegundaParcela = money(inss + irrf)
   const segundaParcelaLiquida = money(segundaParcelaBase - descontosSegundaParcela)
 
@@ -42,8 +44,8 @@ export function simulateThirteenth(input: ThirteenthInput): ThirteenthResult {
     { key: 'base', label: '13º salário (base)', amount: valorBase, kind: 'info' as const },
     { key: 'primeira', label: '1ª parcela (50% - sem descontos)', amount: primeiraParcela, kind: 'earning' as const },
     { key: 'segunda_base', label: '2ª parcela (50% - base)', amount: segundaParcelaBase, kind: 'info' as const },
-    { key: 'inss', label: 'INSS sobre 2ª parcela', amount: inss, kind: 'deduction' as const },
-    { key: 'irrf', label: 'IRRF sobre 2ª parcela', amount: irrf, kind: 'deduction' as const },
+    { key: 'inss', label: 'INSS sobre 13º salário (base: total)', amount: inss, kind: 'deduction' as const },
+    { key: 'irrf', label: 'IRRF sobre 13º salário (base: total)', amount: irrf, kind: 'deduction' as const },
     { key: 'segunda_liquida', label: '2ª parcela líquida', amount: segundaParcelaLiquida, kind: 'earning' as const },
   ]
 
