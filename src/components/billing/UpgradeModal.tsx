@@ -14,7 +14,7 @@ const FREE_FEATURES = [
   { name: 'Gráficos de evolução', included: false },
   { name: 'Simulador de rescisão', included: false },
   { name: 'Comparador CLT x PJ', included: false },
-  { name: 'Exportação de dados', included: false },
+  { name: 'Exportação CSV e PDF', included: true },
 ]
 
 interface UpgradeModalProps {

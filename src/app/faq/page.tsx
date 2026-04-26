@@ -60,8 +60,8 @@ export default async function FAQPage() {
                 <Link href="/planos" className="text-emerald-400 underline-offset-2 hover:underline">
                   Planos
                 </Link>
-                ) inclui dashboard completo, gráficos, histórico mensal, comparador CLT x PJ, simulador de
-                rescisão e exportação de dados.
+                ) inclui dashboard completo, gráficos, histórico mensal, comparador CLT x PJ e simulador de
+                rescisão — tudo ilimitado.
               </p>
             </div>
 
