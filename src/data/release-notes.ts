@@ -14,6 +14,31 @@ export type ReleaseNote = {
 
 export const releaseNotes: readonly ReleaseNote[] = [
   {
+    version: 'v1.8.0',
+    date: '2026-04-26',
+    title: 'Quotas mensais no plano FREE — reset automático todo mês',
+    items: [
+      'Plano FREE: as quotas agora renovam automaticamente no dia 1 de cada mês (antes eram vitalícias).',
+      'Limite de simulações salvas aumentado de 3 para 5 por mês.',
+      'Banner no topo exibe a data exata de renovação ("Renova em 1 de maio").',
+      'Página de conta mostra a próxima data de renovação de quotas.',
+      'Ao atingir o limite, basta aguardar o próximo mês — ou fazer upgrade para o Pro (ilimitado).',
+    ],
+    kind: 'Feature',
+  },
+  {
+    version: 'v1.7.0',
+    date: '2026-04-26',
+    title: 'Correções de cálculo: IRRF 2026, 13º salário e rescisão CLT',
+    items: [
+      'IRRF 2026 (Lei 15.270/2025): implementado o complemento de isenção gradual entre R$5.000 e R$7.786,72 — sem mais salto brusco na alíquota na fronteira da isenção.',
+      '13º salário: INSS e IRRF agora são calculados sobre 100% do valor base do 13º, não sobre os 50% da 2ª parcela (alinhado com a legislação).',
+      'Rescisão CLT: aviso prévio indenizado e férias indenizadas removidos da base do INSS (Art. 28 §9° Lei 8.212/91); férias indenizadas também removidas do IRRF (Art. 6° V Lei 7.713/88).',
+      'Parâmetros fiscais 2026 (INSS, IRRF, DAS Simples Nacional) persistidos no banco de dados com fallback automático.',
+    ],
+    kind: 'Correção',
+  },
+  {
     version: 'v1.6.0',
     date: '2026-04-14',
     title: 'Dashboard mais claro, dark e com comparações PJ',

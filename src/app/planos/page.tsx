@@ -176,12 +176,6 @@ export default async function PlanosPage() {
                   </span>
                   <span>Comparador CLT × PJ, 13º, férias e rescisão</span>
                 </li>
-                <li className="flex items-start gap-3 text-white">
-                  <span className="mt-0.5 shrink-0 text-emerald-400" aria-hidden>
-                    ✓
-                  </span>
-                  <span>Exportação de dados</span>
-                </li>
               </ul>
 
               <Link

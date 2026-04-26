@@ -19,6 +19,7 @@ export default async function ComparadorPage() {
         quota={{
           isPro,
           comparisonsRemaining: profile.comparisons_remaining,
+          quotaResetAt: profile.quota_reset_at,
         }}
       />
     </div>

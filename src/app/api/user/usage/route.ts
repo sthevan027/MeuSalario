@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('plan, simulations_remaining, comparisons_remaining, compatibility_checks_remaining')
+    .select('plan, simulations_remaining, comparisons_remaining, compatibility_checks_remaining, quota_reset_at')
     .eq('id', user.id)
     .single()
 
@@ -37,12 +37,14 @@ export async function GET() {
     simulations_remaining,
     comparisons_remaining,
     compatibility_checks_remaining,
+    quota_reset_at: typeof data.quota_reset_at === 'string' ? data.quota_reset_at : null,
   })
 
   return NextResponse.json({
     simulations_remaining: payload.simulations_remaining,
     comparisons_remaining: payload.comparisons_remaining,
     compatibility_checks_remaining: payload.compatibility_checks_remaining,
+    quota_reset_at: payload.quota_reset_at,
     plan_type: payload.plan_type,
     unlimited: payload.unlimited,
   })
