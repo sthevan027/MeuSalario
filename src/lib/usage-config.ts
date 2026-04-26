@@ -4,9 +4,9 @@
  */
 export function getDefaultFreeSimulationsLimit(): number {
   const raw = process.env.NEXT_PUBLIC_FREE_SIMULATIONS_DEFAULT
-  if (raw === undefined || raw === '') return 3
+  if (raw === undefined || raw === '') return 5
   const n = Number.parseInt(raw, 10)
-  return Number.isFinite(n) && n >= 0 ? n : 3
+  return Number.isFinite(n) && n >= 0 ? n : 5
 }
 
 export function getDefaultFreeComparisonsLimit(): number {
