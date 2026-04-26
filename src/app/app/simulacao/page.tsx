@@ -21,6 +21,7 @@ export default async function SimulacaoPage() {
         quota={{
           isPro,
           simulationsRemaining: profile.simulations_remaining,
+          quotaResetAt: profile.quota_reset_at,
         }}
       />
     </div>

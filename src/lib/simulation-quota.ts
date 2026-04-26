@@ -148,6 +148,12 @@ export function buildUsageResponse(profile: FreeUsageSnapshot): {
   }
 }
 
+/** Retorna true se o reset mensal já venceu (ou nunca foi definido). */
+export function isQuotaResetDue(resetAt: string | null | undefined): boolean {
+  if (!resetAt) return true
+  return Date.now() >= new Date(resetAt).getTime()
+}
+
 export type QuotaPersistMeta = {
   simulationsRemaining: number | null
   comparisonsRemaining: number | null

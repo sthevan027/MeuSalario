@@ -116,9 +116,9 @@ BEGIN
   SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 2) INTO v_compat
     FROM public.app_config WHERE key = 'free_compatibility_limit';
 
-  IF v_sim   IS NULL THEN v_sim   := 5; END IF;
-  IF v_comp  IS NULL THEN v_comp  := 2; END IF;
-  IF v_compat IS NULL THEN v_compat := 2; END IF;
+  IF v_sim   IS NULL OR v_sim   < 1 THEN v_sim   := 5; END IF;
+  IF v_comp  IS NULL OR v_comp  < 1 THEN v_comp  := 2; END IF;
+  IF v_compat IS NULL OR v_compat < 1 THEN v_compat := 2; END IF;
 
   INSERT INTO public.profiles (
     id, email, name, role,
@@ -186,9 +186,9 @@ BEGIN
     SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 2) INTO v_compat_limit
       FROM public.app_config WHERE key = 'free_compatibility_limit';
 
-    IF v_sim_limit   IS NULL THEN v_sim_limit   := 5; END IF;
-    IF v_comp_limit  IS NULL THEN v_comp_limit  := 2; END IF;
-    IF v_compat_limit IS NULL THEN v_compat_limit := 2; END IF;
+    IF v_sim_limit   IS NULL OR v_sim_limit   < 1 THEN v_sim_limit   := 5; END IF;
+    IF v_comp_limit  IS NULL OR v_comp_limit  < 1 THEN v_comp_limit  := 2; END IF;
+    IF v_compat_limit IS NULL OR v_compat_limit < 1 THEN v_compat_limit := 2; END IF;
 
     PERFORM set_config('app.skip_profile_guard', 'on', true);
     UPDATE public.profiles
@@ -265,9 +265,9 @@ BEGIN
     SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 2) INTO v_compat_limit
       FROM public.app_config WHERE key = 'free_compatibility_limit';
 
-    IF v_sim_limit   IS NULL THEN v_sim_limit   := 5; END IF;
-    IF v_comp_limit  IS NULL THEN v_comp_limit  := 2; END IF;
-    IF v_compat_limit IS NULL THEN v_compat_limit := 2; END IF;
+    IF v_sim_limit   IS NULL OR v_sim_limit   < 1 THEN v_sim_limit   := 5; END IF;
+    IF v_comp_limit  IS NULL OR v_comp_limit  < 1 THEN v_comp_limit  := 2; END IF;
+    IF v_compat_limit IS NULL OR v_compat_limit < 1 THEN v_compat_limit := 2; END IF;
 
     PERFORM set_config('app.skip_profile_guard', 'on', true);
     UPDATE public.profiles
@@ -344,9 +344,9 @@ BEGIN
     SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 2) INTO v_compat_limit
       FROM public.app_config WHERE key = 'free_compatibility_limit';
 
-    IF v_sim_limit   IS NULL THEN v_sim_limit   := 5; END IF;
-    IF v_comp_limit  IS NULL THEN v_comp_limit  := 2; END IF;
-    IF v_compat_limit IS NULL THEN v_compat_limit := 2; END IF;
+    IF v_sim_limit   IS NULL OR v_sim_limit   < 1 THEN v_sim_limit   := 5; END IF;
+    IF v_comp_limit  IS NULL OR v_comp_limit  < 1 THEN v_comp_limit  := 2; END IF;
+    IF v_compat_limit IS NULL OR v_compat_limit < 1 THEN v_compat_limit := 2; END IF;
 
     PERFORM set_config('app.skip_profile_guard', 'on', true);
     UPDATE public.profiles

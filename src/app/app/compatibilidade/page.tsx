@@ -21,6 +21,7 @@ export default async function CompatibilidadePage() {
         quota={{
           isPro,
           compatibilityRemaining: profile.compatibility_checks_remaining,
+          quotaResetAt: profile.quota_reset_at,
         }}
       />
     </div>

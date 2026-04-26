@@ -15,6 +15,8 @@ export type Profile = {
   comparisons_remaining: number
   /** Saldo de análises de compatibilidade salarial (FREE). */
   compatibility_checks_remaining: number
+  /** Data do próximo reset mensal de quotas (FREE). */
+  quota_reset_at: string | null
 }
 
 /** Busca perfil - cache() deduplica chamadas na mesma request (layout + page). */
@@ -30,7 +32,7 @@ export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
     supabase
       .from('profiles')
       .select(
-        'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining'
+        'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining, quota_reset_at'
       )
       .eq('id', user.id)
       .single()
@@ -52,6 +54,7 @@ export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
     simulations_remaining?: number | null
     comparisons_remaining?: number | null
     compatibility_checks_remaining?: number | null
+    quota_reset_at?: string | null
   }
   return {
     ...row,
@@ -63,6 +66,7 @@ export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
       typeof row.compatibility_checks_remaining === 'number'
         ? row.compatibility_checks_remaining
         : 2,
+    quota_reset_at: typeof row.quota_reset_at === 'string' ? row.quota_reset_at : null,
   }
 })
 

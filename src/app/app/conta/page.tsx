@@ -68,17 +68,29 @@ export default async function ContaPage() {
           {profile.plan !== 'pro' && (
             <>
               <div>
-                <div className="text-xs text-slate-400">Simulações salvas no histórico (FREE)</div>
+                <div className="text-xs text-slate-400">Simulações salvas no histórico (FREE/mês)</div>
                 <div className="text-sm font-medium text-white">{profile.simulations_remaining}</div>
               </div>
               <div>
-                <div className="text-xs text-slate-400">Comparações CLT × PJ restantes (FREE)</div>
+                <div className="text-xs text-slate-400">Comparações CLT × PJ restantes (FREE/mês)</div>
                 <div className="text-sm font-medium text-white">{profile.comparisons_remaining}</div>
               </div>
               <div>
-                <div className="text-xs text-slate-400">Análises de compatibilidade restantes (FREE)</div>
+                <div className="text-xs text-slate-400">Análises de compatibilidade restantes (FREE/mês)</div>
                 <div className="text-sm font-medium text-white">{profile.compatibility_checks_remaining}</div>
               </div>
+              {profile.quota_reset_at && (
+                <div>
+                  <div className="text-xs text-slate-400">Renovação das quotas</div>
+                  <div className="text-sm font-medium text-white">
+                    {new Intl.DateTimeFormat('pt-BR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    }).format(new Date(profile.quota_reset_at))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
