@@ -180,7 +180,7 @@ BEGIN
   -- Reset mensal lazy: repõe todas as quotas quando o período expirou
   IF v_reset_at IS NULL OR now() >= v_reset_at THEN
     SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 5) INTO v_sim_limit
-      FROM public.app_config WHERE key = 'free_simulations_limit';
+      FROM public.app_config WHERE key = 'free_simulations_limit'; -- 5
     SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 2) INTO v_comp_limit
       FROM public.app_config WHERE key = 'free_comparisons_limit';
     SELECT coalesce(nullif(trim(value #>> '{}'), '')::int, 2) INTO v_compat_limit
