@@ -1,8 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { isSupabaseConfigured, requireEnv } from '@/lib/env'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+
+const AUTH_RATE_LIMIT    = { limit: 10, windowSeconds: 60 }   // 10 tentativas/min por IP
+const BILLING_RATE_LIMIT = { limit: 20, windowSeconds: 60 }   // 20 req/min por IP
+
+const AUTH_PATHS    = ['/login', '/cadastro', '/recuperar-senha', '/atualizar-senha']
+const BILLING_PATHS = ['/api/billing/']
+
+function applyRateLimit(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname
+  const ip = getClientIp(request)
+
+  const isAuthPath    = AUTH_PATHS.some(p => pathname.startsWith(p))
+  const isBillingPath = BILLING_PATHS.some(p => pathname.startsWith(p))
+
+  if (!isAuthPath && !isBillingPath) return null
+
+  const options = isAuthPath ? AUTH_RATE_LIMIT : BILLING_RATE_LIMIT
+  const key = `${isAuthPath ? 'auth' : 'billing'}:${ip}`
+  const result = checkRateLimit(key, options)
+
+  if (!result.success) {
+    return NextResponse.json(
+      { error: 'Muitas tentativas. Tente novamente em instantes.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((result.resetAt - Date.now()) / 1000)),
+          'X-RateLimit-Limit': String(options.limit),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.ceil(result.resetAt / 1000)),
+        },
+      }
+    )
+  }
+
+  return null
+}
 
 export async function middleware(request: NextRequest) {
+  const rateLimitResponse = applyRateLimit(request)
+  if (rateLimitResponse) return rateLimitResponse
+
   const pathname = request.nextUrl.pathname
   const isAppRoute = pathname.startsWith('/app')
   const isAdminRoute = pathname.startsWith('/admin')

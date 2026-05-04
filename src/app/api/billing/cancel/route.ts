@@ -1,19 +1,29 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { getPaymentProvider, getSubscriptionIdColumn } from '@/lib/payments'
+import { logAuditEvent } from '@/lib/audit'
+import { getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+const cancelSchema = z.object({
+  cancel_immediately: z.boolean().optional().default(false),
+  offer_discount: z.number().min(0).max(100).optional(),
+})
 
 /**
  * POST - Cancela assinatura (com opção de retenção)
  */
 export async function POST(request: Request) {
   try {
-    const { cancel_immediately, offer_discount } = (await request.json().catch(() => ({}))) as {
-      cancel_immediately?: boolean
-      offer_discount?: number
+    const rawBody = await request.json().catch(() => ({}))
+    const parsed = cancelSchema.safeParse(rawBody)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos.', details: parsed.error.flatten() }, { status: 400 })
     }
+    const { cancel_immediately, offer_discount } = parsed.data
 
     const supabase = await createSupabaseActionClient()
     const {
@@ -39,6 +49,14 @@ export async function POST(request: Request) {
     }
 
     if (offer_discount && offer_discount > 0 && offer_discount <= 100) {
+      void logAuditEvent({
+        userId: user.id,
+        action: 'subscription.discount_offered',
+        resource: 'subscription',
+        resourceId: subscriptionId,
+        metadata: { discount: offer_discount },
+        ipAddress: getClientIp(request),
+      })
       return NextResponse.json({
         success: true,
         message: `Oferta de ${offer_discount}% de desconto registrada. Entre em contato com o suporte para aplicar.`,
@@ -60,6 +78,15 @@ export async function POST(request: Request) {
         })
         .eq('id', user.id)
 
+      void logAuditEvent({
+        userId: user.id,
+        action: 'subscription.canceled_immediately',
+        resource: 'subscription',
+        resourceId: subscriptionId,
+        ipAddress: getClientIp(request),
+        userAgent: request.headers.get('user-agent'),
+      })
+
       return NextResponse.json({
         success: true,
         message: 'Assinatura cancelada imediatamente.',
@@ -67,6 +94,15 @@ export async function POST(request: Request) {
     }
 
     await provider.cancelSubscription(subscriptionId, false)
+
+    void logAuditEvent({
+      userId: user.id,
+      action: 'subscription.cancel_at_period_end',
+      resource: 'subscription',
+      resourceId: subscriptionId,
+      ipAddress: getClientIp(request),
+      userAgent: request.headers.get('user-agent'),
+    })
 
     return NextResponse.json({
       success: true,

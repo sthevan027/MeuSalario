@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 import { getPaymentProvider, getCustomerIdColumn } from '@/lib/payments'
 import {
@@ -6,17 +7,27 @@ import {
   shouldApplyAsaasReceiptOnlyCustomerEmails,
 } from '@/lib/payments/asaas-provider'
 import { parsePlanMoney } from '@/lib/billing/plan-price'
+import { logAuditEvent } from '@/lib/audit'
+import { getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+const checkoutSchema = z.object({
+  interval: z.enum(['month', 'year']).optional().default('month'),
+})
 
 /**
  * POST - Cria sessão de checkout e retorna URL de pagamento (Asaas)
  */
 export async function POST(request: Request) {
   try {
-    const { interval } = (await request.json().catch(() => ({}))) as { interval?: 'month' | 'year' }
-    const safeInterval: 'month' | 'year' = interval === 'year' ? 'year' : 'month'
+    const rawBody = await request.json().catch(() => ({}))
+    const parsed = checkoutSchema.safeParse(rawBody)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos.', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const { interval: safeInterval } = parsed.data
 
     const supabase = await createSupabaseActionClient()
     const {
@@ -103,10 +114,17 @@ export async function POST(request: Request) {
       baseUrl,
     })
 
-    await supabase
-      .from('profiles')
-      .update({ subscription_status: 'trialing' })
-      .eq('id', user.id)
+    // Não marcar como 'trialing' aqui — o status só muda após pagamento confirmado via webhook.
+    // Setar 'trialing' antes do pagamento causava acesso indevido ao plano Pro.
+
+    void logAuditEvent({
+      userId: user.id,
+      action: 'checkout.initiated',
+      resource: 'subscription',
+      metadata: { interval: safeInterval, planId: 'pro' },
+      ipAddress: getClientIp(request),
+      userAgent: request.headers.get('user-agent'),
+    })
 
     return NextResponse.json({ url: paymentLink })
   } catch (error: unknown) {

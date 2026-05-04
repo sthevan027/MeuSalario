@@ -9,6 +9,37 @@ type ActionState =
   | { ok: true; message?: string }
   | { ok: false; message: string }
 
+/**
+ * Converte erros internos do Supabase em mensagens seguras para o cliente.
+ * Evita vazar detalhes de implementação (nomes de tabela, SQL, etc.).
+ */
+function sanitizeAuthError(message: string): string {
+  const msg = message.toLowerCase()
+  if (msg.includes('invalid login credentials') || msg.includes('invalid email or password')) {
+    return 'Email ou senha incorretos.'
+  }
+  if (msg.includes('email not confirmed')) {
+    return 'Confirme seu email antes de entrar. Verifique sua caixa de entrada.'
+  }
+  if (msg.includes('user already registered') || msg.includes('already been registered')) {
+    return 'Este email já está cadastrado. Tente fazer login.'
+  }
+  if (msg.includes('password should be at least')) {
+    return 'A senha deve ter pelo menos 6 caracteres.'
+  }
+  if (msg.includes('rate limit') || msg.includes('too many requests')) {
+    return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.'
+  }
+  if (msg.includes('database error')) {
+    return 'Erro interno. Tente novamente em instantes.'
+  }
+  if (msg.includes('expired') || msg.includes('invalid') || msg.includes('token')) {
+    return 'Código expirado ou inválido. Solicite um novo email de recuperação.'
+  }
+  // Fallback genérico — não vaza detalhes técnicos
+  return 'Ocorreu um erro. Tente novamente.'
+}
+
 async function getOrigin() {
   const h = await headers()
   return (
@@ -38,7 +69,7 @@ export async function signInWithGoogle(nextPath: string = '/app/dashboard'): Pro
   })
 
   if (error) {
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   if (data.url) {
@@ -63,7 +94,7 @@ export async function linkGoogleAccount(): Promise<ActionState> {
   })
 
   if (error) {
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   if (data.url) {
@@ -94,7 +125,7 @@ export async function unlinkGoogleAccount(): Promise<ActionState> {
   const { error } = await supabase.auth.unlinkIdentity(googleIdentity)
 
   if (error) {
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   return { ok: true, message: 'Conta Google desvinculada com sucesso' }
@@ -108,7 +139,7 @@ export async function signIn(_prevState: ActionState | null, formData: FormData)
   const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) return { ok: false, message: sanitizeAuthError(error.message) }
 
   redirect(nextPath)
 }
@@ -130,14 +161,7 @@ export async function signUp(_prevState: ActionState | null, formData: FormData)
   })
 
   if (error) {
-    if (error.message?.toLowerCase().includes('database error saving new user')) {
-      return {
-        ok: false,
-        message:
-          'Erro no banco ao criar o usuário. No Supabase, rode novamente o SQL `supabase/schema.sql` (principalmente a coluna `profiles.name` e o trigger `handle_new_user`).',
-      }
-    }
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   if (data.user) {
@@ -165,7 +189,7 @@ export async function requestPasswordReset(
     redirectTo: `${origin}/auth/callback?type=recovery`,
   })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) return { ok: false, message: sanitizeAuthError(error.message) }
 
   return { ok: true, message: 'Link enviado! Verifique seu email para redefinir sua senha.' }
 }
@@ -189,15 +213,7 @@ export async function verifyRecoveryCode(
   })
 
   if (error) {
-    const msg = error.message.toLowerCase()
-    if (msg.includes('expired') || msg.includes('invalid') || msg.includes('token')) {
-      return {
-        ok: false,
-        message:
-          'Código expirado ou inválido. Solicite um novo email em "Recuperar senha" e use o código mais recente (ele vale 1 hora).',
-      }
-    }
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   redirect('/atualizar-senha')
@@ -212,7 +228,7 @@ export async function updatePassword(
   const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.updateUser({ password })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) return { ok: false, message: sanitizeAuthError(error.message) }
 
   redirect('/app/dashboard')
 }

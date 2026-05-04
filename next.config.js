@@ -1,4 +1,23 @@
 /** @type {import('next').NextConfig} */
+
+// CSP base para Next.js com Supabase e Asaas.
+// 'unsafe-inline' e 'unsafe-eval' são necessários para o runtime do Next.js (RSC / hydration).
+// Para um CSP mais restritivo com nonces, use next-safe middleware ou Next.js middleware CSP.
+const ContentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  // Supabase (auth, storage, realtime) + Asaas (sandbox e produção)
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.asaas.com https://sandbox.asaas.com",
+  "font-src 'self' data:",
+  "frame-src 'none'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join('; ')
+
 const nextConfig = {
   async headers() {
     return [
@@ -15,6 +34,8 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           // Restringe APIs sensíveis do navegador
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // Política de segurança de conteúdo (XSS, injeção de recursos)
+          { key: 'Content-Security-Policy', value: ContentSecurityPolicy },
         ],
       },
     ]

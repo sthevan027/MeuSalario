@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import { createHash } from 'crypto'
 import { getPaymentProvider, getSubscriptionIdColumn } from '@/lib/payments'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { captureException, captureMessage } from '@/lib/sentry'
 import { mapWebhookStatus, planFromWebhookStatus } from '@/lib/payments/webhook-helpers'
+import { logAuditEvent } from '@/lib/audit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 function correlationId(): string {
   return `wh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+function sha256(data: string): string {
+  return createHash('sha256').update(data).digest('hex')
 }
 
 /**
@@ -26,6 +32,7 @@ export async function POST(request: Request) {
     const provider = getPaymentProvider()
     const headersList = new Headers(await headers())
     const body = await request.text()
+    const payloadHash = sha256(body)
 
     const admin = createSupabaseAdminClient()
 
@@ -37,6 +44,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Supabase Admin não configurado.' }, { status: 500 })
     }
 
+    // handleWebhook lança se o token for inválido/ausente — resulta em 401 abaixo
     const result = await provider.handleWebhook(body, headersList)
 
     if (!result) {
@@ -45,6 +53,34 @@ export async function POST(request: Request) {
     }
 
     log('webhook.parsed', { status: result.status, subscriptionId: result.subscriptionId })
+
+    // ─── Idempotência ──────────────────────────────────────────────────────────
+    // Usa o subscriptionId + status como event_id único por evento de negócio.
+    // O ON CONFLICT ignora duplicatas silenciosamente.
+    const eventId = `${result.subscriptionId ?? 'no-sub'}:${result.status}:${result.userId}`
+    const { error: idempotencyError, data: idempotencyData } = await admin
+      .from('webhook_events')
+      .insert({
+        provider: 'asaas',
+        event_id: eventId,
+        event_type: result.status,
+        payload_hash: payloadHash,
+      })
+      .select('id')
+      .single()
+
+    if (idempotencyError) {
+      // Código 23505 = unique_violation (PostgreSQL) — evento já processado
+      if ((idempotencyError as { code?: string }).code === '23505') {
+        log('webhook.duplicate', { eventId })
+        return NextResponse.json({ received: true, message: 'Evento duplicado, ignorado.' })
+      }
+      // Outro erro de DB — logar mas continuar processando
+      log('webhook.idempotency_error', { error: idempotencyError.message })
+    }
+
+    const webhookEventRowId = idempotencyData?.id
+    // ──────────────────────────────────────────────────────────────────────────
 
     let userId = result.userId
 
@@ -62,6 +98,10 @@ export async function POST(request: Request) {
           tags: { cid, area: 'billing_webhook' },
           extra: { email },
         })
+        // Marcar evento como skipped na tabela de idempotência
+        if (webhookEventRowId) {
+          await admin.from('webhook_events').update({ status: 'skipped' }).eq('id', webhookEventRowId)
+        }
         return NextResponse.json({ received: true, message: 'Usuário não encontrado para email' })
       }
       userId = profile.id
@@ -92,8 +132,25 @@ export async function POST(request: Request) {
         tags: { cid, area: 'billing_webhook' },
         extra: { userId, mappedStatus, plan },
       })
-      return NextResponse.json({ received: true, error: 'Falha ao atualizar perfil' }, { status: 500 })
+      if (webhookEventRowId) {
+        await admin.from('webhook_events').update({ status: 'error', error_message: updateError.message, user_id: userId }).eq('id', webhookEventRowId)
+      }
+      // Retorna 500 para que o Asaas reenvie o evento — falha crítica de persistência
+      return NextResponse.json({ error: 'Falha ao atualizar perfil' }, { status: 500 })
     }
+
+    // Atualizar evento com userId resolvido
+    if (webhookEventRowId) {
+      await admin.from('webhook_events').update({ user_id: userId }).eq('id', webhookEventRowId)
+    }
+
+    void logAuditEvent({
+      userId,
+      action: `subscription.${mappedStatus.toLowerCase()}`,
+      resource: 'subscription',
+      resourceId: result.subscriptionId ?? undefined,
+      metadata: { mappedStatus, plan, cid },
+    })
 
     log('webhook.processed', { userId, mappedStatus, plan })
     return NextResponse.json({ received: true, processed: true })
@@ -101,18 +158,16 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : String(error)
     log('webhook.exception', { error: message })
 
-    if (message.includes('signature') || message.includes('Webhook')) {
-      return NextResponse.json({ error: message }, { status: 401 })
+    // Token inválido ou ausente → 401 (não fazer retry do Asaas)
+    if (message.includes('signature') || message.toLowerCase().includes('webhook') || message.includes('ASAAS_WEBHOOK_TOKEN')) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
     }
 
     captureException(error, {
       tags: { cid, area: 'billing_webhook' },
     })
 
-    // Retorna 200 para evitar retries do Asaas em erros não-críticos
-    return NextResponse.json({
-      received: true,
-      error: message,
-    })
+    // Erro inesperado → 500 para Asaas reenviar
+    return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 }

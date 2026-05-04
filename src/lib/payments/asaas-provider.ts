@@ -265,9 +265,12 @@ export class AsaasProvider implements PaymentProvider {
 
   async handleWebhook(payload: string | Buffer, headers: Headers): Promise<WebhookResult | null> {
     const token = process.env.ASAAS_WEBHOOK_TOKEN
-    if (token) {
-      const received = headers.get('asaas-access-token')
-      if (received !== token) return null
+    if (!token) {
+      throw new Error('ASAAS_WEBHOOK_TOKEN não configurado. Configure a variável de ambiente para proteger o endpoint.')
+    }
+    const received = headers.get('asaas-access-token')
+    if (received !== token) {
+      throw new Error('Webhook signature inválida')
     }
 
     const body = typeof payload === 'string' ? payload : payload.toString()
