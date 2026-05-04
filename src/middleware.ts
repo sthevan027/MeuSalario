@@ -8,13 +8,16 @@ const BILLING_RATE_LIMIT = { limit: 20, windowSeconds: 60 }   // 20 req/min por 
 
 const AUTH_PATHS    = ['/login', '/cadastro', '/recuperar-senha', '/atualizar-senha']
 const BILLING_PATHS = ['/api/billing/']
+// Webhook tem autenticação própria (token) e pode receber bursts legítimos do Asaas
+const BILLING_EXEMPT_PATHS = ['/api/billing/webhook']
 
 function applyRateLimit(request: NextRequest): NextResponse | null {
   const pathname = request.nextUrl.pathname
   const ip = getClientIp(request)
 
   const isAuthPath    = AUTH_PATHS.some(p => pathname.startsWith(p))
-  const isBillingPath = BILLING_PATHS.some(p => pathname.startsWith(p))
+  const isBillingPath = BILLING_PATHS.some(p => pathname.startsWith(p)) &&
+                        !BILLING_EXEMPT_PATHS.some(p => pathname.startsWith(p))
 
   if (!isAuthPath && !isBillingPath) return null
 

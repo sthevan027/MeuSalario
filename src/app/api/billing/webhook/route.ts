@@ -69,17 +69,33 @@ export async function POST(request: Request) {
       .select('id')
       .single()
 
-    if (idempotencyError) {
-      // Código 23505 = unique_violation (PostgreSQL) — evento já processado
-      if ((idempotencyError as { code?: string }).code === '23505') {
-        log('webhook.duplicate', { eventId })
-        return NextResponse.json({ received: true, message: 'Evento duplicado, ignorado.' })
-      }
-      // Outro erro de DB — logar mas continuar processando
-      log('webhook.idempotency_error', { error: idempotencyError.message })
-    }
+    let webhookEventRowId: string | null = idempotencyData?.id ?? null
 
-    const webhookEventRowId = idempotencyData?.id
+    if (idempotencyError) {
+      // Código 23505 = unique_violation (PostgreSQL) — evento já existe na tabela
+      if ((idempotencyError as { code?: string }).code === '23505') {
+        // Busca o status do evento existente para decidir se deve reprocessar
+        const { data: existing } = await admin
+          .from('webhook_events')
+          .select('id, status')
+          .eq('provider', 'asaas')
+          .eq('event_id', eventId)
+          .single()
+
+        if (existing?.status === 'processed') {
+          // Evento já concluído com sucesso — ack seguro
+          log('webhook.duplicate', { eventId })
+          return NextResponse.json({ received: true, message: 'Evento duplicado, ignorado.' })
+        }
+
+        // Status 'error' ou 'skipped' — evento falhou anteriormente, permite reprocessar
+        log('webhook.retry', { eventId, previousStatus: existing?.status })
+        webhookEventRowId = existing?.id ?? null
+      } else {
+        // Outro erro de DB — logar mas continuar processando
+        log('webhook.idempotency_error', { error: idempotencyError.message })
+      }
+    }
     // ──────────────────────────────────────────────────────────────────────────
 
     let userId = result.userId
