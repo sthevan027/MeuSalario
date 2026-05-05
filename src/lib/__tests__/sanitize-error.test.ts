@@ -46,16 +46,10 @@ describe('sanitizeAuthError', () => {
     )
   })
 
-  it('detecta token de recuperação expirado/inválido', () => {
-    expect(sanitizeAuthError('token is invalid')).toBe(
-      'Código expirado ou inválido. Solicite um novo email de recuperação.'
-    )
-    expect(sanitizeAuthError('otp expired')).toBe(
-      'Código expirado ou inválido. Solicite um novo email de recuperação.'
-    )
-    expect(sanitizeAuthError('token has expired')).toBe(
-      'Código expirado ou inválido. Solicite um novo email de recuperação.'
-    )
+  it('não retorna mensagem contextual para token de recovery', () => {
+    expect(sanitizeAuthError('token is invalid')).toBe('Ocorreu um erro. Tente novamente.')
+    expect(sanitizeAuthError('otp expired')).toBe('Ocorreu um erro. Tente novamente.')
+    expect(sanitizeAuthError('token has expired')).toBe('Ocorreu um erro. Tente novamente.')
   })
 
   it('não vaza detalhes de erros com "invalid" genérico', () => {

@@ -22,9 +22,6 @@ export function sanitizeAuthError(message: string): string {
   if (msg.includes('database error')) {
     return 'Erro interno. Tente novamente em instantes.'
   }
-  if (msg.includes('expired') || msg.includes('otp') || msg.includes('token is invalid')) {
-    return 'Código expirado ou inválido. Solicite um novo email de recuperação.'
-  }
   // Fallback genérico — não vaza detalhes técnicos
   return 'Ocorreu um erro. Tente novamente.'
 }
