@@ -47,7 +47,7 @@
     "overrides": {
       "flatted": "^3.4.2",
       "brace-expansion": "^1.1.13",
-      "postcss": ">=8.5.10"
+      "postcss": "^8.5.14"
     }
   }
 }
