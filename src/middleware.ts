@@ -3,27 +3,22 @@ import { createServerClient } from '@supabase/ssr'
 import { isSupabaseConfigured, requireEnv } from '@/lib/env'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
-const AUTH_RATE_LIMIT    = { limit: 10, windowSeconds: 60 }   // 10 tentativas/min por IP
-const BILLING_RATE_LIMIT = { limit: 20, windowSeconds: 60 }   // 20 req/min por IP
+// Rate limit de auth é por IP — não há userId disponível antes da autenticação.
+// Rate limit de billing é aplicado dentro dos handlers (onde user.id já está disponível).
+const AUTH_RATE_LIMIT = { limit: 10, windowSeconds: 60 }   // 10 tentativas/min por IP
 
-const AUTH_PATHS    = ['/login', '/cadastro', '/recuperar-senha', '/atualizar-senha']
-const BILLING_PATHS = ['/api/billing/']
-// Webhook tem autenticação própria (token) e pode receber bursts legítimos do Asaas
-const BILLING_EXEMPT_PATHS = ['/api/billing/webhook']
+const AUTH_PATHS = ['/login', '/cadastro', '/recuperar-senha', '/atualizar-senha']
 
 function applyRateLimit(request: NextRequest): NextResponse | null {
   const pathname = request.nextUrl.pathname
   const ip = getClientIp(request)
 
-  const isAuthPath    = AUTH_PATHS.some(p => pathname.startsWith(p))
-  const isBillingPath = BILLING_PATHS.some(p => pathname.startsWith(p)) &&
-                        !BILLING_EXEMPT_PATHS.some(p => pathname.startsWith(p))
+  const isAuthPath = AUTH_PATHS.some(p => pathname.startsWith(p))
 
-  if (!isAuthPath && !isBillingPath) return null
+  if (!isAuthPath) return null
 
-  const options = isAuthPath ? AUTH_RATE_LIMIT : BILLING_RATE_LIMIT
-  const key = `${isAuthPath ? 'auth' : 'billing'}:${ip}`
-  const result = checkRateLimit(key, options)
+  const key = `auth:${ip}`
+  const result = checkRateLimit(key, AUTH_RATE_LIMIT)
 
   if (!result.success) {
     return NextResponse.json(

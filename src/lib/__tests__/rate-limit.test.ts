@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { checkRateLimit } from '../rate-limit'
+import { checkRateLimit, buildRateLimitKey } from '../rate-limit'
 
 // Limpa o store entre testes usando chaves únicas por teste
 let testKeyCounter = 0
@@ -73,5 +73,27 @@ describe('checkRateLimit', () => {
     const { resetAt } = checkRateLimit(key, { limit: 5, windowSeconds: 60 })
     expect(resetAt).toBeGreaterThan(before)
     expect(resetAt).toBeLessThanOrEqual(before + 60_000 + 10)
+  })
+})
+
+describe('buildRateLimitKey', () => {
+  it('usa userId quando disponível', () => {
+    expect(buildRateLimitKey('billing', { userId: 'abc123', ip: '1.2.3.4' }))
+      .toBe('billing:user:abc123')
+  })
+
+  it('usa IP como fallback quando userId é nulo', () => {
+    expect(buildRateLimitKey('billing', { userId: null, ip: '1.2.3.4' }))
+      .toBe('billing:ip:1.2.3.4')
+  })
+
+  it('usa IP como fallback quando userId é undefined', () => {
+    expect(buildRateLimitKey('auth', { ip: '10.0.0.1' }))
+      .toBe('auth:ip:10.0.0.1')
+  })
+
+  it('usa unknown quando userId e ip são ausentes', () => {
+    expect(buildRateLimitKey('billing', {}))
+      .toBe('billing:ip:unknown')
   })
 })

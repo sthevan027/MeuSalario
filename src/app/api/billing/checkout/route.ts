@@ -8,7 +8,7 @@ import {
 } from '@/lib/payments/asaas-provider'
 import { parsePlanMoney } from '@/lib/billing/plan-price'
 import { logAuditEvent } from '@/lib/audit'
-import { getClientIp } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp, buildRateLimitKey } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -36,6 +36,25 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+    }
+
+    const rl = checkRateLimit(
+      buildRateLimitKey('billing', { userId: user.id, ip: getClientIp(request) }),
+      { limit: 20, windowSeconds: 60 }
+    )
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Tente novamente em instantes.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+            'X-RateLimit-Limit': '20',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.ceil(rl.resetAt / 1000)),
+          },
+        }
+      )
     }
 
     const { data: plan } = await supabase

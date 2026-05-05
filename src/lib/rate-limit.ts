@@ -66,9 +66,12 @@ export function checkRateLimit(key: string, options: RateLimitOptions): RateLimi
 
 /**
  * Extrai o IP real do request, considerando proxies (Vercel, Cloudflare, etc.).
- * Prioriza x-real-ip (setado pelo Vercel/proxy confiável) sobre x-forwarded-for
- * que pode ser injetado pelo cliente. Use apenas para rate limiting, não para
- * controle de acesso ou decisões de segurança críticas.
+ * Prioriza x-real-ip (setado pelo Vercel/proxy confiável) sobre x-forwarded-for,
+ * que pode ser injetado pelo cliente em ambientes sem proxy.
+ *
+ * IMPORTANTE: este IP é best-effort. Use apenas como fallback de rate limiting
+ * para usuários anônimos. Para usuários autenticados, prefira buildRateLimitKey
+ * com userId. Nunca use este valor para controle de acesso ou decisões de segurança.
  */
 export function getClientIp(request: Request): string {
   const h = request instanceof Request ? request.headers : new Headers()
@@ -77,4 +80,18 @@ export function getClientIp(request: Request): string {
     h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     'unknown'
   )
+}
+
+/**
+ * Monta a chave de rate limit priorizando userId quando disponível.
+ * Para usuários autenticados, a cota é por conta (evita punir IPs corporativos
+ * compartilhados e protege contra abuso por conta individual).
+ * Para anônimos, cai no IP como best-effort.
+ */
+export function buildRateLimitKey(
+  scope: string,
+  identity: { userId?: string | null; ip?: string | null }
+): string {
+  if (identity.userId) return `${scope}:user:${identity.userId}`
+  return `${scope}:ip:${identity.ip ?? 'unknown'}`
 }
