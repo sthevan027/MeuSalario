@@ -3,6 +3,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { safeRedirectPath } from '@/lib/auth/safe-redirect-path'
+import { sanitizeAuthError } from '@/lib/auth/sanitize-error'
 import { createSupabaseActionClient } from '@/lib/supabase/server'
 
 type ActionState =
@@ -38,7 +39,7 @@ export async function signInWithGoogle(nextPath: string = '/app/dashboard'): Pro
   })
 
   if (error) {
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   if (data.url) {
@@ -63,7 +64,7 @@ export async function linkGoogleAccount(): Promise<ActionState> {
   })
 
   if (error) {
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   if (data.url) {
@@ -94,7 +95,7 @@ export async function unlinkGoogleAccount(): Promise<ActionState> {
   const { error } = await supabase.auth.unlinkIdentity(googleIdentity)
 
   if (error) {
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   return { ok: true, message: 'Conta Google desvinculada com sucesso' }
@@ -108,7 +109,7 @@ export async function signIn(_prevState: ActionState | null, formData: FormData)
   const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) return { ok: false, message: sanitizeAuthError(error.message) }
 
   redirect(nextPath)
 }
@@ -130,14 +131,7 @@ export async function signUp(_prevState: ActionState | null, formData: FormData)
   })
 
   if (error) {
-    if (error.message?.toLowerCase().includes('database error saving new user')) {
-      return {
-        ok: false,
-        message:
-          'Erro no banco ao criar o usuário. No Supabase, rode novamente o SQL `supabase/schema.sql` (principalmente a coluna `profiles.name` e o trigger `handle_new_user`).',
-      }
-    }
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   if (data.user) {
@@ -165,7 +159,7 @@ export async function requestPasswordReset(
     redirectTo: `${origin}/auth/callback?type=recovery`,
   })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) return { ok: false, message: sanitizeAuthError(error.message) }
 
   return { ok: true, message: 'Link enviado! Verifique seu email para redefinir sua senha.' }
 }
@@ -189,15 +183,7 @@ export async function verifyRecoveryCode(
   })
 
   if (error) {
-    const msg = error.message.toLowerCase()
-    if (msg.includes('expired') || msg.includes('invalid') || msg.includes('token')) {
-      return {
-        ok: false,
-        message:
-          'Código expirado ou inválido. Solicite um novo email em "Recuperar senha" e use o código mais recente (ele vale 1 hora).',
-      }
-    }
-    return { ok: false, message: error.message }
+    return { ok: false, message: sanitizeAuthError(error.message) }
   }
 
   redirect('/atualizar-senha')
@@ -212,7 +198,7 @@ export async function updatePassword(
   const supabase = await createSupabaseActionClient()
   const { error } = await supabase.auth.updateUser({ password })
 
-  if (error) return { ok: false, message: error.message }
+  if (error) return { ok: false, message: sanitizeAuthError(error.message) }
 
   redirect('/app/dashboard')
 }
