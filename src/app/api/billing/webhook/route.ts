@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { createHash } from 'crypto'
+import type { PostgrestError } from '@supabase/supabase-js'
 import { getPaymentProvider, getSubscriptionIdColumn } from '@/lib/payments'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { captureException, captureMessage } from '@/lib/sentry'
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
         event_id: eventId,
         event_type: result.status,
         payload_hash: payloadHash,
+        status: 'pending',
       })
       .select('id')
       .single()
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
 
     if (idempotencyError) {
       // Código 23505 = unique_violation (PostgreSQL) — evento já existe na tabela
-      if ((idempotencyError as { code?: string }).code === '23505') {
+      if ((idempotencyError as PostgrestError).code === '23505') {
         // Busca o status do evento existente para decidir se deve reprocessar
         const { data: existing } = await admin
           .from('webhook_events')
@@ -155,9 +157,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Falha ao atualizar perfil' }, { status: 500 })
     }
 
-    // Atualizar evento com userId resolvido
+    // Marcar evento como processado com sucesso (inclui userId resolvido)
     if (webhookEventRowId) {
-      await admin.from('webhook_events').update({ user_id: userId }).eq('id', webhookEventRowId)
+      await admin
+        .from('webhook_events')
+        .update({ status: 'processed', user_id: userId })
+        .eq('id', webhookEventRowId)
     }
 
     void logAuditEvent({

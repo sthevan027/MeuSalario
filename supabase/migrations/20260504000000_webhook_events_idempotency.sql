@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   provider       TEXT        NOT NULL DEFAULT 'asaas',
   event_id       TEXT        NOT NULL,
   event_type     TEXT        NOT NULL,
-  status         TEXT        NOT NULL DEFAULT 'processed' CHECK (status IN ('processed', 'skipped', 'error')),
+  status         TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processed', 'skipped', 'error')),
   user_id        UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
   payload_hash   TEXT,
   error_message  TEXT,
@@ -29,3 +29,9 @@ CREATE POLICY "service_role_only" ON webhook_events
 -- Opcional: pode ser substituído por pg_cron se disponível
 COMMENT ON TABLE webhook_events IS
   'Idempotência de webhooks. Registros com mais de 90 dias podem ser removidos com segurança.';
+
+COMMENT ON COLUMN webhook_events.status IS
+  'pending = inserido mas ainda não finalizado (crash-safe); '
+  'processed = concluído com sucesso; '
+  'skipped = evento ignorado (ex: usuário não encontrado); '
+  'error = falha ao processar (será reprocessado no próximo retry).';

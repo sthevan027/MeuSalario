@@ -9,12 +9,12 @@
  * por instância representa uma barreira significativa.
  */
 
-interface Window {
+interface RateLimitWindow {
   count: number
   resetAt: number
 }
 
-const store = new Map<string, Window>()
+const store = new Map<string, RateLimitWindow>()
 
 let lastCleanup = Date.now()
 
@@ -64,12 +64,17 @@ export function checkRateLimit(key: string, options: RateLimitOptions): RateLimi
   return { success: true, remaining: options.limit - existing.count, resetAt: existing.resetAt }
 }
 
-/** Extrai o IP real do request, considerando proxies (Vercel, Cloudflare, etc.) */
+/**
+ * Extrai o IP real do request, considerando proxies (Vercel, Cloudflare, etc.).
+ * Prioriza x-real-ip (setado pelo Vercel/proxy confiável) sobre x-forwarded-for
+ * que pode ser injetado pelo cliente. Use apenas para rate limiting, não para
+ * controle de acesso ou decisões de segurança críticas.
+ */
 export function getClientIp(request: Request): string {
-  const headers = request instanceof Request ? request.headers : new Headers()
+  const h = request instanceof Request ? request.headers : new Headers()
   return (
-    headers.get('x-real-ip') ??
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    h.get('x-real-ip') ??
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     'unknown'
   )
 }

@@ -12,7 +12,7 @@ async function getAdminIp(): Promise<string | null> {
 }
 
 export async function updatePlanPrices(formData: FormData): Promise<void> {
-  const admin_user = await requireAdmin()
+  const adminUser = await requireAdmin()
 
   const planId = String(formData.get('planId') ?? '')
   const priceMonthly = parseFloat(String(formData.get('priceMonthly') ?? '0'))
@@ -32,7 +32,7 @@ export async function updatePlanPrices(formData: FormData): Promise<void> {
     .eq('id', planId)
 
   void logAuditEvent({
-    userId: admin_user.id,
+    userId: adminUser.id,
     action: 'admin.plan_prices_updated',
     resource: 'plan',
     resourceId: planId,
@@ -45,7 +45,7 @@ export async function updatePlanPrices(formData: FormData): Promise<void> {
 }
 
 export async function setUserPlan(formData: FormData): Promise<void> {
-  const admin_user = await requireAdmin()
+  const adminUser = await requireAdmin()
 
   const userId = String(formData.get('userId') ?? '')
   const plan = String(formData.get('plan') ?? 'free')
@@ -58,7 +58,7 @@ export async function setUserPlan(formData: FormData): Promise<void> {
   await admin.from('profiles').update({ plan }).eq('id', userId)
 
   void logAuditEvent({
-    userId: admin_user.id,
+    userId: adminUser.id,
     action: 'admin.user_plan_changed',
     resource: 'profile',
     resourceId: userId,
@@ -70,7 +70,7 @@ export async function setUserPlan(formData: FormData): Promise<void> {
 }
 
 export async function setUserRole(formData: FormData): Promise<void> {
-  const admin_user = await requireAdmin()
+  const adminUser = await requireAdmin()
 
   const userId = String(formData.get('userId') ?? '')
   const role = String(formData.get('role') ?? 'user')
@@ -83,7 +83,7 @@ export async function setUserRole(formData: FormData): Promise<void> {
   await admin.from('profiles').update({ role }).eq('id', userId)
 
   void logAuditEvent({
-    userId: admin_user.id,
+    userId: adminUser.id,
     action: 'admin.user_role_changed',
     resource: 'profile',
     resourceId: userId,
@@ -96,7 +96,7 @@ export async function setUserRole(formData: FormData): Promise<void> {
 
 export async function seedPlans(formData: FormData): Promise<void> {
   void formData
-  const admin_user = await requireAdmin()
+  const adminUser = await requireAdmin()
 
   const admin = createSupabaseAdminClient()
   if (!admin) return
@@ -140,7 +140,7 @@ export async function seedPlans(formData: FormData): Promise<void> {
   )
 
   void logAuditEvent({
-    userId: admin_user.id,
+    userId: adminUser.id,
     action: 'admin.plans_seeded',
     resource: 'plan',
     metadata: { plans: ['free', 'pro'] },
