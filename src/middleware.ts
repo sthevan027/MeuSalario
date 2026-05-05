@@ -27,7 +27,7 @@ function applyRateLimit(request: NextRequest): NextResponse | null {
         status: 429,
         headers: {
           'Retry-After': String(Math.ceil((result.resetAt - Date.now()) / 1000)),
-          'X-RateLimit-Limit': String(options.limit),
+          'X-RateLimit-Limit': String(AUTH_RATE_LIMIT.limit),
           'X-RateLimit-Remaining': '0',
           'X-RateLimit-Reset': String(Math.ceil(result.resetAt / 1000)),
         },
