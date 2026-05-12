@@ -17,35 +17,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24"
-
-      - name: Setup pnpm (corepack)
-        run: |
-          corepack enable
-          corepack prepare pnpm@9.15.9 --activate
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: |
-          STORE="$(pnpm store path --silent)"
-          if [ -z "$STORE" ]; then echo "::error::pnpm store path vazio"; exit 1; fi
-          echo "STORE_PATH=${STORE}" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Pnpm version
-        run: pnpm -v
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -59,9 +42,11 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key' }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://meusalario.vercel.app' }}
+          # Literais estáveis: evitam edge cases de expressões com secrets em PRs/forks.
+          # Preview/produção continuam com env real na Vercel.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
+          NEXT_PUBLIC_APP_URL: https://meusalario.vercel.app
 
   test:
     name: Unit Tests
@@ -69,35 +54,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24"
-
-      - name: Setup pnpm (corepack)
-        run: |
-          corepack enable
-          corepack prepare pnpm@9.15.9 --activate
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        run: |
-          STORE="$(pnpm store path --silent)"
-          if [ -z "$STORE" ]; then echo "::error::pnpm store path vazio"; exit 1; fi
-          echo "STORE_PATH=${STORE}" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Pnpm version
-        run: pnpm -v
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
