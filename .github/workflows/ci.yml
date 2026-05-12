@@ -14,7 +14,7 @@ jobs:
   lint-typecheck-build:
     name: Lint, Type Check & Build
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: "24"
 
       - name: Setup pnpm (corepack)
         run: |
@@ -63,7 +63,7 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -71,7 +71,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Setup pnpm (corepack)
         run: |
