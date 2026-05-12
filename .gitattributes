@@ -1,0 +1,2 @@
+# Lockfile YAML deve permanecer LF para evitar merges quebrados no GitHub Actions (Windows/CRLF).
+pnpm-lock.yaml text eol=lf
