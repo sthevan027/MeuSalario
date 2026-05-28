@@ -153,8 +153,13 @@ export async function middleware(request: NextRequest) {
   try {
     const { data } = await supabase.auth.getSession()
     hasSession = !!data.session
-  } catch {
-    hasSession = false
+  } catch (error: unknown) {
+    const err = error as { code?: string; status?: number }
+    if (err.code === 'refresh_token_not_found' || err.status === 400) {
+      hasSession = false
+    } else {
+      throw error
+    }
   }
 
   if (!hasSession) {
