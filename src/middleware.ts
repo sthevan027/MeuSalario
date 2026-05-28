@@ -80,11 +80,13 @@ export async function middleware(request: NextRequest) {
     )
 
     try {
+      // getSession() decodifica o JWT do cookie localmente (sem chamada de rede),
+      // suficiente para decidir o redirect de UX na home.
       const {
-        data: { user },
-      } = await supabase.auth.getUser()
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (user) {
+      if (session?.user) {
         const url = request.nextUrl.clone()
         url.pathname = '/app/dashboard'
         url.search = ''
@@ -144,18 +146,23 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  let user = null
+  // getSession() lê o JWT do cookie localmente (sem chamada de rede) para decidir
+  // o redirect de UX ao login. A validação real de auth + role admin é feita pelo
+  // layout em src/app/admin/layout.tsx via requireAdmin().
+  let hasSession = false
   try {
-    const { data } = await supabase.auth.getUser()
-    user = data.user
+    const { data } = await supabase.auth.getSession()
+    hasSession = !!data.session
   } catch (error: unknown) {
     const err = error as { code?: string; status?: number }
-    if (err.code !== 'refresh_token_not_found' && err.status !== 400) {
+    if (err.code === 'refresh_token_not_found' || err.status === 400) {
+      hasSession = false
+    } else {
       throw error
     }
   }
 
-  if (!user) {
+  if (!hasSession) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('next', pathname)
@@ -164,24 +171,6 @@ export async function middleware(request: NextRequest) {
       redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
     })
     return redirectResponse
-  }
-
-  if (isAdminRoute) {
-    // Admin é determinado apenas por profiles.role = 'admin'.
-    let role: string | null = null
-    try {
-      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      role = (data as { role?: string } | null)?.role ?? null
-    } catch {
-      role = null
-    }
-
-    if (role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/app/dashboard'
-      url.search = ''
-      return NextResponse.redirect(url)
-    }
   }
 
   return response
