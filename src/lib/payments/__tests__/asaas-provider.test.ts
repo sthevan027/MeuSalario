@@ -133,6 +133,7 @@ describe('AsaasProvider.createSubscription', () => {
     const provider = new AsaasProvider()
     const result = await provider.createSubscription({
       customerId: 'cus_abc',
+      planId: 'plan_pro_monthly',
       userId: 'user-1',
       value: 10.0,
       interval: 'month',
@@ -156,6 +157,7 @@ describe('AsaasProvider.createSubscription', () => {
     const provider = new AsaasProvider()
     await provider.createSubscription({
       customerId: 'cus_abc',
+      planId: 'plan_pro_yearly',
       userId: 'user-1',
       value: 95.0,
       interval: 'year',
@@ -175,6 +177,7 @@ describe('AsaasProvider.createSubscription', () => {
     const provider = new AsaasProvider()
     await provider.createSubscription({
       customerId: 'cus_abc',
+      planId: 'plan_pro_monthly',
       userId: 'user-1',
       value: 10.0,
       interval: 'month',
