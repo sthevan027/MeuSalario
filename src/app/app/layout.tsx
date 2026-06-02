@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         simulationsRemaining={profile.simulations_remaining}
         comparisonsRemaining={profile.comparisons_remaining}
         compatibilityRemaining={profile.compatibility_checks_remaining}
+        quotaResetAt={profile.quota_reset_at}
       />
 
       <AppAuthenticatedShell profile={profile} isPro={isPro} isAdmin={isAdmin}>

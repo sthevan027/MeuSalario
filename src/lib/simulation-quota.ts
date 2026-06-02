@@ -126,12 +126,14 @@ export type FreeUsageSnapshot = {
   simulations_remaining: number
   comparisons_remaining: number
   compatibility_checks_remaining: number
+  quota_reset_at?: string | null
 }
 
 export function buildUsageResponse(profile: FreeUsageSnapshot): {
   simulations_remaining: number | null
   comparisons_remaining: number | null
   compatibility_checks_remaining: number | null
+  quota_reset_at: string | null
   plan_type: PlanTypeApi
   unlimited: boolean
 } {
@@ -140,9 +142,16 @@ export function buildUsageResponse(profile: FreeUsageSnapshot): {
     simulations_remaining: unlimited ? null : profile.simulations_remaining,
     comparisons_remaining: unlimited ? null : profile.comparisons_remaining,
     compatibility_checks_remaining: unlimited ? null : profile.compatibility_checks_remaining,
+    quota_reset_at: profile.quota_reset_at ?? null,
     plan_type: planToApiType(profile.plan),
     unlimited,
   }
+}
+
+/** Retorna true se o reset mensal já venceu (ou nunca foi definido). */
+export function isQuotaResetDue(resetAt: string | null | undefined): boolean {
+  if (!resetAt) return true
+  return Date.now() >= new Date(resetAt).getTime()
 }
 
 export type QuotaPersistMeta = {

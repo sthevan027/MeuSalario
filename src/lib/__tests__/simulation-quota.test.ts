@@ -55,4 +55,28 @@ describe('buildUsageResponse', () => {
     expect(res.comparisons_remaining).toBe(0)
     expect(res.compatibility_checks_remaining).toBe(0)
   })
+
+  it('passa quota_reset_at quando presente', () => {
+    const resetAt = '2026-05-01T00:00:00.000Z'
+    const res = buildUsageResponse({
+      plan: 'free',
+      simulations_remaining: 5,
+      comparisons_remaining: 2,
+      compatibility_checks_remaining: 2,
+      quota_reset_at: resetAt,
+    })
+
+    expect(res.quota_reset_at).toBe(resetAt)
+  })
+
+  it('retorna quota_reset_at null quando ausente', () => {
+    const res = buildUsageResponse({
+      plan: 'free',
+      simulations_remaining: 5,
+      comparisons_remaining: 2,
+      compatibility_checks_remaining: 2,
+    })
+
+    expect(res.quota_reset_at).toBeNull()
+  })
 })

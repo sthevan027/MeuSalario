@@ -14,6 +14,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { formatBRL } from '@/lib/format'
 import { getLastSalaryBase } from '@/lib/last-salary'
 import type { ExportData } from '@/lib/export'
+import { isQuotaResetDue } from '@/lib/simulation-quota'
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus()
@@ -27,6 +28,7 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
 type QuotaProps = {
   isPro: boolean
   comparisonsRemaining: number
+  quotaResetAt: string | null
 }
 
 export function CompareForm({ quota }: { quota: QuotaProps }) {
@@ -58,7 +60,7 @@ export function CompareForm({ quota }: { quota: QuotaProps }) {
     }
   }, [state, router])
 
-  const blocked = !quota.isPro && comparisonsLeft <= 0
+  const blocked = !quota.isPro && comparisonsLeft <= 0 && !isQuotaResetDue(quota.quotaResetAt)
   const [dependentes, setDependentes] = useState('0')
   const [usaCalculoRealPJ, setUsaCalculoRealPJ] = useState(false)
   const [proLabore, setProLabore] = useState('')

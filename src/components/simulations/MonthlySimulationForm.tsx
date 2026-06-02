@@ -14,6 +14,7 @@ import { simulateMonthly } from '@/lib/calculators/monthly'
 import { getLastSalaryBase } from '@/lib/last-salary'
 import type { ExportData } from '@/lib/export'
 import type { MonthlySimulationInput } from '@/lib/calculators/types'
+import { isQuotaResetDue } from '@/lib/simulation-quota'
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus()
@@ -27,6 +28,7 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
 type QuotaProps = {
   isPro: boolean
   simulationsRemaining: number
+  quotaResetAt: string | null
 }
 
 export function MonthlySimulationForm({ quota }: { quota: QuotaProps }) {
@@ -34,7 +36,8 @@ export function MonthlySimulationForm({ quota }: { quota: QuotaProps }) {
   const [state, formAction] = useFormState(createMonthlySimulation, null)
   const [limitModalOpen, setLimitModalOpen] = useState(false)
 
-  const blocked = !quota.isPro && quota.simulationsRemaining <= 0
+  // Permite submit quando o reset mensal já venceu — o RPC vai restaurar a quota automaticamente
+  const blocked = !quota.isPro && quota.simulationsRemaining <= 0 && !isQuotaResetDue(quota.quotaResetAt)
 
   useEffect(() => {
     if (

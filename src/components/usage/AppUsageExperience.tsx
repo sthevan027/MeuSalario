@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { SimulationQuotaBanner } from '@/components/usage/SimulationQuotaBanner'
 import { UsageWelcomeModal } from '@/components/usage/UsageWelcomeModal'
+import { isQuotaResetDue } from '@/lib/simulation-quota'
 
 const STORAGE_KEY = 'meusalario_usage_welcome_seen'
 
@@ -11,6 +12,7 @@ type Props = {
   simulationsRemaining: number
   comparisonsRemaining: number
   compatibilityRemaining: number
+  quotaResetAt: string | null
 }
 
 export function AppUsageExperience({
@@ -18,6 +20,7 @@ export function AppUsageExperience({
   simulationsRemaining,
   comparisonsRemaining,
   compatibilityRemaining,
+  quotaResetAt,
 }: Props) {
   const [welcomeOpen, setWelcomeOpen] = useState(false)
 
@@ -32,8 +35,15 @@ export function AppUsageExperience({
     return null
   }
 
+  // Quando o reset já venceu e todos os saldos estão em zero, não mostra urgente —
+  // o próximo submit vai restaurar tudo automaticamente.
+  const resetDue = isQuotaResetDue(quotaResetAt)
+  const allExhausted =
+    simulationsRemaining <= 0 && comparisonsRemaining <= 0 && compatibilityRemaining <= 0
   const urgent =
-    simulationsRemaining <= 1 || comparisonsRemaining <= 1 || compatibilityRemaining <= 1
+    !resetDue &&
+    (simulationsRemaining <= 1 || comparisonsRemaining <= 1 || compatibilityRemaining <= 1) &&
+    !allExhausted
 
   return (
     <>
@@ -42,6 +52,7 @@ export function AppUsageExperience({
         comparisons={comparisonsRemaining}
         compatibility={compatibilityRemaining}
         urgent={urgent}
+        quotaResetAt={quotaResetAt}
       />
       <UsageWelcomeModal
         open={welcomeOpen}

@@ -190,18 +190,27 @@ describe('AsaasProvider.createSubscription', () => {
 // ─── AsaasProvider.handleWebhook ────────────────────────────────────────────
 
 describe('AsaasProvider.handleWebhook', () => {
-  it('retorna null para token inválido', async () => {
+  it('lança erro quando ASAAS_WEBHOOK_TOKEN não está configurado', async () => {
+    delete process.env.ASAAS_WEBHOOK_TOKEN
+    vi.stubGlobal('fetch', vi.fn())
+
+    const provider = new AsaasProvider()
+    await expect(provider.handleWebhook('{}', new Headers()))
+      .rejects.toThrow('ASAAS_WEBHOOK_TOKEN não configurado')
+  })
+
+  it('lança erro para token inválido', async () => {
     process.env.ASAAS_WEBHOOK_TOKEN = 'secret-token'
     vi.stubGlobal('fetch', vi.fn())
 
     const provider = new AsaasProvider()
     const headers = new Headers({ 'asaas-access-token': 'wrong-token' })
-    const result = await provider.handleWebhook('{}', headers)
-
-    expect(result).toBeNull()
+    await expect(provider.handleWebhook('{}', headers))
+      .rejects.toThrow('Webhook signature inválida')
   })
 
   it('processa PAYMENT_RECEIVED e retorna userId + status ACTIVE', async () => {
+    process.env.ASAAS_WEBHOOK_TOKEN = 'valid-token'
     const fetch = mockFetch([
       // resolveUserIdForAsaasPayment: GET /payments/pay_1 → tem subscription
       { body: { customer: 'cus_1', subscription: 'sub_1' } },
@@ -218,7 +227,8 @@ describe('AsaasProvider.handleWebhook', () => {
       payment: { id: 'pay_1', subscription: 'sub_1', customer: 'cus_1', status: 'RECEIVED' },
     })
 
-    const result = await provider.handleWebhook(payload, new Headers())
+    const headers = new Headers({ 'asaas-access-token': 'valid-token' })
+    const result = await provider.handleWebhook(payload, headers)
     expect(result).toEqual({
       userId: 'user-uuid-123',
       status: 'ACTIVE',
@@ -227,6 +237,7 @@ describe('AsaasProvider.handleWebhook', () => {
   })
 
   it('processa SUBSCRIPTION_CREATED com externalReference', async () => {
+    process.env.ASAAS_WEBHOOK_TOKEN = 'valid-token'
     const fetch = mockFetch([
       { body: { externalReference: 'user-uuid-456' } },
     ])
@@ -238,7 +249,8 @@ describe('AsaasProvider.handleWebhook', () => {
       subscription: { id: 'sub_2', status: 'ACTIVE', nextDueDate: '2026-07-01', cycle: 'MONTHLY' },
     })
 
-    const result = await provider.handleWebhook(payload, new Headers())
+    const headers = new Headers({ 'asaas-access-token': 'valid-token' })
+    const result = await provider.handleWebhook(payload, headers)
     expect(result).toEqual({
       userId: 'user-uuid-456',
       status: 'ACTIVE',
@@ -247,12 +259,14 @@ describe('AsaasProvider.handleWebhook', () => {
   })
 
   it('retorna null para eventos desconhecidos', async () => {
+    process.env.ASAAS_WEBHOOK_TOKEN = 'valid-token'
     vi.stubGlobal('fetch', vi.fn())
 
     const provider = new AsaasProvider()
+    const headers = new Headers({ 'asaas-access-token': 'valid-token' })
     const result = await provider.handleWebhook(
       JSON.stringify({ event: 'PAYMENT_OVERDUE' }),
-      new Headers()
+      headers
     )
     expect(result).toBeNull()
   })

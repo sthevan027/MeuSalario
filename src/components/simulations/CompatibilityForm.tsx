@@ -16,6 +16,7 @@ import {
   type SalaryFitResult,
 } from '@/lib/calculators/compatibility-types'
 import type { ContractType } from '@/lib/calculators/types'
+import { isQuotaResetDue } from '@/lib/simulation-quota'
 import { ChevronRight, ChevronLeft, Wallet, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react'
 
 const STATUS_LABELS: Record<SalaryFitResult['compatibilityStatus'], string> = {
@@ -48,6 +49,7 @@ function formatMoneyInput(n: number): string {
 type QuotaProps = {
   isPro: boolean
   compatibilityRemaining: number
+  quotaResetAt: string | null
 }
 
 export function CompatibilityForm({ quota }: { quota: QuotaProps }) {
@@ -71,7 +73,8 @@ export function CompatibilityForm({ quota }: { quota: QuotaProps }) {
       setStep(4)
       return
     }
-    if (compatLeft <= 0) {
+    // Permite tentar quando o reset mensal já venceu — o RPC restaura a quota automaticamente
+    if (compatLeft <= 0 && !isQuotaResetDue(quota.quotaResetAt)) {
       setLimitModalOpen(true)
       return
     }
@@ -94,7 +97,7 @@ export function CompatibilityForm({ quota }: { quota: QuotaProps }) {
     }
   }
 
-  const blockedCompat = !quota.isPro && compatLeft <= 0
+  const blockedCompat = !quota.isPro && compatLeft <= 0 && !isQuotaResetDue(quota.quotaResetAt)
   const [contractType, setContractType] = useState<ContractType>('clt')
   const [grossCompensation, setGrossCompensation] = useState('6000')
   const [dependentes, setDependentes] = useState('0')
