@@ -4,9 +4,8 @@ export async function register() {
     (global as any).self = global
   }
 
-  // Inicializa monitoramento de erros (Sentry)
-  if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-    const { initSentry } = await import('@/lib/sentry')
-    initSentry()
+  // Inicializa Sentry server-side via @sentry/nextjs (Node.js runtime)
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./sentry.server.config')
   }
 }
