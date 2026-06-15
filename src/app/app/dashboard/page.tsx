@@ -32,55 +32,29 @@ function monthLabel(key: string) {
 }
 
 function lastNMonthKeys(endDate: Date, n = 12) {
-  const keys: string[] = []
-  const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
-  
-  // Sempre começar de 2026/01 (Janeiro 2026)
-  const startYear = 2026
-  const startMonth = 0 // Janeiro
-  const start = new Date(startYear, startMonth, 1)
-  
-  // Data atual para incluir meses futuros
+  // Âncora é o mês mais recente entre endDate e hoje
   const hoje = new Date()
-  const hojeMonth = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-  
-  // Usar a data mais recente entre endDate e hoje como referência
-  const referenceDate = end >= hojeMonth ? end : hojeMonth
-  
-  // Calcular quantos meses temos desde 2026/01 até a data de referência
-  const monthsFromStart = (referenceDate.getFullYear() - startYear) * 12 + (referenceDate.getMonth() - startMonth) + 1
-  
-  // Se temos menos de N meses, começar do início de 2026
-  if (monthsFromStart < n) {
-    let current = new Date(start)
-    let count = 0
-    while (count < n) {
-      keys.push(monthKey(current))
-      current = new Date(current.getFullYear(), current.getMonth() + 1, 1)
-      count++
-    }
-  } else {
-    // Gerar N meses, incluindo meses futuros a partir da data de referência
-    // Começar alguns meses antes e ir até alguns meses depois
-    const monthsBefore = Math.floor(n * 0.6) // 60% dos meses são passados
-    const monthsAfter = n - monthsBefore // 40% são futuros
-    
-    // Gerar meses passados
-    for (let i = monthsBefore - 1; i >= 0; i--) {
-      const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1)
-      if (d >= start) {
-        keys.push(monthKey(d))
-      }
-    }
-    
-    // Gerar meses futuros
-    for (let i = 1; i <= monthsAfter; i++) {
-      const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + i, 1)
-      keys.push(monthKey(d))
-    }
+  const referenceDate = new Date(
+    Math.max(
+      new Date(endDate.getFullYear(), endDate.getMonth(), 1).getTime(),
+      new Date(hoje.getFullYear(), hoje.getMonth(), 1).getTime()
+    )
+  )
+
+  // Gera janela de n meses: 60% passados + mês atual + 40% futuros
+  const monthsBefore = Math.max(0, Math.floor(n * 0.6))
+  const monthsAfter = n - monthsBefore - 1
+  const keys: string[] = []
+
+  for (let i = monthsBefore; i > 0; i--) {
+    keys.push(monthKey(new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1)))
   }
-  
-  return keys.slice(0, n) // Garante que sempre retorna exatamente N meses
+  keys.push(monthKey(referenceDate))
+  for (let i = 1; i <= monthsAfter; i++) {
+    keys.push(monthKey(new Date(referenceDate.getFullYear(), referenceDate.getMonth() + i, 1)))
+  }
+
+  return keys.slice(0, n)
 }
 
 // Função auxiliar para buscar simulações mensais (usada no cache).

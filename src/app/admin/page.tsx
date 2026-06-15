@@ -65,12 +65,14 @@ export default async function AdminDashboardPage({
     admin
       .from('profiles')
       .select('created_at, plan')
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: true })
+      .limit(2000),
     admin.from('simulations').select('*', { count: 'exact', head: true }),
     admin
       .from('simulations')
       .select('user_id')
-      .gte('created_at', thirtyDaysAgo),
+      .gte('created_at', thirtyDaysAgo)
+      .limit(5000),
   ])
 
   const activeUserSet = new Set((activeUserIds ?? []).map((r) => r.user_id))
@@ -325,20 +327,33 @@ function generateGrowthData(
 
   const days = period === 'all' ? 90 : parseInt(period)
   const now = new Date()
+
+  // Pré-processa datas uma única vez: O(n)
+  const processed = users.map((u) => ({
+    date: u.created_at.slice(0, 10), // YYYY-MM-DD sem parsing de Date
+    isPro: u.plan === 'pro',
+  }))
+  // Usuários já vêm ordenados por created_at ASC da query
+  // Usa pointer acumulativo para evitar re-filtrar: O(n + days) total
+  let pointer = 0
+  let total = 0
+  let pro = 0
   const data: { date: string; total: number; pro: number }[] = []
 
   for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
-    const dateStr = date.toISOString().split('T')[0]
-
-    const usersUntilDate = users.filter(
-      (u) => new Date(u.created_at).toISOString().split('T')[0] <= dateStr
-    )
-
+    const dateStr = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    while (pointer < processed.length && processed[pointer].date <= dateStr) {
+      total++
+      if (processed[pointer].isPro) pro++
+      pointer++
+    }
     data.push({
-      date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      total: usersUntilDate.length,
-      pro: usersUntilDate.filter((u) => u.plan === 'pro').length,
+      date: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+      }),
+      total,
+      pro,
     })
   }
 
