@@ -105,7 +105,7 @@ export default async function HomePage() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 sm:mb-4 sm:h-14 sm:w-14">
                 <Calculator className="text-emerald-400 transition-transform group-hover:scale-110" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">💰 Previsão do líquido</h3>
+              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">Previsão do líquido</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Veja exatamente o impacto de horas extras, adicionais e descontos no seu salário.
               </p>
@@ -115,7 +115,7 @@ export default async function HomePage() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 sm:mb-4 sm:h-14 sm:w-14">
                 <TrendingUp className="text-emerald-400 transition-transform group-hover:scale-110" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">⚖️ Comparador CLT × PJ</h3>
+              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">Comparador CLT × PJ</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Compare lado a lado com percentuais e impostos ajustáveis para tomar a melhor decisão.
               </p>
@@ -125,7 +125,7 @@ export default async function HomePage() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 sm:mb-4 sm:h-14 sm:w-14">
                 <FileText className="text-emerald-400 transition-transform group-hover:scale-110" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">📄 Cálculo de rescisão</h3>
+              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">Cálculo de rescisão</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Simule quanto você deve receber numa rescisão com ou sem justa causa.
               </p>
@@ -135,7 +135,7 @@ export default async function HomePage() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 sm:mb-4 sm:h-14 sm:w-14">
                 <BarChart3 className="text-emerald-400 transition-transform group-hover:scale-110" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">📊 Dashboard completo</h3>
+              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">Dashboard completo</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Visualize a evolução do seu salário com gráficos e indicadores detalhados.
               </p>
@@ -145,7 +145,7 @@ export default async function HomePage() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 sm:mb-4 sm:h-14 sm:w-14">
                 <History className="text-emerald-400 transition-transform group-hover:scale-110" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">💾 Simulações salvas</h3>
+              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">Simulações salvas</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Guarde e compare diferentes cenários para planejar suas finanças.
               </p>
@@ -155,7 +155,7 @@ export default async function HomePage() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 sm:mb-4 sm:h-14 sm:w-14">
                 <Zap className="text-emerald-400 transition-transform group-hover:scale-110" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">⚡ Cálculos instantâneos</h3>
+              <h3 className="mb-2 text-lg font-bold text-white sm:text-xl">Cálculos instantâneos</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Todos os cálculos acontecem em tempo real enquanto você ajusta os valores.
               </p>
@@ -206,9 +206,9 @@ export default async function HomePage() {
                 </li>
               </ul>
               
-              <Link 
-                href="/cadastro" 
-                className="flex w-full items-center justify-center rounded-lg border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white transition-all hover:bg-white/10"
+              <Link
+                href="/cadastro"
+                className="flex w-full items-center justify-center rounded-lg border border-white/20 bg-white/5 px-6 py-3 font-semibold text-slate-200 transition-all hover:border-white/30 hover:bg-white/10"
               >
                 Começar grátis
               </Link>

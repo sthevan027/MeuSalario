@@ -99,7 +99,7 @@ export default async function AdminDashboardPage({
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent sm:text-3xl">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">
             Dashboard
           </h1>
           <p className="text-xs text-slate-400 sm:text-sm">Visão geral das métricas da plataforma</p>
@@ -118,12 +118,54 @@ export default async function AdminDashboardPage({
           value={totalUsers ?? 0}
           subtitle="Todos os cadastros"
           subtitleMobile="Total"
-          gradient="from-blue-500/10 to-cyan-500/5"
-          iconColor="text-blue-400"
-          labelColor="text-blue-300"
-          hoverBorder="hover:border-blue-500/30"
+          gradient="from-emerald-500/10 to-teal-500/5"
+          iconColor="text-emerald-400"
+          labelColor="text-emerald-300"
+          hoverBorder="hover:border-emerald-500/30"
         />
 
+        <MetricCard
+          icon={Activity}
+          label="Pro ativos"
+          labelMobile="Ativos"
+          value={activeProUsers ?? 0}
+          subtitle="Com assinatura ativa"
+          subtitleMobile="Assinando"
+          gradient="from-teal-500/10 to-cyan-500/5"
+          iconColor="text-teal-400"
+          labelColor="text-teal-300"
+          hoverBorder="hover:border-teal-500/30"
+        />
+
+        <MetricCard
+          icon={DollarSign}
+          label="Receita mensal estimada"
+          labelMobile="Receita"
+          value={`R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          subtitle="Baseado em assinaturas ativas"
+          subtitleMobile="Estimada"
+          gradient="from-sky-500/10 to-blue-500/5"
+          iconColor="text-sky-400"
+          labelColor="text-sky-300"
+          hoverBorder="hover:border-sky-500/30"
+        />
+
+        <MetricCard
+          icon={UserPlus}
+          label={`Novos (${period === 'all' ? 'todos' : period + 'd'})`}
+          labelMobile="Novos"
+          value={newUsersInPeriod ?? 0}
+          subtitle={period === 'all' ? 'Todos os usuários' : `Últimos ${period} dias`}
+          subtitleMobile={`${period}d`}
+          gradient="from-slate-500/10 to-slate-600/5"
+          iconColor="text-slate-400"
+          labelColor="text-slate-300"
+          hoverBorder="hover:border-slate-500/30"
+        />
+      </div>
+
+      {/* Métricas secundárias */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <MetricCard
           icon={Crown}
           label="Usuários Pro"
@@ -135,37 +177,9 @@ export default async function AdminDashboardPage({
           iconColor="text-amber-400"
           labelColor="text-amber-300"
           hoverBorder="hover:border-amber-500/30"
+          secondary
         />
 
-        <MetricCard
-          icon={Activity}
-          label="Pro ativos"
-          labelMobile="Ativos"
-          value={activeProUsers ?? 0}
-          subtitle="Com assinatura ativa"
-          subtitleMobile="Assinando"
-          gradient="from-emerald-500/10 to-teal-500/5"
-          iconColor="text-emerald-400"
-          labelColor="text-emerald-300"
-          hoverBorder="hover:border-emerald-500/30"
-        />
-
-        <MetricCard
-          icon={UserPlus}
-          label={`Novos (${period === 'all' ? 'todos' : period + 'd'})`}
-          labelMobile="Novos"
-          value={newUsersInPeriod ?? 0}
-          subtitle={period === 'all' ? 'Todos os usuários' : `Últimos ${period} dias`}
-          subtitleMobile={`${period}d`}
-          gradient="from-violet-500/10 to-purple-500/5"
-          iconColor="text-violet-400"
-          labelColor="text-violet-300"
-          hoverBorder="hover:border-violet-500/30"
-        />
-      </div>
-
-      {/* Métricas adicionais */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <MetricCard
           icon={Percent}
           label="Taxa de conversão"
@@ -173,23 +187,11 @@ export default async function AdminDashboardPage({
           value={`${conversionRate}%`}
           subtitle="Free → Pro"
           subtitleMobile="Free→Pro"
-          gradient="from-pink-500/10 to-rose-500/5"
-          iconColor="text-pink-400"
-          labelColor="text-pink-300"
-          hoverBorder="hover:border-pink-500/30"
-        />
-
-        <MetricCard
-          icon={DollarSign}
-          label="Receita mensal estimada"
-          labelMobile="Receita"
-          value={`R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          subtitle="Baseado em assinaturas ativas"
-          subtitleMobile="Estimada"
-          gradient="from-green-500/10 to-emerald-500/5"
-          iconColor="text-green-400"
-          labelColor="text-green-300"
-          hoverBorder="hover:border-green-500/30"
+          gradient="from-slate-500/10 to-slate-600/5"
+          iconColor="text-slate-400"
+          labelColor="text-slate-300"
+          hoverBorder="hover:border-slate-500/30"
+          secondary
         />
 
         <MetricCard
@@ -199,10 +201,11 @@ export default async function AdminDashboardPage({
           value={totalSimulations ?? 0}
           subtitle="Todas as simulações salvas"
           subtitleMobile="Total"
-          gradient="from-cyan-500/10 to-sky-500/5"
-          iconColor="text-cyan-400"
-          labelColor="text-cyan-300"
-          hoverBorder="hover:border-cyan-500/30"
+          gradient="from-slate-500/10 to-slate-600/5"
+          iconColor="text-slate-400"
+          labelColor="text-slate-300"
+          hoverBorder="hover:border-slate-500/30"
+          secondary
         />
 
         <MetricCard
@@ -212,10 +215,11 @@ export default async function AdminDashboardPage({
           value={inactiveUsers}
           subtitle="Sem simulação nos últimos 30 dias"
           subtitleMobile="Sem sim. 30d"
-          gradient="from-orange-500/10 to-amber-500/5"
-          iconColor="text-orange-400"
-          labelColor="text-orange-300"
-          hoverBorder="hover:border-orange-500/30"
+          gradient="from-rose-500/10 to-red-500/5"
+          iconColor="text-rose-400"
+          labelColor="text-rose-300"
+          hoverBorder="hover:border-rose-500/30"
+          secondary
         />
       </div>
 
@@ -273,6 +277,7 @@ type MetricCardProps = {
   iconColor: string
   labelColor: string
   hoverBorder: string
+  secondary?: boolean
 }
 
 function MetricCard({
@@ -286,9 +291,10 @@ function MetricCard({
   iconColor,
   labelColor,
   hoverBorder,
+  secondary = false,
 }: MetricCardProps) {
   return (
-    <div className={`group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br ${gradient} p-4 backdrop-blur-sm transition-all ${hoverBorder} sm:rounded-2xl sm:p-6`}>
+    <div className={`group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br ${gradient} p-4 backdrop-blur-sm transition-all ${hoverBorder} sm:rounded-2xl ${secondary ? 'sm:p-4' : 'sm:p-6'}`}>
       <div className="absolute -right-2 -top-2 opacity-10 sm:-right-4 sm:-top-4">
         <Icon size={60} className={`${iconColor} sm:h-20 sm:w-20`} />
       </div>
@@ -298,7 +304,7 @@ function MetricCard({
           <span className="hidden sm:inline">{label}</span>
           <span className="sm:hidden">{labelMobile}</span>
         </div>
-        <div className="mt-1.5 text-xl font-bold tabular-nums text-white sm:mt-2 sm:text-3xl">
+        <div className={`mt-1.5 tabular-nums text-white font-bold ${secondary ? 'text-xl sm:text-2xl' : 'text-xl sm:text-3xl'} sm:mt-2`}>
           {value}
         </div>
         <div className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-400 sm:mt-1 sm:text-xs">
