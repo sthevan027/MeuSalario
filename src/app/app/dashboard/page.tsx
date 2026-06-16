@@ -8,6 +8,7 @@ import { requireUser } from '@/lib/auth/profile'
 import { getGreeting, getDisplayName, getProfileInitials } from '@/lib/greetings'
 import { LazyChart } from '@/components/charts/LazyChart'
 import { DashboardUpdatesBanner } from '@/components/dashboard/DashboardUpdatesBanner'
+import { Card } from '@/components/ui/Card'
 import { Calendar, LineChart as LineChartIcon, Link2, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { CltVsPjChartClient } from './DashboardChartsClient'
 import { DashboardCharts } from './DashboardCharts'
@@ -31,55 +32,29 @@ function monthLabel(key: string) {
 }
 
 function lastNMonthKeys(endDate: Date, n = 12) {
-  const keys: string[] = []
-  const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
-  
-  // Sempre começar de 2026/01 (Janeiro 2026)
-  const startYear = 2026
-  const startMonth = 0 // Janeiro
-  const start = new Date(startYear, startMonth, 1)
-  
-  // Data atual para incluir meses futuros
+  // Âncora é o mês mais recente entre endDate e hoje
   const hoje = new Date()
-  const hojeMonth = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-  
-  // Usar a data mais recente entre endDate e hoje como referência
-  const referenceDate = end >= hojeMonth ? end : hojeMonth
-  
-  // Calcular quantos meses temos desde 2026/01 até a data de referência
-  const monthsFromStart = (referenceDate.getFullYear() - startYear) * 12 + (referenceDate.getMonth() - startMonth) + 1
-  
-  // Se temos menos de N meses, começar do início de 2026
-  if (monthsFromStart < n) {
-    let current = new Date(start)
-    let count = 0
-    while (count < n) {
-      keys.push(monthKey(current))
-      current = new Date(current.getFullYear(), current.getMonth() + 1, 1)
-      count++
-    }
-  } else {
-    // Gerar N meses, incluindo meses futuros a partir da data de referência
-    // Começar alguns meses antes e ir até alguns meses depois
-    const monthsBefore = Math.floor(n * 0.6) // 60% dos meses são passados
-    const monthsAfter = n - monthsBefore // 40% são futuros
-    
-    // Gerar meses passados
-    for (let i = monthsBefore - 1; i >= 0; i--) {
-      const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1)
-      if (d >= start) {
-        keys.push(monthKey(d))
-      }
-    }
-    
-    // Gerar meses futuros
-    for (let i = 1; i <= monthsAfter; i++) {
-      const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + i, 1)
-      keys.push(monthKey(d))
-    }
+  const referenceDate = new Date(
+    Math.max(
+      new Date(endDate.getFullYear(), endDate.getMonth(), 1).getTime(),
+      new Date(hoje.getFullYear(), hoje.getMonth(), 1).getTime()
+    )
+  )
+
+  // Gera janela de n meses: 60% passados + mês atual + 40% futuros
+  const monthsBefore = Math.max(0, Math.floor(n * 0.6))
+  const monthsAfter = n - monthsBefore - 1
+  const keys: string[] = []
+
+  for (let i = monthsBefore; i > 0; i--) {
+    keys.push(monthKey(new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1)))
   }
-  
-  return keys.slice(0, n) // Garante que sempre retorna exatamente N meses
+  keys.push(monthKey(referenceDate))
+  for (let i = 1; i <= monthsAfter; i++) {
+    keys.push(monthKey(new Date(referenceDate.getFullYear(), referenceDate.getMonth() + i, 1)))
+  }
+
+  return keys.slice(0, n)
 }
 
 // Função auxiliar para buscar simulações mensais (usada no cache).
@@ -314,7 +289,7 @@ export default async function DashboardPage() {
       <DashboardUpdatesBanner />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+        <Card variant="metric" padding="none" className="p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <Wallet className="h-4 w-4 text-slate-500" aria-hidden />
             Bruto
@@ -323,9 +298,9 @@ export default async function DashboardPage() {
             {formatBRL(metrics.bruto)}
           </div>
           <div className="mt-1 text-xs text-slate-500">Salário base total</div>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+        <Card variant="metric" padding="none" className="p-4">
           <div className="flex items-center justify-between gap-1">
             <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
               <TrendingUp className="h-4 w-4 shrink-0" aria-hidden />
@@ -341,9 +316,9 @@ export default async function DashboardPage() {
             {formatBRL(metrics.adicionais)}
           </div>
           <div className="mt-1 text-xs text-slate-500">Horas extras e outros</div>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+        <Card variant="metric" padding="none" className="p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-400">
             <TrendingDown className="h-4 w-4 shrink-0" aria-hidden />
             Descontos
@@ -352,9 +327,9 @@ export default async function DashboardPage() {
             {formatBRL(metrics.descontos)}
           </div>
           <div className="mt-1 text-xs text-slate-500">INSS, IRRF e outros</div>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4">
+        <Card variant="metric" padding="none" className="p-4">
           <div className="flex items-center justify-between gap-1">
             <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-sky-400">
               <Link2 className="h-4 w-4 shrink-0" aria-hidden />
@@ -368,10 +343,10 @@ export default async function DashboardPage() {
             {formatBRL(metrics.liquido)}
           </div>
           <div className="mt-1 text-xs text-slate-500">Valor que você recebe</div>
-        </div>
+        </Card>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-[#111]/90 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card variant="metric" padding="none" className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
             <Calendar className="h-5 w-5" aria-hidden />
@@ -387,7 +362,7 @@ export default async function DashboardPage() {
           <LineChartIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500/80" aria-hidden />
           <span>{anualExplicacao}</span>
         </div>
-      </div>
+      </Card>
 
       {/* Gráficos lado a lado */}
       {(hasSeries || hasCltVsPjData) && (
@@ -400,23 +375,10 @@ export default async function DashboardPage() {
               hasCltVsPjData={false}
             />
           ) : (
-            <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
-              <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
-              <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
-                <p className="text-slate-400">Nenhuma simulação ainda</p>
-                <p className="mt-1 text-sm text-slate-500">Faça uma simulação para ver o gráfico</p>
-                <Link
-                  href="/app/simulacao"
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
-                >
-                  Fazer simulação
-                </Link>
-              </div>
-            </div>
+            <EmptySimulations />
           )}
 
-          <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
+          <Card variant="metric">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h2 className="text-lg font-semibold text-slate-100">CLT vs PJ</h2>
@@ -447,27 +409,30 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* Se não houver nada para mostrar, mantém o empty state do mensal */}
-      {!hasSeries && !hasCltVsPjData && (
-        <div className="rounded-xl border border-white/10 bg-[#111]/90 p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
-          <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
-          <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
-            <p className="text-slate-400">Nenhuma simulação ainda</p>
-            <p className="mt-1 text-sm text-slate-500">Faça uma simulação para ver o gráfico</p>
-            <Link
-              href="/app/simulacao"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
-            >
-              Fazer simulação
-            </Link>
-          </div>
-        </div>
-      )}
+      {!hasSeries && !hasCltVsPjData && <EmptySimulations />}
     </div>
+  )
+}
+
+function EmptySimulations() {
+  return (
+    <Card variant="metric">
+      <h2 className="text-lg font-semibold text-slate-100">Evolução do salário líquido</h2>
+      <p className="mt-0.5 text-sm text-slate-500">Últimos 12 meses</p>
+      <div className="mt-8 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-12 text-center">
+        <p className="text-slate-400">Nenhuma simulação ainda</p>
+        <p className="mt-1 text-sm text-slate-500">Faça uma simulação para ver o gráfico</p>
+        <Link
+          href="/app/simulacao"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+        >
+          Fazer simulação
+        </Link>
+      </div>
+    </Card>
   )
 }

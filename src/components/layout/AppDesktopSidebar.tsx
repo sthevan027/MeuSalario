@@ -67,7 +67,13 @@ export function AppDesktopSidebar({ profile, isPro, isAdmin }: Props) {
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden p-2 pt-3">
-          <div className={`mb-3 flex items-center ${rail ? 'justify-center' : 'justify-end px-1'}`}>
+          <div className={`mb-3 flex items-center ${rail ? 'justify-center' : 'justify-between px-1'}`}>
+            {!rail && (
+              <span className="pl-1 text-sm font-bold select-none">
+                <span className="text-emerald-400">Meu</span>
+                <span className="text-white">Salario</span>
+              </span>
+            )}
             <button
               type="button"
               onClick={() => persistExpanded(!expanded)}
@@ -211,14 +217,12 @@ export function AppDesktopSidebar({ profile, isPro, isAdmin }: Props) {
         <>
           <button
             type="button"
-            className="fixed inset-y-0 right-0 z-[34] hidden bg-black/50 lg:block"
-            style={{ left: '4.5rem' }}
+            className="fixed inset-y-0 right-0 z-[34] hidden bg-black/50 lg:block left-[4.5rem]"
             aria-label="Fechar menu Simular"
             onClick={() => setSimGroupOpen(false)}
           />
           <div
-            className="fixed z-[35] hidden max-h-[70vh] w-56 flex-col overflow-y-auto rounded-xl border border-white/10 bg-slate-900/98 p-2 shadow-xl backdrop-blur-xl lg:flex"
-            style={{ left: '4.5rem', top: '5.5rem' }}
+            className="fixed z-[35] hidden max-h-[70vh] w-56 flex-col overflow-y-auto rounded-xl border border-white/10 bg-slate-900/98 p-2 shadow-xl backdrop-blur-xl lg:flex left-[4.5rem] top-[5.5rem]"
             role="menu"
             id="app-sidebar-simular-flyout"
           >
