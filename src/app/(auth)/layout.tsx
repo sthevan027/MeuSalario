@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { isSupabaseConfigured } from '@/lib/env'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  if (!isSupabaseConfigured()) notFound()
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       {/* Background decorativo */}
