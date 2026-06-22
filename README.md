@@ -1,5 +1,7 @@
 # MeuSalario
 
+![Status](https://img.shields.io/badge/status-em%20produ%C3%A7%C3%A3o-success)
+
 Plataforma web para **previsão salarial**, simulações e dashboards (CLT/PJ), com **Supabase** (Auth/DB) e **Asaas** (pagamentos - PIX, cartão, boleto).
 
 ## Funcionalidades
