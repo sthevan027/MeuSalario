@@ -1,8 +1,16 @@
-# MeuSalario
+# MeuSalário Pro
 
 ![Status](https://img.shields.io/badge/status-em%20produ%C3%A7%C3%A3o-success)
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white) ![Tailwind](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white) ![pnpm](https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm&logoColor=white)
+
+## 🚀 Evolução: de simulador para copiloto fiscal
+
+**De → Para:** deixa de ser só um simulador de salário e passa a copiloto fiscal-financeiro contínuo para PJ e MEI.
+
+**Novas funcionalidades:** importação de extrato bancário (CSV/OFX) com classificação automática de receitas; cálculo de DAS/DARF e provisão mensal de impostos; alerta de teto ao atingir 75% do limite anual do MEI; projeção de quanto guardar por mês e fluxo de caixa.
+
+**Mudanças na lógica:** o cálculo passa a usar dados reais importados (não só valores digitados); o histórico vira base contínua mês a mês, não simulações avulsas; regras fiscais isoladas em módulo testável, versionado por ano-calendário.
 
 Plataforma web para **previsão salarial**, simulações e dashboards (CLT/PJ), com **Supabase** (Auth/DB) e **Asaas** (pagamentos - PIX, cartão, boleto).
 
