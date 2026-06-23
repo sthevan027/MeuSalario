@@ -1,4 +1,4 @@
-# MeuSalário Pro
+# MeuSalário Pro 
 
 ![Status](https://img.shields.io/badge/status-em%20produ%C3%A7%C3%A3o-success)
 
