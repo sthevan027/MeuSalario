@@ -38,6 +38,26 @@ function applyRateLimit(request: NextRequest): NextResponse | null {
   return null
 }
 
+function createSupabaseCookieClient(request: NextRequest, response: NextResponse) {
+  return createServerClient(
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: Record<string, unknown>) {
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: Record<string, unknown>) {
+          response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+        },
+      },
+    }
+  )
+}
+
 export async function middleware(request: NextRequest) {
   const rateLimitResponse = applyRateLimit(request)
   if (rateLimitResponse) return rateLimitResponse
@@ -61,23 +81,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const response = NextResponse.next({ request: { headers: request.headers } })
-    const supabase = createServerClient(
-      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
-      requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: Record<string, unknown>) {
-            response.cookies.set({ name, value, ...options })
-          },
-          remove(name: string, options: Record<string, unknown>) {
-            response.cookies.set({ name, value: '', ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
+    const supabase = createSupabaseCookieClient(request, response)
 
     try {
       // getSession() decodifica o JWT do cookie localmente (sem chamada de rede),
@@ -105,14 +109,28 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // /app: auth é feita no layout (requireUser) para evitar loop de redirect no Edge
+  // /app: Chama getUser() para disparar refresh do JWT quando necessário e propagar
+  // os cookies atualizados. Não redireciona em caso de sessão inválida — o layout
+  // (requireUser) trata isso para evitar loop de redirect no Edge.
   if (isAppRoute) {
     if (pathname === '/app' || pathname === '/app/') {
       const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
       return NextResponse.redirect(url)
     }
-    return NextResponse.next()
+
+    if (!isSupabaseConfigured()) return NextResponse.next()
+
+    const response = NextResponse.next({ request: { headers: request.headers } })
+    const supabase = createSupabaseCookieClient(request, response)
+
+    try {
+      await supabase.auth.getUser()
+    } catch {
+      // Layout (requireUser) lida com sessão inválida — não redirecionar aqui.
+    }
+
+    return response
   }
 
   // /admin: verificação de sessão no middleware
@@ -178,6 +196,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

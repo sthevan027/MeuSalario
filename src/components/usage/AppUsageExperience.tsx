@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react'
 import { SimulationQuotaBanner } from '@/components/usage/SimulationQuotaBanner'
 import { UsageWelcomeModal } from '@/components/usage/UsageWelcomeModal'
+import { UpgradeModal } from '@/components/billing/UpgradeModal'
 import { isQuotaResetDue } from '@/lib/simulation-quota'
 
 const STORAGE_KEY = 'meusalario_usage_welcome_seen'
+const QUOTA_EXHAUSTED_KEY = 'meusalario_quota_exhausted_modal_seen'
 
 type Props = {
   isPro: boolean
@@ -23,6 +25,7 @@ export function AppUsageExperience({
   quotaResetAt,
 }: Props) {
   const [welcomeOpen, setWelcomeOpen] = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   useEffect(() => {
     if (isPro) return
@@ -30,6 +33,17 @@ export function AppUsageExperience({
     if (sessionStorage.getItem(STORAGE_KEY)) return
     setWelcomeOpen(true)
   }, [isPro])
+
+  useEffect(() => {
+    if (isPro) return
+    if (typeof window === 'undefined') return
+    if (sessionStorage.getItem(QUOTA_EXHAUSTED_KEY)) return
+    const anyExhausted =
+      simulationsRemaining <= 0 || comparisonsRemaining <= 0 || compatibilityRemaining <= 0
+    if (anyExhausted) {
+      setUpgradeOpen(true)
+    }
+  }, [isPro, simulationsRemaining, comparisonsRemaining, compatibilityRemaining])
 
   if (isPro) {
     return null
@@ -67,6 +81,13 @@ export function AppUsageExperience({
           sessionStorage.setItem(STORAGE_KEY, '1')
           setWelcomeOpen(false)
           window.location.href = '/planos'
+        }}
+      />
+      <UpgradeModal
+        isOpen={upgradeOpen}
+        onClose={() => {
+          sessionStorage.setItem(QUOTA_EXHAUSTED_KEY, '1')
+          setUpgradeOpen(false)
         }}
       />
     </>
