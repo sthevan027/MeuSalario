@@ -17,6 +17,8 @@ export type Profile = {
   compatibility_checks_remaining: number
   /** Data do próximo reset mensal de quotas (FREE). */
   quota_reset_at: string | null
+  /** Anexo do Simples Nacional (III ou V) — usado no cálculo real de DAS a partir do faturamento lançado. */
+  anexo_simples_nacional: 'III' | 'V' | null
 }
 
 /** Busca perfil - cache() deduplica chamadas na mesma request (layout + page). */
@@ -32,7 +34,7 @@ export const getProfileOrNull = cache(async (): Promise<Profile | null> => {
     supabase
       .from('profiles')
       .select(
-        'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining, quota_reset_at'
+        'id, plan, role, subscription_status, email, name, simulations_remaining, comparisons_remaining, compatibility_checks_remaining, quota_reset_at, anexo_simples_nacional'
       )
       .eq('id', user.id)
       .single()

@@ -37,6 +37,10 @@ const FALLBACK_2026 = {
     { limiteAnual: 3_600_000, aliquota: 0.23, deducao: 62_100 },
     { limiteAnual: 4_800_000, aliquota: 0.305, deducao: 540_000 },
   ],
+  // Limite anual de faturamento do MEI (Lei Complementar 123/2006, art. 18-A).
+  // Configurável aqui (não hardcoded na tela) porque já mudou de valor por
+  // lei no passado e pode mudar de novo.
+  mei_limite_anual: 81_000.0,
 } as const
 
 export type TaxConfig = typeof FALLBACK_2026

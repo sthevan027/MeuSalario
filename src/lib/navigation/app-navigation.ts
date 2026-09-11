@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Calculator, Calendar, FileText, Scale, Wallet } from 'lucide-react'
+import { Calculator, Calendar, FileText, Scale, Wallet, Receipt } from 'lucide-react'
 
 /** Rotas do painel Simular (BottomNav sheet + sidebar desktop). Fonte única — issue #34. */
 export const APP_SIMULATION_ITEMS: ReadonlyArray<{
@@ -13,6 +13,7 @@ export const APP_SIMULATION_ITEMS: ReadonlyArray<{
   { name: 'Férias', href: '/app/ferias', icon: Calendar },
   { name: 'Rescisão', href: '/app/rescisao', icon: FileText },
   { name: 'CLT × PJ', href: '/app/comparador', icon: Scale },
+  { name: 'Faturamento PJ/MEI', href: '/app/faturamento', icon: Receipt },
 ]
 
 export const APP_SIMULATION_PATHS = APP_SIMULATION_ITEMS.map((i) => i.href)
